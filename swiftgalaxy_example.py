@@ -55,6 +55,11 @@ print('Chosen halo index: ', chosen_halo_index)
 galaxy_data = SWIFTGalaxy(virtual_snapshot_file, SOAP(soap_catalogue_file, soap_index=chosen_halo_index,),)
 print('SOAP index: ', galaxy_data.halo_catalogue.soap_index)
 
+
+# SOAP catalogue data of the galaxy can be accessed through
+#Lstars = galaxy_data.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze()
+
+
 # We can define a function that uses some of swiftsimio's visualisation tools to make some quick images of this galaxy:
 def myvis(galaxy_data = None, plot_annotate = None, savefig_txt_in = None,       # SWIFTGalaxy object containing all the integrated properties + access the particles from the snapshot file
             #=====================================
