@@ -21,14 +21,14 @@ COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir = _assign_direct
 
 #--------------------------------
 # Selects a galaxy (or set of galaxies) that meet criteria, returns soap_catalogue_file, virtual_snapshot_file, soap_indicies
-def _create_soap_sample(simulation_run = 'L0025N0752',
-                         simulation_type = 'THERMAL_AGN_m5',
+def _create_soap_sample(simulation_run = '',
+                         simulation_type = '',
                          snapshot_no     = 123,      # snapshot 45 = 045
                          print_sample    = True,
                        #=================================================
                        # Selection criteria
-                       #aperture
-                       #mass criteria
+                       min_stelmass     = 10**9.5,
+                       max_stelmass     = 10**15,
                        #=================================================
                        csv_file = False,                       # Will write sample to csv file in sapmle_dir
                           csv_name = '',
@@ -48,18 +48,25 @@ def _create_soap_sample(simulation_run = 'L0025N0752',
     
     
     #==========================================
-    # Select candidates, To avoid having too many particles let's pick something with an m200c of about 1e11 Msun.
+    # Select candidates that meet mass sample
+    stelmass30  = swiftdata.exclusive_sphere_30kpc.stellar_mass
+    stelmass30.convert_to_units('Msun')       # Specify units
+    stelmass30.convert_to_physical()          # Specify physical/comoving
+    
+    # The warning is complaining that 1e11 * u.Msun doesn't include information about whether and how the quantity depends on the scale factor (while m200c does). The mass doesn't depend on the scale factor (and we're at a=1 anyway) so we can safely ignore it.
+    soap_indicies = np.argwhere(np.logical_and(stelmass30 > min_stelmass * u.Msun, stelmass30 < max_stelmass * u.Msun)).squeeze()
+    
+    
+    """
     m200c = swiftdata.spherical_overdensity_200_crit.total_mass
     m200c.convert_to_units('Msun')       # Specify units
     m200c.convert_to_physical()          # Specify physical/comoving
-    
-    # The warning is complaining that 1e11 * u.Msun doesn't include information about whether and how the quantity depends on the scale factor (while m200c does). The mass doesn't depend on the scale factor (and we're at a=1 anyway) so we can safely ignore it.
     soap_indicies = np.argwhere(np.logical_and(m200c > 1e11 * u.Msun, m200c < 2e11 * u.Msun)).squeeze()
+    """
     
-        
-    # Lets grab th first 5 from our list
-    #soap_indicies = candidates[:5]
-    #print(soap_indicies)
+    
+    # Print first 10 just to check
+    #print(swiftdata.exclusive_sphere_30kpc.stellar_mass[soap_indicies][:10])
     
     if print_sample:
         print('\n=================')
@@ -110,10 +117,12 @@ def _create_soap_sample(simulation_run = 'L0025N0752',
 #=======================================
 _create_soap_sample(simulation_run = 'L0025N0752', simulation_type = 'THERMAL_AGN_m5', 
                     snapshot_no = 123,
-                    csv_file = True)
+                    csv_file = True,
+                    csv_name = 'example_sample')
                     
                     
-                    
+# simulation_run = 'L100_m6'    THERMAL_AGN_m6  127
+# simulation_run = 'L0025N0752' THERMAL_AGN_m5  123
                     
                     
                     
