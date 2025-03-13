@@ -14,8 +14,9 @@ def _assign_directories(file_type):
         sample_dir      = COLIBRE_dir + '/samples'
         output_dir      = COLIBRE_dir + '/outputs'
         fig_dir         = COLIBRE_dir + '/figures'
+        obs_dir         = COLIBRE_dir + '/obs_data'
         
-        return COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir
+        return COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir
         
     # serpens
     elif file_type == '2':
@@ -27,20 +28,22 @@ def _assign_directories(file_type):
         sample_dir      = COLIBRE_dir + '/samples'
         output_dir      = COLIBRE_dir + '/outputs'
         fig_dir         = COLIBRE_dir + '/figures'
+        obs_dir         = COLIBRE_dir + '/obs_data'
         
-        return COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir
+        return COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir
     # cosma8 system   
     elif file_type == '3':
         # Raw data Directories cosma8
         colibre_base_path = "/cosma8/data/dp004/colibre/Runs/"
         
         # work directories
-        COLIBRE_dir       = '/cosma8/data/do019/dc-bake3'
+        COLIBRE_dir       = '/cosma8/data/do019/dc-bake3/COLIBRE'
         sample_dir      = COLIBRE_dir + '/samples'
         output_dir      = COLIBRE_dir + '/outputs'
         fig_dir         = '/cosma/home/do019/dc-bake3/COLIBRE/figures'
+        obs_dir         = COLIBRE_dir + '/obs_data'
         
-        return COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir
+        return COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir
         
         
     else:

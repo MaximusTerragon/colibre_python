@@ -12,6 +12,7 @@ def _load_soap_sample(sample_dir, csv_sample, print_sample=True):
     dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
     
     soap_indicies = np.array(dict_new['soap_indicies'])
+    trackid_list  = np.array(dict_new['trackid_list'])
     sample_input  = dict_new['sample_input']
     dict_new = 0
     
@@ -23,4 +24,4 @@ def _load_soap_sample(sample_dir, csv_sample, print_sample=True):
         print('Created sample size:   %s' %len(soap_indicies))
         print('')
     
-    return soap_indicies, sample_input
+    return soap_indicies, trackid_list, sample_input
