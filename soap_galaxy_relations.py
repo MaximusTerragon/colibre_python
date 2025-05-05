@@ -6,6 +6,7 @@ import scipy
 import csv
 import time
 import math
+from swiftsimio import cosmo_quantity, cosmo_array
 from operator import attrgetter
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -51,10 +52,11 @@ def _stelmass_gasmass(simulation_run = ['L100_m6', 'L0025N0752'],
                     snapshot_no   = [127, 123],        # available for L100_m6: 127, 119, 114, 102, 092
                    #=====================================
                    # Graph settings
-                   mass_type = 'gas_mass',    # [ gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass 
-                                                  #   molecular_and_atomic_mass / gas_mass_in_cold_dense_gas / molecular_gas_mass ]
+                   mass_type = 'gas_mass',    # [ gas_mass / star_forming_gas_mass / gas_mass_in_cold_dense_gas
+                                              #   molecular_hydrogen_mass / atomic_hydrogen_mass / 
+                                              #   molecular_and_atomic_hydrogen_mass ]
                    centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                   aperture = 'exclusive_sphere_30kpc', 
+                   aperture = 'exclusive_sphere_50kpc', 
                    #----------
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
                    plot_fractions    = False,         # Converts to mass fraction instead of mass
@@ -113,34 +115,21 @@ def _stelmass_gasmass(simulation_run = ['L100_m6', 'L0025N0752'],
     
         # Get stelmass and gas mass data
         stellar_mass = attrgetter('%s.%s'%(aperture, 'stellar_mass'))(data)
-        total_gas_mass = attrgetter('%s.%s'%(aperture, 'gas_mass'))(data)
+        #total_gas_mass = attrgetter('%s.%s'%(aperture, 'gas_mass'))(data)
         #total_atomic_mass = attrgetter('%s.%s'%(aperture, 'atomic_hydrogen_mass'))(data)
         #total_molecular_mass = attrgetter('%s.%s'%(aperture, 'molecular_hydrogen_mass'))(data)
-        
-        
-        
-        if mass_type == 'molecular_and_atomic_mass':
-            quantity_m1 = attrgetter('%s.%s'%(aperture, 'atomic_hydrogen_mass'))(data)
-            quantity_m2 = attrgetter('%s.%s'%(aperture, 'molecular_hydrogen_mass'))(data)
-            gas_mass = quantity_m1 + quantity_m2
-        elif mass_type == 'molecular_gas_mass':
-            # He adjusted per Rob McGibbon
+            
+        if mass_type == 'molecular_and_atomic_hydrogen_mass':
+            HI_mass = attrgetter('%s.%s'%(aperture, 'atomic_hydrogen_mass'))(data)
             H2_mass = attrgetter('%s.%s'%(aperture, 'molecular_hydrogen_mass'))(data)
-            H_mass  = attrgetter('%s.%s'%(aperture, 'hydrogen_mass'))(data)
-            He_mass = attrgetter('%s.%s'%(aperture, 'helium_mass'))(data)
-            gas_mass = u.unyt_array(np.zeros(H2_mass.shape), units=H2_mass.units)
-            gas_mass[H_mass > 0.0] = H2_mass[H_mass > 0.0] * (1.0 + (He_mass[H_mass > 0.0] / H_mass[H_mass > 0.0]))
+            quantity_mass = HI_mass + H2_mass
+            HI_mass = 0
             H2_mass = 0
-            H_mass = 0
-            He_mass = 0
-            H1_mass = 0
         else:
             gas_mass = attrgetter('%s.%s'%(aperture, mass_type))(data)
         
         stellar_mass.convert_to_units('Msun')
-        stellar_mass.convert_to_physical()
         gas_mass.convert_to_units('Msun')
-        gas_mass.convert_to_physical()
         
         # Get other data
         central_sat = attrgetter('input_halos.is_central')(data)
@@ -148,35 +137,28 @@ def _stelmass_gasmass(simulation_run = ['L100_m6', 'L0025N0752'],
 
         # Mask for central/satellite and no DM-only galaxies
         if centrals_or_satellites == 'centrals':
-            candidates = np.argwhere(np.logical_and(central_sat == 1, stellar_mass > lower_mass_limit)).squeeze()
+            candidates = np.argwhere(np.logical_and(central_sat == 1, 
+                                                    stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0))).squeeze()
             stellar_mass = stellar_mass[candidates]
             gas_mass = gas_mass[candidates]
-            total_gas_mass = total_gas_mass[candidates]
-            #total_atomic_mass = total_atomic_mass[candidates]
-            #total_molecular_mass = total_molecular_mass[candidates]
             kappa_stars = kappa_stars[candidates]
             print('Masking only centrals: ', len(stellar_mass))
         elif centrals_or_satellites == 'satellites':
-            candidates = np.argwhere(np.logical_and(central_sat == 0, stellar_mass > lower_mass_limit)).squeeze()
+            candidates = np.argwhere(np.logical_and(central_sat == 0, 
+                                                    stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0))).squeeze()
             stellar_mass = stellar_mass[candidates]
             gas_mass = gas_mass[candidates]
-            total_gas_mass = total_gas_mass[candidates]
-            #total_atomic_mass = total_atomic_mass[candidates]
-            #total_molecular_mass = total_molecular_mass[candidates]
             kappa_stars = kappa_stars[candidates]
             print('Masking only satellites: ', len(stellar_mass))
         else:
-            candidates = np.argwhere(stellar_mass > lower_mass_limit).squeeze()
+            candidates = np.argwhere(stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)).squeeze()
             stellar_mass = stellar_mass[candidates]
             gas_mass = gas_mass[candidates]
-            total_gas_mass = total_gas_mass[candidates]
-            #total_atomic_mass = total_atomic_mass[candidates]
-            #total_molecular_mass = total_molecular_mass[candidates]
             kappa_stars = kappa_stars[candidates]
             print('Masking all galaxies: ', len(stellar_mass))
 
         if plot_fractions:
-            gas_mass = gas_mass/(total_gas_mass + stellar_mass)
+            gas_mass = gas_mass/(gas_mass + stellar_mass)
 
         #-----------------
         # Scatter
@@ -205,7 +187,7 @@ def _stelmass_gasmass(simulation_run = ['L100_m6', 'L0025N0752'],
             y_bin = gas_mass.value[mask]
             
             # Remove zero values before computing statistics
-            #y_bin = y_bin[y_bin > 0]
+            y_bin = y_bin[y_bin > 0]
             
             if len(y_bin) >= 10:  # Ensure the bin contains data
                 medians.append(np.median(y_bin))
@@ -238,26 +220,28 @@ def _stelmass_gasmass(simulation_run = ['L100_m6', 'L0025N0752'],
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
     
-    dict_aperture = {'exclusive_sphere_30kpc': '30 \mathrm{pkpc}', 
-                     'exclusive_sphere_50kpc': '50 \mathrm{pkpc}'}
+    dict_aperture = {'exclusive_sphere_30kpc': '30 pkpc', 
+                     'exclusive_sphere_50kpc': '50 pkpc'}
     dict_ylabel = {'mass': {'gas_mass': r'$M_{\mathrm{gas}}$ [M$_{\odot}$]',
                             'star_forming_gas_mass': r'$M_{\mathrm{gas,SF}}$ [M$_{\odot}$]',
                             'molecular_hydrogen_mass': r'$M_{\mathrm{H_{2}}}$ [M$_{\odot}$]',
                             'atomic_hydrogen_mass': r'$M_{\mathrm{HI}}$ [M$_{\odot}$]',
                             'molecular_gas_mass': r'$M_{\mathrm{mol}}$ (incl. He) [M$_{\odot}$]',
                             'molecular_and_atomic_hydrogen_mass': r'$M_{\mathrm{HI+H_{2}}}$ [M$_{\odot}$]',
+                            'molecular_and_atomic_gas_mass': r'$M_{\mathrm{HI+H_{mol}}}$ [M$_{\odot}$]',
                             'gas_mass_in_cold_dense_gas': r'$M_{\mathrm{cold,dense}}$ [M$_{\odot}$]' 
                             },
                    'fraction': {'gas_mass': r'$M_{\mathrm{gas}}/(M_{*}+M_{\mathrm{gas}})$',
-                                'star_forming_gas_mass': r'$M_{\mathrm{gas,SF}}/(M_{*}+M_{\mathrm{gas}})$',
-                                'molecular_hydrogen_mass': r'$M_{\mathrm{H_{2}}}/(M_{*}+M_{\mathrm{gas}})$',
-                                'atomic_hydrogen_mass': r'$M_{\mathrm{HI}}/(M_{*}+M_{\mathrm{gas}})$',
-                                'molecular_gas_mass': '$M_{\mathrm{mol}} (incl. He)$',
-                                'molecular_and_atomic_hydrogen_mass': r'$M_{\mathrm{HI+H_{2}}}/(M_{*}+M_{\mathrm{gas}})$',
-                                'gas_mass_in_cold_dense_gas': r'$M_{\mathrm{cold,dense}}/(M_{*}+M_{\mathrm{gas}})$'
+                                'star_forming_gas_mass': r'$M_{\mathrm{gas,SF}}/(M_{\mathrm{gas,SF}}+M_{*})$',
+                                'molecular_hydrogen_mass': r'$M_{\mathrm{H_{2}}}/(M_{\mathrm{H_{2}}}+M_{*})$',
+                                'atomic_hydrogen_mass': r'$M_{\mathrm{HI}}/(M_{\mathrm{HI}}+M_{*})$',
+                                'molecular_gas_mass': '$M_{\mathrm{mol}}/(M_{\mathrm{mol}}+M_{*})$',
+                                'molecular_and_atomic_hydrogen_mass': r'$M_{\mathrm{HI+H_{2}}}/(M_{\mathrm{HI+H_{2}}}+M_{*})$',
+                                'molecular_and_atomic_gas_mass': r'$M_{\mathrm{HI+H_{mol}}}/(M_{\mathrm{HI+H_{mol}}}+M_{*})$',
+                                'gas_mass_in_cold_dense_gas': r'$M_{\mathrm{cold,dense}}/(M_{\mathrm{cold,dense}}+M_{*})$'
                                 }}
-    plt.xlabel(r'$M_*$ (%s)'%dict_aperture[aperture])
-    plt.ylabel(r'%s'%dict_ylabel['%s'%('fraction' if plot_fractions else 'mass')])
+    plt.xlabel(r'$M_*$ (%s) [M$_{\odot}$]'%dict_aperture[aperture])
+    plt.ylabel(r'%s'%dict_ylabel['%s'%('fraction' if plot_fractions else 'mass')][mass_type])
     
     
     #------------
@@ -303,7 +287,7 @@ def _stelmass_sfr(simulation_run = ['L100_m6'],
                    # Graph settings
                    sfr_or_ssfr      = 'sfr',        # sfr or ssfr
                    centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                   aperture = 'exclusive_sphere_30kpc', 
+                   aperture = 'exclusive_sphere_50kpc', 
                    #----------
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
                    format_z          = False,        # For variations in z graphs
@@ -362,7 +346,6 @@ def _stelmass_sfr(simulation_run = ['L100_m6'],
         sfr          = attrgetter('%s.%s'%(aperture, 'star_formation_rate'))(data)
         
         stellar_mass.convert_to_units('Msun')
-        stellar_mass.convert_to_physical()
         sfr.convert_to_units(u.Msun/u.yr)
         sfr.convert_to_physical()
         
@@ -372,19 +355,21 @@ def _stelmass_sfr(simulation_run = ['L100_m6'],
 
         # Mask for central/satellite and no DM-only galaxies
         if centrals_or_satellites == 'centrals':
-            candidates = np.argwhere(np.logical_and(central_sat == 1, stellar_mass > lower_mass_limit)).squeeze()
+            candidates = np.argwhere(np.logical_and(central_sat == 1, 
+                                                    stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0))).squeeze()
             stellar_mass = stellar_mass[candidates]
             sfr = sfr[candidates]
             kappa_stars = kappa_stars[candidates]
             print('Masking only centrals: ', len(stellar_mass))
         elif centrals_or_satellites == 'satellites':
-            candidates = np.argwhere(np.logical_and(central_sat == 0, stellar_mass > lower_mass_limit)).squeeze()
+            candidates = np.argwhere(np.logical_and(central_sat == 0, 
+                                                    stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0))).squeeze()
             stellar_mass = stellar_mass[candidates]
             sfr = sfr[candidates]
             kappa_stars = kappa_stars[candidates]
             print('Masking only satellites: ', len(stellar_mass))
         else:
-            candidates = np.argwhere(stellar_mass > lower_mass_limit).squeeze()
+            candidates = np.argwhere(stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)).squeeze()
             stellar_mass = stellar_mass[candidates]
             sfr = sfr[candidates]
             kappa_stars = kappa_stars[candidates]
@@ -422,10 +407,10 @@ def _stelmass_sfr(simulation_run = ['L100_m6'],
             y_bin = sfr_plot.value[mask]
             
             # Remove inactive galaxies from ssfr values before computing statistics
-            #if sfr_or_ssfr == 'ssfr':
-            #    y_bin = y_bin[y_bin > 1e-11]
-            
-            
+            if sfr_or_ssfr == 'ssfr':
+                y_bin = y_bin[y_bin > 1e-11]
+            else:
+                y_bin = y_bin[y_bin > 0]
             
             if len(y_bin) >= 10:  # Ensure the bin contains data
                 medians.append(np.median(y_bin))
@@ -459,11 +444,13 @@ def _stelmass_sfr(simulation_run = ['L100_m6'],
     plt.yscale("log")
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
-    plt.xlabel(r'%s $M_{*}$ [M$_{\odot}$]'%(aperture))
-    if sfr_or_ssfr == 'sfr':
-        plt.ylabel(r'SFR [M$_{\odot}$ yr$^{-1}$]')
-    elif sfr_or_ssfr == 'ssfr':
-        plt.ylabel(r'sSFR [yr$^{-1}$]')
+    dict_aperture = {'exclusive_sphere_30kpc': '30 pkpc', 
+                     'exclusive_sphere_50kpc': '50 pkpc'}
+    dict_ylabel = {'sfr': 'SFR (%s) [M$_{\odot}$ yr$^{-1}$]'%dict_aperture[aperture],
+                   'ssfr': 'sSFR (%s) [yr$^{-1}$]'%dict_aperture[aperture]}
+    plt.xlabel(r'$M_{*}$ (%s) [M$_{\odot}$]'%dict_aperture[aperture])
+    plt.ylabel(r'%s'%(dict_ylabel[sfr_or_ssfr]))
+    
     
     #------------
     # colorbar
@@ -507,7 +494,7 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
                    # Graph settings
                    magnitudes      = 'u-r',        # [ u-r / u-g ]
                    centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                   aperture = 'exclusive_sphere_30kpc', 
+                   aperture = 'exclusive_sphere_50kpc', 
                    #----------
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
                    format_z          = False,        # For variations in z graphs
@@ -563,11 +550,13 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
     
         # Get stelmass, molecular hydrogen, and magnitude data
         stellar_mass = attrgetter('%s.%s'%(aperture, 'stellar_mass'))(data)
-        H2_mass = attrgetter('%s.%s'%(aperture, 'molecular_hydrogen_mass'))(data)
         stellar_mass.convert_to_units('Msun')
         stellar_mass.convert_to_physical()
+        
+        # Raw H2 without He adjustment
+        H2_mass = attrgetter('%s.%s'%(aperture, 'molecular_hydrogen_mass'))(data)
         H2_mass.convert_to_units('Msun')
-        H2_mass.convert_to_physical()
+        
         if magnitudes == 'u-r':
             u_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,0])
             r_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,2])
@@ -587,21 +576,23 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
 
         # Mask for central/satellite and no DM-only galaxies
         if centrals_or_satellites == 'centrals':
-            candidates = np.argwhere(np.logical_and(central_sat == 1, stellar_mass > lower_mass_limit)).squeeze()
+            candidates = np.argwhere(np.logical_and(central_sat == 1, 
+                                                    stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0))).squeeze()
             stellar_mass = stellar_mass[candidates]
             mag_plot = mag_plot[candidates]
             kappa_stars = kappa_stars[candidates]
             H2_mass = H2_mass[candidates]
             print('Masking only centrals: ', len(stellar_mass))
         elif centrals_or_satellites == 'satellites':
-            candidates = np.argwhere(np.logical_and(central_sat == 0, stellar_mass > lower_mass_limit)).squeeze()
+            candidates = np.argwhere(np.logical_and(central_sat == 0, 
+                                                    stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0))).squeeze()
             stellar_mass = stellar_mass[candidates]
             mag_plot = mag_plot[candidates]
             kappa_stars = kappa_stars[candidates]
             H2_mass = H2_mass[candidates]
             print('Masking only satellites: ', len(stellar_mass))
         else:
-            candidates = np.argwhere(stellar_mass > lower_mass_limit).squeeze()
+            candidates = np.argwhere(stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)).squeeze()
             stellar_mass = stellar_mass[candidates]
             mag_plot = mag_plot[candidates]
             kappa_stars = kappa_stars[candidates]
@@ -670,7 +661,9 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
     dict_aperture = {'exclusive_sphere_30kpc': '30 \mathrm{pkpc}', 
                      'exclusive_sphere_50kpc': '50 \mathrm{pkpc}'}
     plt.xlabel(r'$M_{*}$ ($%s$) [M$_{\odot}$]'%dict_aperture[aperture])
-    plt.ylabel(r'$%s$'%magnitudes)
+    ylabel_dict = {'u-r': '$u^{*} - r^{*}$', 
+                   'u-g': '$u^{*} - g^{*}$'}
+    plt.ylabel(r'%s'%ylabel_dict[magnitudes])
         
     #------------
     # colorbar
@@ -718,245 +711,211 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
 
 #--------------------
 # Plots stellarmass against cold dense gas (T<10**4.5, n>0.1)
-"""_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+
+
+
+raise Exception('current pause... look through the bottom lot and figure out what we keep/remove')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)"""
-# Plots stellarmass against cold dense gas fractions 
-"""_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                savefig = True)
+# Plots stellarmass against cold dense gas fractions (gas / stars+gas)
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                      plot_fractions = True,
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                      plot_fractions = True,
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],      
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],      
+                mass_type = 'gas_mass_in_cold_dense_gas',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
                      plot_fractions = True,
                 savefig = True)"""
                 
                 
 #-------------------- 
-# Plots stellarmass against atomic+molecular gas
-"""_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_and_atomic_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+# Plots stellarmass against atomic+molecular gas (inc. He)
+"""_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_and_atomic_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_and_atomic_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_and_atomic_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_and_atomic_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_and_atomic_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True) """      
-# Plots stellarmass against atomic+molecular gas fractions (gas/stellar+gas)
-"""_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_and_atomic_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                savefig = True)
+# Plots stellarmass against atomic+molecular H fractions (HI+H2 (He adjusted)/stellar + HI+H2 (He adjusted))
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_and_atomic_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                      plot_fractions = True,
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_and_atomic_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_and_atomic_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                      plot_fractions = True,
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],      
-                mass_type = 'molecular_and_atomic_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],      
+                mass_type = 'molecular_and_atomic_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
                      plot_fractions = True,
-                savefig = True)  """   
+                savefig = True)"""
 
 
 
 #-------------------- 
 # Plots stellarmass against atomic gas
-"""_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+"""_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                savefig = True)
+# Plots stellarmass against atomic gas fractions (H1/stellar+HI)
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                     plot_fractions = True,
+                savefig = True)
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                     plot_fractions = True,
+                savefig = True)
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                     plot_fractions = True,
                 savefig = True)"""
-# Plots stellarmass against atomic gas fractions (gas/stellar+gas)
-"""_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                     plot_fractions = True,
-                savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                     plot_fractions = True,
-                savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                     plot_fractions = True,
-                savefig = True) """   
                 
 
 #-----------------
-# Plots stellarmass against molecular gas
-"""_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+# Plots stellarmass against molecular gas (inc. He)
+"""_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)"""
-# Plots stellarmass against molecular gas fractions (gas/stellar+gas)
-"""_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                savefig = True)
+# Plots stellarmass against molecular gas fractions (H2/stellar+H2)
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                      plot_fractions = True,
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                      plot_fractions = True,
                 savefig = True)
-_stelmass_gasmass(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'molecular_hydrogen_mass',    # [ molecular_and_atomic_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                mass_type = 'molecular_gas_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
                      plot_fractions = True,
                 savefig = True)"""
                 
 
-#====================================
-# Plots stellarmass against u-r, with point size by molecular hydrogen mass
-_stelmass_u_r(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                magnitudes = 'u-r',    # [ u-r / u-g ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                savefig = True)
-_stelmass_u_r(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                magnitudes = 'u-r',    # [ u-r / u-g ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                savefig = True)
-_stelmass_u_r(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                magnitudes = 'u-r',    # [ u-r / u-g ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)
-
 
 #====================================
 # Plots stellarmass against SFR 
-"""_stelmass_sfr(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+"""_stelmass_sfr(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 sfr_or_ssfr      = 'sfr',
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_sfr(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+_stelmass_sfr(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 sfr_or_ssfr      = 'sfr',
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_sfr(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+_stelmass_sfr(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 sfr_or_ssfr      = 'sfr',
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)
+                savefig = True)"""
 
 # Plots stellarmass against SFR 
-_stelmass_sfr(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+"""_stelmass_sfr(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 sfr_or_ssfr      = 'ssfr',
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_sfr(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+_stelmass_sfr(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 sfr_or_ssfr      = 'ssfr',
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                 savefig = True)
-_stelmass_sfr(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+_stelmass_sfr(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 sfr_or_ssfr      = 'ssfr',
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
                 savefig = True)"""
 
 
+#====================================
+# Plots stellarmass against u-r, with point size by molecular hydrogen mass
+"""_stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                magnitudes = 'u-r',    # [ u-r / u-g ]
+                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                savefig = True)
+_stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                magnitudes = 'u-r',    # [ u-r / u-g ]
+                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                savefig = True)
+_stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                magnitudes = 'u-r',    # [ u-r / u-g ]
+                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                savefig = True)"""
+# Plots r-band magnitude M_r against u-r, with point size by molecular hydrogen mass
+"""_Mr_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                magnitudes = 'u-r',    # [ u-r / u-g ]
+                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                savefig = True)
+_Mr_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                magnitudes = 'u-r',    # [ u-r / u-g ]
+                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                savefig = True)
+_Mr_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                magnitudes = 'u-r',    # [ u-r / u-g ]
+                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                savefig = True)"""
 
 
 

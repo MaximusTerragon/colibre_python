@@ -57,7 +57,6 @@ def _plot_galaxy_evolution(simulation_run = ['L100_m6'],
                        plot_HImass        = True,
                        plot_H2mass        = True,
                        plot_molecularmass = False,      # He corrected
-                       plot_HIH2mass      = True,
                    # Angles   [ deg ]
                      plot_angles          = False,
                      #plot_inclination     = False,
@@ -166,7 +165,12 @@ def _plot_galaxy_evolution(simulation_run = ['L100_m6'],
         
         fix 'quantity' below:
         
-        dict_plot['plot_HIH2mass'][i] = (attrgetter('%s.%s'%(aperture_general, 'quantity'))(data))[soap_idx]
+        
+        
+        
+        
+        
+        
         
         dict_plot['plot_angle'][i] = (attrgetter('%s.%s'%(aperture_angle, 'quantity'))(data))[soap_idx]
         dict_plot['plot_inclination'][i] = 0
@@ -198,7 +202,7 @@ def _plot_galaxy_evolution(simulation_run = ['L100_m6'],
     # Default graphs: [ angles, massrate, mass, ssfr, radius, kappa, Z, edd, lbol ]
     plot_height_ratios = []
     plot_names         = []
-    if plot_halomass or plot_stelmass or plot_gasmass or plot_sfmass or plot_nsfmass or plot_colddense or plot_HImass or plot_H2mass or plot_HIH2mass or plot_molecularmass:
+    if plot_halomass or plot_stelmass or plot_gasmass or plot_sfmass or plot_nsfmass or plot_colddense or plot_HImass or plot_H2mass or plot_molecularmass:
         plot_height_ratios.append(2)
         plot_names.append('mass')
     if plot_angles:

@@ -7,6 +7,7 @@ import scipy
 import csv
 import time
 import math
+from swiftsimio import cosmo_quantity, cosmo_array
 from operator import attrgetter
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -52,10 +53,12 @@ def _mass_function(simulation_run = ['L100_m6', 'L0025N0752'],
                     snapshot_no   = [127, 123],        # available for L100_m6: 127, 119, 114, 102, 092
                    #=====================================
                    # Graph settings
-                   mass_type = 'stellar_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass 
-                                                  #    molecular_gas_mass / molecular_and_atomic_hydrogen_mass / gas_mass_in_cold_dense_gas ]
+                   mass_type = 'stellar_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / gas_mass_in_cold_dense_gas
+                                                   #  molecular_hydrogen_mass / atomic_hydrogen_mass / molecular_and_atomic_hydrogen_mass ]
                    centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                   aperture = 'exclusive_sphere_30kpc', 
+                     min_stelmass     = 1,
+                     max_stelmass     = 10**15,
+                   aperture = 'exclusive_sphere_50kpc', 
                    #----------
                    add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                    format_z          = False,        # For variations in z graphs
@@ -109,39 +112,37 @@ def _mass_function(simulation_run = ['L100_m6', 'L0025N0752'],
         # Get mass data
         stellar_mass = attrgetter('%s.%s'%(aperture, 'stellar_mass'))(data)
         if mass_type == 'molecular_and_atomic_hydrogen_mass':
-            quantity_mass = attrgetter('%s.%s'%(aperture, 'atomic_hydrogen_mass'))(data) + attrgetter('%s.%s'%(aperture, 'molecular_hydrogen_mass'))(data)
-        elif mass_type == 'molecular_gas_mass':
-            # He adjusted per Rob McGibbon
+            HI_mass = attrgetter('%s.%s'%(aperture, 'atomic_hydrogen_mass'))(data)
             H2_mass = attrgetter('%s.%s'%(aperture, 'molecular_hydrogen_mass'))(data)
-            H_mass  = attrgetter('%s.%s'%(aperture, 'hydrogen_mass'))(data)
-            He_mass = attrgetter('%s.%s'%(aperture, 'helium_mass'))(data)
-            quantity_mass = u.unyt_array(np.zeros(H2_mass.shape), units=H2_mass.units)
-            quantity_mass[H_mass > 0.0] = H2_mass[H_mass > 0.0] * (1.0 + (He_mass[H_mass > 0.0] / H_mass[H_mass > 0.0]))
-            H2_mass = 0
-            H_mass = 0
-            He_mass = 0
-            H1_mass = 0        
+            quantity_mass = HI_mass + H2_mass
+            HI_mass = 0
+            H2_mass = 0      
         else:
             quantity_mass = attrgetter('%s.%s'%(aperture, mass_type))(data)
         
         stellar_mass.convert_to_units('Msun')
-        #stellar_mass.convert_to_physical()
         quantity_mass.convert_to_units('Msun')
-        #quantity_mass.convert_to_physical()
         central_sat = attrgetter('input_halos.is_central')(data)
 
         # Mask for central/satellite and no DM-only galaxies
         if centrals_or_satellites == 'centrals':
-            candidates = np.argwhere(np.logical_and(central_sat == 1, quantity_mass > 0)).squeeze()
+            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                            central_sat == 1, 
+                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)])).squeeze()
             quantity_mass = quantity_mass[candidates]
             print('Masking only centrals: ', len(quantity_mass))
         elif centrals_or_satellites == 'satellites':
-            candidates = np.argwhere(np.logical_and(central_sat == 0, quantity_mass > 0)).squeeze()
+            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                            central_sat == 0, 
+                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)])).squeeze()
             quantity_mass = quantity_mass[candidates]
             print('Masking only satellites: ', len(quantity_mass))
         else:
-            candidates = np.argwhere(quantity_mass > 0).squeeze()
-            #candidates = np.argwhere(stellar_mass > 0).squeeze()
+            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)])).squeeze()
             quantity_mass = quantity_mass[candidates]
             print('Masking all galaxies: ', len(quantity_mass))
             
@@ -284,7 +285,7 @@ def _mass_function(simulation_run = ['L100_m6', 'L0025N0752'],
                     obs_mass     = file['x/values'][:] * u.Unit(file['x/values'].attrs['units'])
                     obs_fraction = file['y/values'][:] * u.Unit(file['y/values'].attrs['units'])
                     obs_fraction_scatter = file['y/scatter'][:] * u.Unit(file['y/scatter'].attrs['units'])
-                obs_mass = obs_mass.to('Msun')
+                obs_mass = obs_mass.to('Msun')/1.36     # divide to account for x1.36 He correction in observations
                 obs_size = obs_fraction.to('Mpc**(-3)')
                 obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
                 
@@ -438,15 +439,16 @@ def _mass_function(simulation_run = ['L100_m6', 'L0025N0752'],
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
 
-    dict_aperture = {'exclusive_sphere_30kpc': '30 \mathrm{pkpc}', 
-                     'exclusive_sphere_50kpc': '50 \mathrm{pkpc}'}
+    dict_aperture = {'exclusive_sphere_30kpc': '30 pkpc', 
+                     'exclusive_sphere_50kpc': '50 pkpc'}
     dict_xlabel = {'stellar_mass': '$M_*$ (%s)'%dict_aperture[aperture], 
                    'gas_mass': '$M_{\mathrm{gas}}$ (%s)'%dict_aperture[aperture],
                    'star_forming_gas_mass': '$M_{\mathrm{gas}}$ (%s)'%dict_aperture[aperture],
                    'molecular_hydrogen_mass': '$M_{\mathrm{H_{2}}}$ (%s)'%dict_aperture[aperture],
                    'atomic_hydrogen_mass': '$M_{\mathrm{I}}$ (%s)'%dict_aperture[aperture],
-                   'molecular_gas_mass': '$M_{\mathrm{mol}} (\mathrm{incl. He}, %s)$'%dict_aperture[aperture],
+                   'molecular_gas_mass': '$M_{\mathrm{mol}}$ (incl. He, %s)'%dict_aperture[aperture],
                    'molecular_and_atomic_hydrogen_mass': '$M_{\mathrm{HI+H_{2}}}$ (%s)'%dict_aperture[aperture],
+                   'molecular_and_atomic_gas_mass': '$M_{\mathrm{HI+H_{mol}}}$ (%s)'%dict_aperture[aperture],
                    'gas_mass_in_cold_dense_gas': '$M_{\mathrm{cold,dense}}$ (%s)'%dict_aperture[aperture]
                    }
     plt.xlabel(r'%s [M$_{\odot}$]'%(dict_xlabel[mass_type]))
@@ -483,11 +485,6 @@ def _mass_function(simulation_run = ['L100_m6', 'L0025N0752'],
 
 
 
-
-# Run several z
-# add missing Fletcher H2 mass func
-
-
 #============================================
 # Example to mimic pipeline:
 """_mass_function(simulation_run = ['L100_m6', 'L0025N0752'], 
@@ -500,245 +497,146 @@ def _mass_function(simulation_run = ['L100_m6', 'L0025N0752'],
                 
 
 #-------------------------
-# Stellar mass function in 30pkpc, all, centrals, satellites
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+# Stellar mass function in 50pkpc, all, centrals, satellites
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 mass_type = 'stellar_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                 savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 mass_type = 'stellar_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                 savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
                 mass_type = 'stellar_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                  centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)"""
+                savefig = True)
                 
 
 #-------------------------
-# Cold and dense (T<10**4.5K, n>0.1 cm**-1) function in 30pkpc, all, centrals, satellites
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)"""
+# Cold and dense (T<10**4.5K, n>0.1 cm**-1) function in 50pkpc, all, centrals, satellites
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                    mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                    mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                    mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                    savefig = True)
 # Redshift
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],        
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],      
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],       
-                mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)"""
-                
-
-#-------------------------
-# H1 + H2 mass function in 30pkpc, all, centrals, satellites 
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],   
-                mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass / molecular_and_atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],       
-                mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass / molecular_and_atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],      
-                mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass / molecular_and_atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)"""
-# Redshift
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],        
-                mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],      
-                mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],       
-                mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)"""
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],        
+                    mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],      
+                    mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],       
+                    mass_type = 'gas_mass_in_cold_dense_gas',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
 
 
 #------------------------
-# H1 mass function in 30pkpc, all, centrals, satellites 
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],        
-                mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)
+# H1 mass function in 50pkpc, all, centrals, satellites 
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                    mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                    mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],        
+                    mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                    savefig = True)
 # Redshift
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],        
-                mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],      
-                mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],       
-                mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)"""
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],        
+                    mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],      
+                    mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],       
+                    mass_type = 'atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
 
 
 #----------------------
-# H2 mass function in 30pkpc, all, centrals, satellites 
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],     
-                mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],  
-                mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],    
-                mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)"""
+# H2 mass function in 50pkpc, all, centrals, satellites 
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],     
+                    mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],  
+                    mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],    
+                    mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                    savefig = True)
 # Redshift
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],        
-                mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],      
-                mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],       
-                mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)"""
-
-
-#------------------------                
-# MOLECULAR mass function (He-adjusted) in 30pkpc, all, centrals, satellites 
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],     
-                mass_type = 'molecular_gas_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],  
-                mass_type = 'molecular_gas_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127],    
-                mass_type = 'molecular_gas_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                savefig = True)"""
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],        
+                    mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],      
+                    mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],       
+                    mass_type = 'molecular_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+                    
+#----------------------
+# HI + H2 mass function in 50pkpc, all, centrals, satellites 
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],     
+                    mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],  
+                    mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127],    
+                    mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                    savefig = True)
 # Redshift
-"""_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],     
-                mass_type = 'molecular_gas_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],  
-                mass_type = 'molecular_gas_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)
-_mass_function(simulation_run = ['L100_m6'], 
-                 simulation_type = ['THERMAL_AGN_m6'],
-                 snapshot_no     = [127, 119, 114, 102, 92],    
-                mass_type = 'molecular_gas_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
-                 centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                 format_z = True,
-                savefig = True)"""
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],        
+                    mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],      
+                    mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
+_mass_function(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [127, 119, 114, 102, 92],       
+                    mass_type = 'molecular_and_atomic_hydrogen_mass',    # [ stellar_mass / gas_mass / star_forming_gas_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                     format_z = True,
+                    savefig = True)
 
 
 

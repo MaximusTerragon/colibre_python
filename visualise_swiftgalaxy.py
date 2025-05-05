@@ -10,7 +10,7 @@ import json
 import math
 from tqdm import tqdm
 from packaging.version import Version
-from swiftsimio import SWIFTDataset
+from swiftsimio import SWIFTDataset, cosmo_quantity, cosmo_array
 from swiftgalaxy import SWIFTGalaxy, SOAP, MaskCollection
 from swiftgalaxy.iterator import SWIFTGalaxies
 from swiftsimio.visualisation.projection import project_gas, project_pixel_grid
@@ -59,6 +59,7 @@ This applies to both halo_catalogue and particle data (.stars):
 #--------------------------------
 # We can define a function that uses some of swiftsimio's visualisation tools to make some quick images of a given galaxy. Requires a SOAP index
 # Visualises stars, gas out to 15 kpc, and DM out to 200 kpc
+# NOT WORKING WITHOUT COSMO_ARRAY CHANGES
 def _visualize_galaxy_example(sg, plot_annotate = None, savefig_txt_in = None,      # SWIFTGalaxy object containing all the integrated properties + access the particles from the snapshot file
                       #=====================================
                       # fig settings
@@ -76,7 +77,7 @@ def _visualize_galaxy_example(sg, plot_annotate = None, savefig_txt_in = None,  
     
     #--------------------
     # Load soap_index
-    soap_index  = sg.halo_catalogue.soap_index.squeeze()
+    soap_index  = sg.halo_catalogue.soap_index
     track_id    = sg.halo_catalogue.input_halos_hbtplus.track_id.squeeze()
     redshift    = sg.metadata.redshift.squeeze()
     run_name    = sg.metadata.run_name
@@ -101,29 +102,40 @@ def _visualize_galaxy_example(sg, plot_annotate = None, savefig_txt_in = None,  
             speedup_fac=2,
             dimension=3,
         )
-    disc_region = [-disc_radius, disc_radius, -disc_radius, disc_radius]
-    halo_region = [-halo_radius, halo_radius, -halo_radius, halo_radius]
+    disc_region = cosmo_array(
+        [-disc_radius, disc_radius, -disc_radius, disc_radius],
+        comoving=True,
+        scale_factor=sg.metadata.a,
+        scale_exponent=1,
+    )
+    halo_region = cosmo_array(
+        [-halo_radius, halo_radius, -halo_radius, halo_radius],
+        comoving=True,
+        scale_factor=sg.metadata.a,
+        scale_exponent=1,
+    )
     gas_map = project_gas(
         sg,
         resolution=256,
         project="masses",
         parallel=True,
+        periodic=False,  # always recommended when using swiftgalaxy
         region=disc_region,
     )
     dm_map = project_pixel_grid(
         data=sg.dark_matter,
-        boxsize=sg.metadata.boxsize,
         resolution=256,
         project="masses",
         parallel=True,
+        periodic=False,  # always recommended when using swiftgalaxy
         region=halo_region,
     )
     star_map = project_pixel_grid(
         data=sg.stars,
-        boxsize=sg.metadata.boxsize,
         resolution=256,
         project="masses",
         parallel=True,
+        periodic=False,  # always recommended when using swiftgalaxy
         region=disc_region,
     )
     
@@ -134,9 +146,31 @@ def _visualize_galaxy_example(sg, plot_annotate = None, savefig_txt_in = None,  
     
     #--------------
     ### Plot imshow
-    sp1.imshow(colors.LogNorm()(gas_map.value), cmap="viridis", extent=disc_region)
-    sp2.imshow(colors.LogNorm()(dm_map), cmap="inferno", extent=halo_region,)
-    sp3.imshow(colors.LogNorm()(star_map), cmap="magma", extent=disc_region,)
+    sp1.imshow(
+        colors.LogNorm()(gas_map.to_value(u.solMass / u.kpc**2).T),
+        cmap="viridis",
+        extent=disc_region,
+        origin="lower",
+    )
+    sp2.imshow(
+        colors.LogNorm()(dm_map.to_value(u.solMass / u.kpc**2).T),
+        cmap="inferno",
+        extent=halo_region,
+        origin="lower",
+    )
+    sp3.imshow(
+        colors.LogNorm()(star_map.to_value(u.solMass / u.kpc**2).T),
+        cmap="magma",
+        extent=disc_region,
+        origin="lower",
+    )
+    
+    # Plot region
+    sp2.plot(
+        [-disc_radius, -disc_radius, disc_radius, disc_radius, -disc_radius],
+        [-disc_radius, disc_radius, disc_radius, -disc_radius, -disc_radius],
+        "-k",
+    )
     
     
     #--------------
@@ -150,17 +184,16 @@ def _visualize_galaxy_example(sg, plot_annotate = None, savefig_txt_in = None,  
     sp3.set_xlabel(f"x' [{disc_radius.units}]")
     sp3.set_ylabel(f"y' [{disc_radius.units}]")
     
-    
     #--------------
     ### Annotation
-    sp1.text(0.9, 0.9, "gas", color="white", ha="right", va="top", transform=sp1.transAxes)
-    
-    sp2.plot([-disc_radius, -disc_radius, disc_radius, disc_radius, -disc_radius],
-             [-disc_radius, disc_radius, disc_radius, -disc_radius, -disc_radius],
-             "-k",)
-    sp2.text(0.9, 0.9, "DM", ha="right", va="top", color="white", transform=sp2.transAxes)
+    sp1.text(
+        0.9, 0.9, "gas", color="white", ha="right", va="top", transform=sp1.transAxes
+    )
+    sp2.text(
+        0.9, 0.9, "DM", ha="right", va="top", color="white", transform=sp2.transAxes
+    )  
     sp3.text(0.9, 0.9, "stars", ha="right", va="top", transform=sp3.transAxes)
-    
+        
     
     #--------------
     ### Title
@@ -185,12 +218,12 @@ def _visualize_galaxy_example(sg, plot_annotate = None, savefig_txt_in = None,  
 
 
 #--------------------------------
-# Visualises stars, gas, SF gas, HII, HI, and H2 out to 30 kpc
+# Visualises stars, gas, SF gas, HII, HI, and H2 out to 50 kpc
 def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      # SWIFTGalaxy object containing all the integrated properties + access the particles from the snapshot file
                       print_galaxy = True,
                       #=====================================
                       # fig settings
-                        disc_radius= 15 * u.kpc,           # gas/stars disc radius 
+                        disc_radius= 30 * u.kpc,           # gas/stars disc radius 
                         orientation = 'both',               # [ 'face' / 'edge' / 'none' / 'both' ] Orientates to face within 10 kpc
                       #=====================================
                       showfig       = False,
@@ -204,7 +237,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     #--------------------
     # Load soap_index and 
-    soap_index  = sg.halo_catalogue.soap_index.squeeze()
+    soap_index  = sg.halo_catalogue.soap_index
     track_id    = sg.halo_catalogue.input_halos_hbtplus.track_id.squeeze()
     #descendent_id = sg.halo_catalogue.input_halos_hbtplus.descendant_track_id.squeeze()
     redshift    = sg.metadata.redshift.squeeze()
@@ -222,55 +255,85 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     sg.recentre_velocity(vcentre)
     
     
-    # Bulk properties within aperture of 30 pkpc
-    stelmass30      = sg.halo_catalogue.exclusive_sphere_30kpc.stellar_mass.to(u.Msun)
+    # Bulk properties within aperture of 50 pkpc
+    stelmass50      = sg.halo_catalogue.exclusive_sphere_50kpc.stellar_mass.to(u.Msun)
     m200c           = sg.halo_catalogue.spherical_overdensity_200_crit.total_mass.to(u.Msun)
-    gasmass30       = sg.halo_catalogue.exclusive_sphere_30kpc.gas_mass.to(u.Msun)
-    gascoldmass30     = sg.halo_catalogue.exclusive_sphere_30kpc.gas_mass_in_cold_dense_gas.to(u.Msun)
-    gassfmass30       = sg.halo_catalogue.exclusive_sphere_30kpc.star_forming_gas_mass.to(u.Msun)
-    HImass30          = sg.halo_catalogue.exclusive_sphere_30kpc.atomic_hydrogen_mass.to(u.Msun)
-    H2mass30          = sg.halo_catalogue.exclusive_sphere_30kpc.molecular_hydrogen_mass.to(u.Msun)
-    Molmass30         = (sg.halo_catalogue.exclusive_sphere_30kpc.molecular_hydrogen_mass.to(u.Msun) * (1 + (sg.halo_catalogue.exclusive_sphere_30kpc.helium_mass.to(u.Msun)/sg.halo_catalogue.exclusive_sphere_30kpc.hydrogen_mass.to(u.Msun))))
-    r50stars        = (sg.halo_catalogue.exclusive_sphere_30kpc.half_mass_radius_stars.to_physical()).to(u.kpc)
-    r50gas          = (sg.halo_catalogue.exclusive_sphere_30kpc.half_mass_radius_gas.to_physical()).to(u.kpc)
-    kappastars        = sg.halo_catalogue.exclusive_sphere_30kpc.kappa_corot_stars
-    kappagas          = sg.halo_catalogue.exclusive_sphere_30kpc.kappa_corot_gas
-    sfr30           = sg.halo_catalogue.exclusive_sphere_30kpc.star_formation_rate.to(u.Msun/u.yr)
-    ssfr30          = sfr30/(sg.halo_catalogue.exclusive_sphere_30kpc.stellar_mass.to(u.Msun))
-    u_mag30           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_30kpc.stellar_luminosity.squeeze()[0])
-    g_mag30           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_30kpc.stellar_luminosity.squeeze()[1])
-    r_mag30           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_30kpc.stellar_luminosity.squeeze()[2])
+    gasmass50       = sg.halo_catalogue.exclusive_sphere_50kpc.gas_mass.to(u.Msun)
+    gascoldmass50     = sg.halo_catalogue.exclusive_sphere_50kpc.gas_mass_in_cold_dense_gas.to(u.Msun)
+    gassfmass50       = sg.halo_catalogue.exclusive_sphere_50kpc.star_forming_gas_mass.to(u.Msun)
+    HImass50          = sg.halo_catalogue.exclusive_sphere_50kpc.atomic_hydrogen_mass.to(u.Msun)
+    H2mass50          = sg.halo_catalogue.exclusive_sphere_50kpc.molecular_hydrogen_mass.to(u.Msun)
+    H2Hemass50        = (sg.halo_catalogue.exclusive_sphere_50kpc.molecular_hydrogen_mass * 1.36).to(u.Msun)
+    r50stars        = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_stars.to_physical()).to(u.kpc)
+    r50gas          = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_gas.to_physical()).to(u.kpc)
+    kappastars        = sg.halo_catalogue.exclusive_sphere_50kpc.kappa_corot_stars
+    kappagas          = sg.halo_catalogue.exclusive_sphere_50kpc.kappa_corot_gas
+    sfr50           = sg.halo_catalogue.exclusive_sphere_50kpc.star_formation_rate.to(u.Msun/u.yr)
+    ssfr50          = sfr50/(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_mass.to(u.Msun))
+    u_mag50           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_luminosity.squeeze()[0])
+    g_mag50           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_luminosity.squeeze()[1])
+    r_mag50           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_luminosity.squeeze()[2])
     is_central      = sg.halo_catalogue.input_halos.is_central
     
     
     #---------------
-    # Calculate triax and ellipticity:
-    ϵ = 0 -> Perfectly spherical galaxy
+    # Triaxiality and ellipticity
+    """ ϵ = 0 -> Perfectly spherical galaxy 
     ϵ > 0 -> Elliptical galaxy
     ϵ = 1 -> Highly flattened/disc galaxy or elongated galaxy
     
     T ≈ 0, (a ≈ b > c) -> Oblate (disk-like) galaxy 
     0 < T < 1, (a > b > c) -> Triaxial (ellipsoidal)
     T ≈ 1, (a > b ≈ c) -> Prolate (cigar-shaped)
+    """   
+    # Calculate projected triax and ellipticity:
+    def _compute_projected_ellipticity_triaxiality():
+        # Construct the projected inertia tensor
+        I_xx, I_yy, I_xy = sg.halo_catalogue.projected_aperture_50kpc_projz.projected_stellar_inertia_tensor_noniterative.squeeze()
+        I_proj = np.array([[I_xx, I_xy],
+                           [I_xy, I_yy]])
     
+        # Compute eigenvalues
+        eigvals = np.linalg.eigvalsh(I_proj)  # More efficient for symmetric matrices
+        lambda_1, lambda_2 = np.sort(eigvals)[::-1]  # Ensure lambda_1 >= lambda_2
+
+        # Compute projected ellipticity
+        ellipticity = 1 - (lambda_2 / lambda_1)
     
-    i11, i22, i33, i12, i13, i23 = sg.halo_catalogue.bound_subhalo.stellar_inertia_tensor.squeeze()
-    inertiatensor = np.array([[i11, i12, i13], [i12, i22, i23], [i13, i23, i33]])
+        # Compute projected triaxiality
+        triaxiality = (1 - (lambda_2 / lambda_1)) / (1 + (lambda_2 / lambda_1))
+
+        return cosmo_quantity(ellipticity, u.dimensionless, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0), cosmo_quantity(triaxiality, u.dimensionless, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)     
+    # Calculate intrinsic triax and ellipticity:
+    def _compute_intrinsic_ellipticity_triaxiality():
+        # construct inertia tensor
+        i11, i22, i33, i12, i13, i23 = sg.halo_catalogue.bound_subhalo.stellar_inertia_tensor_noniterative.squeeze()
+        inertiatensor = np.array([[i11, i12, i13], [i12, i22, i23], [i13, i23, i33]])
     
-    # Compute eigenvalues (sorted in descending order)
-    eigenvalues = np.linalg.eigvalsh(inertiatensor)[::-1]  # Sorted: I1 >= I2 >= I3
-    length_a2, length_b2, length_c2 = eigenvalues  # Assign to principal moments, length_a2 == a**2, so length = sqrt length_a2. a = longest axis, b = intermediate, c = shortest
-    #print(length_a2)
-    #print(length_b2)
-    #print(length_c2)
-    # Compute Triaxiality Parameter
-    triaxiality = (length_a2 - length_b2) / (length_a2 - length_c2) if (length_a2 - length_c2) != 0 else np.nan  # Avoid division by zero
-    ellipticity = 1 - (np.sqrt(length_c2)/np.sqrt(length_a2))
-    #print(triaxiality)
-    #print(ellipticity)
+        # Compute eigenvalues (sorted in descending order)
+        eigenvalues = np.linalg.eigvalsh(inertiatensor)[::-1]  # Sorted: I1 >= I2 >= I3
+        length_a2, length_b2, length_c2 = eigenvalues  # Assign to principal moments, length_a2 == a**2, so length = sqrt length_a2. a = longest axis, b = intermediate, c = shortest
+        #print(length_a2)
+        #print(length_b2)
+        #print(length_c2)
     
-    #triaxiality = math.nan
-    #ellipticity = math.nan
+        # Compute Triaxiality Parameter
+        triaxiality = (length_a2 - length_b2) / (length_a2 - length_c2) if (length_a2 - length_c2) != 0 else np.nan  # Avoid division by zero
+        ellipticity = 1 - (np.sqrt(length_c2)/np.sqrt(length_a2))
+        
+        return cosmo_quantity(ellipticity, u.dimensionless, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0), cosmo_quantity(triaxiality, u.dimensionless, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)     
+    
+    # remove 'noniterative' from above when L25 box  
+    ellip, triax            = _compute_intrinsic_ellipticity_triaxiality()
+    ellip_proj, triax_proj  = _compute_projected_ellipticity_triaxiality()
+    
+    #---------------
+    # Add H2 halfmass radius and other properties here:
+    
+    # ...
+    
+    #---------------
+    
     
     #---------------
     if print_galaxy:
@@ -278,28 +341,31 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         print('   trackID:                     %i' %track_id)
         #print('   descendantID:         %i' %descendent_id)
         print('   central or satellite:  ->  %s' %('central' if is_central==1 else 'satellite'))
-        print('   stelmass30:            ->  %.3e      Msun' %stelmass30.squeeze())
+        print('   stelmass50:            ->  %.3e      Msun' %stelmass50.squeeze())
         print('   m200 crit              ->  %.3e      Msun' %m200c.squeeze())
-        print('   gasmass30:                 %.3e      Msun' %gasmass30.squeeze())
-        print('      SF:                       %.3e    Msun' %gassfmass30.squeeze())
-        print('      cold/dense:               %.3e    Msun' %gascoldmass30.squeeze())
-        print('      HI:                 ->    %.3e    Msun' %HImass30.squeeze())
-        print('      H2:                 ->    %.3e    Msun' %H2mass30.squeeze())
-        print('      Mol (H2 adjusted):  ->    %.3e    Msun' %Molmass30.squeeze())
+        print('   gasmass50:                 %.3e      Msun' %gasmass50.squeeze())
+        print('      SF:                       %.3e    Msun' %gassfmass50.squeeze())
+        print('      cold/dense:               %.3e    Msun' %gascoldmass50.squeeze())
+        print('      HI:                 ->    %.3e    Msun' %HImass50.squeeze())
+        print('      H2:                 ->    %.3e    Msun' %H2mass50.squeeze())
+        print('      H2+He (H2 x 1.36):  ->    %.3e    Msun' %H2Hemass50.squeeze())
         print('   r50 stars:             ->  %.2f      pkpc' %r50stars.squeeze())
         print('    r50 gas:                    %.2f    pkpc' %r50gas.squeeze())
-        print('   kappa stars 30:        ->  %.3f'           %kappastars.squeeze())
-        print('    kappa gas 30:               %.3f'         %kappagas.squeeze())
-        print('    ellipticity stars SH:   ->  %.3f'         %ellipticity)
-        print('    triaxiality stars SH:   ->  %.3f'         %triaxiality)
-        print('   SFR 30:                    %.3e      Msun/yr' %sfr30.squeeze())
-        print('    sSFR 30:              ->   %.3e     /yr' %ssfr30.squeeze())
-        print('   u - r (no dust):           %.3f      mag' %(u_mag30-r_mag30))
+        print('   kappa stars 50:        ->  %.3f'           %kappastars.squeeze())
+        print('    kappa gas 50:               %.3f'         %kappagas.squeeze())
+        print('    ellip:                  ->  %.3f'         %ellip.squeeze())
+        print('    triax:                  ->  %.3f'         %triax.squeeze())
+        print('    ellip proj (50pkpc):        %.3f'         %ellip_proj.squeeze())
+        print('    triax proj: (50pkpc):       %.3f'         %triax_proj.squeeze())
+        print('   SFR 50:                    %.3e      Msun/yr' %sfr50.squeeze())
+        print('    sSFR 50:              ->   %.3e     /yr' %ssfr50.squeeze())
+        print('   u - r (no dust):           %.3f      mag' %(u_mag50-r_mag50))
+        print('    M_r (no dust):            %.3f      mag' %(r_mag50))
         
-    metadata_plot = {'Title': 'stelmass30: %.1e\nm200crit: %.1e\ngasmass30: %.1e\ngassf30: %.1e\ngascolddensemass30: %.1e\nHImass30: %.1e\nH2mass30: %.1e\nMolmass30: %.1e\nr50stars: %.2f\nr50gas: %.2f\nellipstars: %.2f\ntriaxstars: %.2f\nkappastars: %.2f\nkappagas: %.2f\nsfr30: %.2e\nssfr30: %.2e\nu-r (nodust): %.2f'%(stelmass30.squeeze(), m200c.squeeze(), gasmass30.squeeze(), gassfmass30.squeeze(), gascoldmass30.squeeze(), HImass30.squeeze(), H2mass30.squeeze(), Molmass30.squeeze(), r50stars.squeeze(), r50gas.squeeze(), ellipticity, triaxiality, kappastars.squeeze(), kappagas.squeeze(), sfr30.squeeze(), ssfr30.squeeze(), (u_mag30-r_mag30)),
+    metadata_plot = {'Title': 'stelmass50: %.1e\nm200crit: %.1e\ngasmass50: %.1e\ngassf50: %.1e\ngascolddensemass50: %.1e\nHImass50: %.1e\nH2mass50: %.1e\nH2Hemass50: %.1e\nr50stars: %.2f\nr50gas: %.2f\nellipstars: %.2f\ntriaxstars: %.2f\nellipstars (proj): %.2f\ntriaxstars (proj): %.2f\nkappastars: %.2f\nkappagas: %.2f\nsfr50: %.2e\nssfr50: %.2e\nu-r (nodust): %.2f\nMr (nodust): %.2f'%(stelmass50.squeeze(), m200c.squeeze(), gasmass50.squeeze(), gassfmass50.squeeze(), gascoldmass50.squeeze(), HImass50.squeeze(), H2mass50.squeeze(), H2Hemass50.squeeze(), r50stars.squeeze(), r50gas.squeeze(), ellip.squeeze(), triax.squeeze(), ellip_proj.squeeze(), triax_proj.squeeze(), kappastars.squeeze(), kappagas.squeeze(), sfr50.squeeze(), ssfr50.squeeze(), (u_mag50-r_mag50), r_mag50),
                      'Author': 'SOAP index: %i\nredshift: %.2f\nTrackID: %i\ncen/sat: %s'%(soap_index, redshift, track_id, 'central' if is_central==1 else 'satellite'),
                      'Subject': run_name,
-                     'Producer': ''}
+                     'Producer': ''}    
     
     #-----------------------
     # Rotation matrix to align vec1 to vec2 (axis)
@@ -323,20 +389,20 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
             Lstars = sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze()
             zhat = (Lstars / np.sqrt(np.sum(Lstars**2))).to_value(u.dimensionless)
             rotmat = rotation_matrix_from_vector(zhat, axis='z')
-            rotcent = u.unyt_array([0, 0, 0]) * u.Mpc
+            rotcent = cosmo_array([0, 0, 0], u.kpc, comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
         elif orientation == 'edge':
             Lstars = sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze()
             zhat = (Lstars / np.sqrt(np.sum(Lstars**2))).to_value(u.dimensionless)
             rotmat = rotation_matrix_from_vector(zhat, axis='x')
-            rotcent = u.unyt_array([0, 0, 0]) * u.Mpc
+            rotcent = cosmo_array([0, 0, 0], u.kpc, comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
         else:
             rotmat = np.identity(3)
-            rotcent = u.unyt_array([0, 0, 0]) * u.Mpc
+            rotcent = cosmo_array([0, 0, 0], u.kpc, comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
 
     
         #---------------------------------------
         # Creating masks for galaxy properties
-        mask_gas_sf         = sg.gas.star_formation_rates > (0 * u.Msun/u.yr)
+        mask_gas_sf         = sg.gas.star_formation_rates > cosmo_quantity(0, u.Msun/u.yr, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)   # negative values are something different!
         #mask_gas_HII    = np.logical_and(sg.gas.species_fractions.HII > 0, sg.gas.element_mass_fractions.hydrogen > 0)
         #mask_gas_HI     = np.logical_and(sg.gas.species_fractions.HI > 0, sg.gas.element_mass_fractions.hydrogen > 0) 
         #mask_gas_H2     = np.logical_and(sg.gas.species_fractions.H2 > 0, sg.gas.element_mass_fractions.hydrogen > 0)
@@ -357,19 +423,29 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
       
         #--------------------
-        disc_region = [-disc_radius, disc_radius, -disc_radius, disc_radius]
+        # Define the region
+        disc_region = cosmo_array([-disc_radius, disc_radius, -disc_radius, disc_radius], comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
+        
+        # Use project_gas_pixel_grid to generate projected images
+        common_arguments = dict(
+            resolution=612,
+            parallel=True,
+            region=disc_region,
+            periodic=False,  # disable periodic boundaries when using rotations
+            rotation_center=rotcent,
+        )
     
         # This creates a grid that has units msun / Mpc^2, and can be transformed like any other unyt quantity
-        star_map    = project_pixel_grid(data=sg.stars, boxsize=sg.metadata.boxsize, resolution=612, project="masses", parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        gas_map     = project_gas(sg, resolution=612, project="masses",  parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        gassf_map   = project_gas(sg, resolution=612, project="masses", mask=mask_gas_sf, parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        mass_weighted_temp_map = project_gas(sg, resolution=612, project="mass_weighted_temps",  parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        mass_weighted_Z_map    = project_gas(sg, resolution=612, project="mass_weighted_Z",  parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        #mass_weighted_sfr      = project_gas(sg, resolution=612, project="mass_weighted_sfr",  parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        mass_weighted_vel      = project_gas(sg, resolution=612, project="mass_weighted_vel",  parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        gasHII_map  = project_gas(sg, resolution=612, project="mass_gas_hii", parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        gasHI_map   = project_gas(sg, resolution=612, project="mass_gas_hi", parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
-        gasH2_map   = project_gas(sg, resolution=612, project="mass_gas_h2", parallel=True, region=disc_region, rotation_matrix=rotmat, rotation_center=rotcent, )
+        star_map                = project_pixel_grid(data=sg.stars, project="masses", rotation_matrix=rotmat, )
+        gas_map                 = project_gas(data=sg, project="masses", rotation_matrix=rotmat, )
+        gassf_map               = project_gas(data=sg, project="masses", mask=mask_gas_sf, rotation_matrix=rotmat, )
+        mass_weighted_temp_map  = project_gas(data=sg, project="mass_weighted_temps",  rotation_matrix=rotmat, )
+        mass_weighted_Z_map     = project_gas(data=sg, project="mass_weighted_Z",  rotation_matrix=rotmat, )
+        #mass_weighted_sfr      = project_gas(data=sg, project="mass_weighted_sfr",  rotation_matrix=rotmat, )
+        mass_weighted_vel       = project_gas(data=sg, project="mass_weighted_vel",  rotation_matrix=rotmat, )
+        gasHII_map              = project_gas(data=sg, project="mass_gas_hii", rotation_matrix=rotmat, )
+        gasHI_map               = project_gas(data=sg, project="mass_gas_hi", rotation_matrix=rotmat, )
+        gasH2_map               = project_gas(data=sg, project="mass_gas_h2", rotation_matrix=rotmat, )
     
         temp_map = (mass_weighted_temp_map / gas_map)
         Z_map    = (mass_weighted_Z_map / gas_map)
@@ -421,17 +497,31 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     if orientation == 'both':
         
         # Rotation matrix
-        Lstars = sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze()
+        """Lstars = sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze()
         zhat = (Lstars / np.sqrt(np.sum(Lstars**2))).to_value(u.dimensionless)
         rotmat_face = rotation_matrix_from_vector(zhat, axis='z')
         rotmat_edge = rotation_matrix_from_vector(zhat, axis='x')
         rotcent = u.unyt_array([0, 0, 0]) * u.Mpc
+        """
+        
+        # The angular momentum vector will point perpendicular to the galaxy disk.
+        # If your simulation contains stars, use lx_star
+        lx = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[0]
+        ly = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[1]
+        lz = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[2]
+        angular_momentum_vector = cosmo_array([lx, ly, lz])
+        angular_momentum_vector /= np.linalg.norm(angular_momentum_vector)
+        
+        rotmat_face = rotation_matrix_from_vector(angular_momentum_vector)
+        rotmat_edge = rotation_matrix_from_vector(angular_momentum_vector, axis="x")
+        rotcent = cosmo_array([0, 0, 0], u.kpc, comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
+        
         
     
         #---------------------------------------
         # Creating masks for galaxy properties
-        mask_gas_sf         = sg.gas.star_formation_rates > (0 * u.Msun/u.yr)
-    
+        mask_gas_sf         = sg.gas.star_formation_rates > cosmo_quantity(0, u.Msun/u.yr, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)
+        
         # Creating new objects for datasets of HII, HI, and H2
         sg.gas.mass_gas_hii = sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * sg.gas.species_fractions.HII
         sg.gas.mass_gas_hi  = sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * sg.gas.species_fractions.HI
@@ -452,27 +542,37 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         
         
         #--------------------
-        disc_region = [-disc_radius, disc_radius, -disc_radius, disc_radius]
+        # Define the region
+        disc_region = cosmo_array([-disc_radius, disc_radius, -disc_radius, disc_radius], comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
+        
+        # Use project_gas_pixel_grid to generate projected images
+        common_arguments = dict(
+            resolution=612,
+            parallel=True,
+            region=disc_region,
+            periodic=False,  # disable periodic boundaries when using rotations
+            rotation_center=rotcent,
+        )
     
         # This creates a grid that has units msun / Mpc^2, and can be transformed like any other unyt quantity
-        star_map_face    = project_pixel_grid(data=sg.stars, boxsize=sg.metadata.boxsize, resolution=612, project="masses", parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        star_map_edge    = project_pixel_grid(data=sg.stars, boxsize=sg.metadata.boxsize, resolution=612, project="masses", parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
-        gas_map_face     = project_gas(sg, resolution=612, project="masses",  parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        gas_map_edge     = project_gas(sg, resolution=612, project="masses",  parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
-        gassf_map_face   = project_gas(sg, resolution=612, project="masses", mask=mask_gas_sf, parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        gassf_map_edge   = project_gas(sg, resolution=612, project="masses", mask=mask_gas_sf, parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
-        mass_weighted_vel_map_face = project_gas(sg, resolution=612, project="mass_weighted_vel",  parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        mass_weighted_vel_map_edge = project_gas(sg, resolution=612, project="mass_weighted_vel",  parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
-        mass_weighted_temp_map_face = project_gas(sg, resolution=612, project="mass_weighted_temps",  parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        mass_weighted_temp_map_edge = project_gas(sg, resolution=612, project="mass_weighted_temps",  parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
-        mass_weighted_Z_map_face    = project_gas(sg, resolution=612, project="mass_weighted_Z",  parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        mass_weighted_Z_map_edge    = project_gas(sg, resolution=612, project="mass_weighted_Z",  parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
-        gasHII_map_face  = project_gas(sg, resolution=612, project="mass_gas_hii", parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        gasHII_map_edge  = project_gas(sg, resolution=612, project="mass_gas_hii", parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
-        gasHI_map_face   = project_gas(sg, resolution=612, project="mass_gas_hi", parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        gasHI_map_edge   = project_gas(sg, resolution=612, project="mass_gas_hi", parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
-        gasH2_map_face   = project_gas(sg, resolution=612, project="mass_gas_h2", parallel=True, region=disc_region, rotation_matrix=rotmat_face, rotation_center=rotcent, )
-        gasH2_map_edge   = project_gas(sg, resolution=612, project="mass_gas_h2", parallel=True, region=disc_region, rotation_matrix=rotmat_edge, rotation_center=rotcent, )
+        star_map_face               = project_pixel_grid(**common_arguments, data=sg.stars, project="masses", rotation_matrix=rotmat_face, )
+        star_map_edge               = project_pixel_grid(**common_arguments, data=sg.stars, project="masses", rotation_matrix=rotmat_edge, )
+        gas_map_face                = project_gas(**common_arguments, data=sg, project="masses", rotation_matrix=rotmat_face, )
+        gas_map_edge                = project_gas(**common_arguments, data=sg, project="masses", rotation_matrix=rotmat_edge, )
+        gassf_map_face              = project_gas(**common_arguments, data=sg, project="masses", mask=mask_gas_sf, rotation_matrix=rotmat_face, )
+        gassf_map_edge              = project_gas(**common_arguments, data=sg, project="masses", mask=mask_gas_sf, rotation_matrix=rotmat_edge, )
+        mass_weighted_vel_map_face  = project_gas(**common_arguments, data=sg, project="mass_weighted_vel", rotation_matrix=rotmat_face, )
+        mass_weighted_vel_map_edge  = project_gas(**common_arguments, data=sg, project="mass_weighted_vel", rotation_matrix=rotmat_edge, )
+        mass_weighted_temp_map_face = project_gas(**common_arguments, data=sg, project="mass_weighted_temps", rotation_matrix=rotmat_face, )
+        mass_weighted_temp_map_edge = project_gas(**common_arguments, data=sg, project="mass_weighted_temps", rotation_matrix=rotmat_edge, )
+        mass_weighted_Z_map_face    = project_gas(**common_arguments, data=sg, project="mass_weighted_Z", rotation_matrix=rotmat_face, )
+        mass_weighted_Z_map_edge    = project_gas(**common_arguments, data=sg, project="mass_weighted_Z", rotation_matrix=rotmat_edge, )
+        gasHII_map_face             = project_gas(**common_arguments, data=sg, project="mass_gas_hii", rotation_matrix=rotmat_face, )
+        gasHII_map_edge             = project_gas(**common_arguments, data=sg, project="mass_gas_hii", rotation_matrix=rotmat_edge, )
+        gasHI_map_face              = project_gas(**common_arguments, data=sg, project="mass_gas_hi", rotation_matrix=rotmat_face, )
+        gasHI_map_edge              = project_gas(**common_arguments, data=sg, project="mass_gas_hi", rotation_matrix=rotmat_edge, )
+        gasH2_map_face              = project_gas(**common_arguments, data=sg, project="mass_gas_h2", rotation_matrix=rotmat_face, )
+        gasH2_map_edge              = project_gas(**common_arguments, data=sg, project="mass_gas_h2", rotation_matrix=rotmat_edge, )
         
         temp_map_face = (mass_weighted_temp_map_face / gas_map_face)
         temp_map_edge = (mass_weighted_temp_map_edge / gas_map_edge)
@@ -489,25 +589,25 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
         #--------------
         ### Plot imshow
-        sp1.imshow(colors.LogNorm()(star_map_face), cmap="magma", extent=disc_region,)
-        sp2.imshow(colors.LogNorm()(gas_map_face.value), cmap="viridis", extent=disc_region)
-        sp3.imshow(colors.LogNorm()(gassf_map_face.value), cmap="viridis", extent=disc_region)
-        sp4.imshow(vel_map_face.value, cmap="coolwarm", extent=disc_region)
-        sp5.imshow(colors.LogNorm()(temp_map_face.value), cmap="Spectral_r", extent=disc_region)
-        sp6.imshow(colors.LogNorm()(Z_map_face.value), cmap="managua_r", extent=disc_region)
-        sp7.imshow(colors.LogNorm()(gasHI_map_face.value), cmap="Greens", extent=disc_region)
-        sp8.imshow(colors.LogNorm()(gasH2_map_face.value), cmap="Blues", extent=disc_region)
-        sp9.imshow(colors.LogNorm()(gasHII_map_face.value), cmap="Reds", extent=disc_region)
+        sp1.imshow(colors.LogNorm()(star_map_face), cmap="magma", extent=disc_region, origin="lower", )
+        sp2.imshow(colors.LogNorm()(gas_map_face.value), cmap="viridis", extent=disc_region, origin="lower", )
+        sp3.imshow(colors.LogNorm()(gassf_map_face.value), cmap="viridis", extent=disc_region, origin="lower", )
+        sp4.imshow(vel_map_face.value, cmap="coolwarm", extent=disc_region, origin="lower", )
+        sp5.imshow(colors.LogNorm()(temp_map_face.value), cmap="Spectral_r", extent=disc_region, origin="lower", )
+        sp6.imshow(colors.LogNorm()(Z_map_face.value), cmap="managua_r", extent=disc_region, origin="lower", )
+        sp7.imshow(colors.LogNorm()(gasHI_map_face.value), cmap="Greens", extent=disc_region, origin="lower", )
+        sp8.imshow(colors.LogNorm()(gasH2_map_face.value), cmap="Blues", extent=disc_region, origin="lower", )
+        sp9.imshow(colors.LogNorm()(gasHII_map_face.value), cmap="Reds", extent=disc_region, origin="lower", )
         
-        sp10.imshow(colors.LogNorm()(star_map_edge), cmap="magma", extent=disc_region,)
-        sp11.imshow(colors.LogNorm()(gas_map_edge.value), cmap="viridis", extent=disc_region)
-        sp12.imshow(colors.LogNorm()(gassf_map_edge.value), cmap="viridis", extent=disc_region)
-        sp13.imshow(vel_map_edge.value, cmap="coolwarm", extent=disc_region)
-        sp14.imshow(colors.LogNorm()(temp_map_edge.value), cmap="Spectral_r", extent=disc_region)
-        sp15.imshow(colors.LogNorm()(Z_map_edge.value), cmap="managua_r", extent=disc_region)
-        sp16.imshow(colors.LogNorm()(gasHI_map_edge.value), cmap="Greens", extent=disc_region)
-        sp17.imshow(colors.LogNorm()(gasH2_map_edge.value), cmap="Blues", extent=disc_region)
-        sp18.imshow(colors.LogNorm()(gasHII_map_edge.value), cmap="Reds", extent=disc_region)
+        sp10.imshow(colors.LogNorm()(star_map_edge), cmap="magma", extent=disc_region, origin="lower", )
+        sp11.imshow(colors.LogNorm()(gas_map_edge.value), cmap="viridis", extent=disc_region, origin="lower", )
+        sp12.imshow(colors.LogNorm()(gassf_map_edge.value), cmap="viridis", extent=disc_region, origin="lower", )
+        sp13.imshow(vel_map_edge.value, cmap="coolwarm", extent=disc_region, origin="lower", )
+        sp14.imshow(colors.LogNorm()(temp_map_edge.value), cmap="Spectral_r", extent=disc_region, origin="lower", )
+        sp15.imshow(colors.LogNorm()(Z_map_edge.value), cmap="managua_r", extent=disc_region, origin="lower", )
+        sp16.imshow(colors.LogNorm()(gasHI_map_edge.value), cmap="Greens", extent=disc_region, origin="lower", )
+        sp17.imshow(colors.LogNorm()(gasH2_map_edge.value), cmap="Blues", extent=disc_region, origin="lower", )
+        sp18.imshow(colors.LogNorm()(gasHII_map_edge.value), cmap="Reds", extent=disc_region, origin="lower", )
     
     
         #--------------
@@ -544,7 +644,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     #--------------
     ### Title
-    sp2.set_title(f"soap_index={soap_index}, track_id={track_id}")
+    sp2.set_title(f"soap_index={soap_index}, track_id={track_id}, redshift={redshift}", fontsize=14)
     
     
     #--------------
@@ -562,15 +662,20 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     if showfig:
         plt.show()
     plt.close()
+    
+    
+    
+    raise Exception('current pause 98yhoik')
 
 
 
 
 #========================================================================
 # Load a sample from a given snapshot
-soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L0025N0752_THERMAL_AGN_m5_123_sample_5_example_sample')
+soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_centrals_sample_20_galaxy_visual')
 savefig_txt_in = ''                                                                 # L100_m6_THERMAL_AGN_m6_127_centrals_sample_20_galaxy_visual
                                                                                     # L0025N0752_THERMAL_AGN_m5_123_sample_5_example_sample
+                                                                                            # change kpc
 #========================================================================
 
 
@@ -581,19 +686,12 @@ savefig_txt_in = ''                                                             
 output_figures = sgs.map(_visualize_galaxy_example)     # Use map to apply `myvis` to each `sg` in `sgs` and give us the results in order.
 """
 
+
 #---------------------
 # Visualise example galaxy L25_m5, L100_m6 (stars + gas + gas_sf + gas_HII + gas_H1 + gas_H2)
 sgs = SWIFTGalaxies(sample_input['virtual_snapshot_file'], SOAP(sample_input['soap_catalogue_file'], soap_index=soap_indicies_sample, ), auto_recentre=False,
                     preload={"gas.coordinates", "gas.masses", "gas.velocities", "gas.star_formation_rates", "gas.temperatures", "gas.metal_mass_fractions", "gas.element_mass_fractions.hydrogen", "gas.species_fractions.HII", "gas.species_fractions.HI", "gas.species_fractions.H2", "gas.smoothing_lengths", "stars.coordinates", "stars.masses", "stars.smoothing_lengths", },)       
 output_figures = sgs.map(_visualize_galaxy_gas)
-
-
-    
-
-
-
-
-
 
 
 
