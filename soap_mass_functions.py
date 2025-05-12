@@ -111,6 +111,7 @@ def _mass_function(simulation_run = ['L100_m6', 'L0025N0752'],
     
         # Get mass data
         stellar_mass = attrgetter('%s.%s'%(aperture, 'stellar_mass'))(data)
+        central_sat = attrgetter('input_halos.is_central')(data)
         if mass_type == 'molecular_and_atomic_hydrogen_mass':
             HI_mass = attrgetter('%s.%s'%(aperture, 'atomic_hydrogen_mass'))(data)
             H2_mass = attrgetter('%s.%s'%(aperture, 'molecular_hydrogen_mass'))(data)
@@ -120,29 +121,29 @@ def _mass_function(simulation_run = ['L100_m6', 'L0025N0752'],
         else:
             quantity_mass = attrgetter('%s.%s'%(aperture, mass_type))(data)
         
+        # convert in place
         stellar_mass.convert_to_units('Msun')
         quantity_mass.convert_to_units('Msun')
-        central_sat = attrgetter('input_halos.is_central')(data)
 
         # Mask for central/satellite and no DM-only galaxies
         if centrals_or_satellites == 'centrals':
-            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                            central_sat == 1, 
-                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)])).squeeze()
+            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0), 
+                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0), 
+                                                            central_sat == cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0), 
+                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0)])).squeeze()
             quantity_mass = quantity_mass[candidates]
             print('Masking only centrals: ', len(quantity_mass))
         elif centrals_or_satellites == 'satellites':
-            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                            central_sat == 0, 
-                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)])).squeeze()
+            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0), 
+                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0), 
+                                                            central_sat == cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0), 
+                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0)])).squeeze()
             quantity_mass = quantity_mass[candidates]
             print('Masking only satellites: ', len(quantity_mass))
         else:
-            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)])).squeeze()
+            candidates = np.argwhere(np.logical_and.reduce([stellar_mass > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0), 
+                                                            stellar_mass < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0), 
+                                                            quantity_mass > cosmo_quantity(0, u.Msun, comoving=True, scale_factor= data.metadata.a, scale_exponent=0)])).squeeze()
             quantity_mass = quantity_mass[candidates]
             print('Masking all galaxies: ', len(quantity_mass))
             

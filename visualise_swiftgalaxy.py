@@ -246,7 +246,8 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     
     #------------------------------
-    print('REMOVE MANUAL RECENTER AND auto_recenter in function !!!!!!!')
+    #print('REMOVE MANUAL RECENTER AND auto_recenter in function !!!!!!!')
+    #print('Using manual recenter due to velocity bug')
     # Manual recentre because bugged velocity in L00250752 simulation
     # REMOVE FROM L100 RUN
     sg.recentre(sg.halo_catalogue.centre)
@@ -386,14 +387,26 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     if orientation != 'both':
         if orientation == 'face':
-            Lstars = sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze()
-            zhat = (Lstars / np.sqrt(np.sum(Lstars**2))).to_value(u.dimensionless)
-            rotmat = rotation_matrix_from_vector(zhat, axis='z')
+            # The angular momentum vector will point perpendicular to the galaxy disk.
+            # If your simulation contains stars, use lx_star
+            lx = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[0]
+            ly = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[1]
+            lz = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[2]
+            angular_momentum_vector = cosmo_array([lx, ly, lz])
+            angular_momentum_vector /= np.linalg.norm(angular_momentum_vector)
+        
+            rotmat_face = rotation_matrix_from_vector(angular_momentum_vector)
             rotcent = cosmo_array([0, 0, 0], u.kpc, comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
         elif orientation == 'edge':
-            Lstars = sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze()
-            zhat = (Lstars / np.sqrt(np.sum(Lstars**2))).to_value(u.dimensionless)
-            rotmat = rotation_matrix_from_vector(zhat, axis='x')
+            # The angular momentum vector will point perpendicular to the galaxy disk.
+            # If your simulation contains stars, use lx_star
+            lx = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[0]
+            ly = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[1]
+            lz = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[2]
+            angular_momentum_vector = cosmo_array([lx, ly, lz])
+            angular_momentum_vector /= np.linalg.norm(angular_momentum_vector)
+            
+            rotmat_edge = rotation_matrix_from_vector(angular_momentum_vector, axis="x")
             rotcent = cosmo_array([0, 0, 0], u.kpc, comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
         else:
             rotmat = np.identity(3)
@@ -532,7 +545,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         sg.gas.mass_weighted_Z      = sg.gas.masses * sg.gas.metal_mass_fractions
         #sg.gas.mass_weighted_sfr    = sg.gas.masses * sg.gas.star_formation_rates.to_physical()
         
-        velocities_xyz = sg.gas.velocities.to(u.km/u.s)
+        velocities_xyz = -1 * sg.gas.velocities.to(u.km/u.s)
         velocities_xyz.convert_to_physical() 
         velocities_edge = (Rotation.from_matrix(rotmat_edge)).apply(velocities_xyz)
         sg.gas.mass_weighted_vel    = sg.gas.masses * (velocities_edge[:,2])    # bugged with scalefactor in L25, see Kyle messages
@@ -663,9 +676,6 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         plt.show()
     plt.close()
     
-    
-    
-    raise Exception('current pause 98yhoik')
 
 
 
