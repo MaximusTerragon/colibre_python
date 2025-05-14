@@ -21,7 +21,8 @@ def _load_soap_sample(sample_dir, csv_sample, print_sample=True):
         print('%s\t%s' %(sample_input['simulation_run'], sample_input['simulation_type']))
         print('Snapshot:  %s' %sample_input['snapshot_no'])
         print('Redshift:  %.2f' %sample_input['redshift'])
-        print('Created sample size:   %s' %len(soap_indicies))
+        print('Loaded sample name:   %s' %sample_input['name_of_preset'])
+        print('Loaded sample size:   %s' %len(soap_indicies))
         print('')
     
     return soap_indicies, trackid_list, sample_input

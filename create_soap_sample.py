@@ -28,17 +28,10 @@ def _create_soap_sample(simulation_run = '',
                          snapshot_no     = 123,      # snapshot 45 = 045
                          print_sample    = True,
                        #=================================================
-                       # Selection method
-                       create_example_sample = False,   # uses halo
-                         select_random  = False,        # or number
-                         select_first   = False,        # or number, selects first N objects in sample
-                       #--------------------------
-                       # Selection criteria
-                       min_stelmass     = 1e10,
-                       max_stelmass     = 1e15,
-                       only_centrals    = False,
-                       use_kappa        = False,
-                         include_colddensefraction = False,     # ctrl+f 'colddensefraction_condition'
+                       # Name of sample --> uses presets see code
+                       name_of_preset = 'example_sample',   # example_sample
+                                                            # galaxy_visual_test, gas_rich_ETGs 
+                                                            # all_galaxies, all_ETGs, all_ETGs_plus_lowgasfrac
                        #=================================================
                        csv_file = False,                       # Will write sample to csv file in sapmle_dir
                           csv_name = '',
@@ -56,90 +49,216 @@ def _create_soap_sample(simulation_run = '',
     # We can load the entire SOAP catalogue using swiftsimio to browse for an interesting galaxy to look at. 
     swiftdata = SWIFTDataset(soap_catalogue_file)
     
+    if print_sample:
+        print('\n=================')
+        print('%s\t%s' %(simulation_run, simulation_type))
+        print('Snapshot:  %s' %snapshot_no)
+        print('Redshift:  %.2f' %swiftdata.metadata.redshift)
+        print('Sample preset:    ->  %s' %name_of_preset)
+    
     
     #==========================================
     # Extact trackids
     trackID = swiftdata.input_halos_hbtplus.track_id
     
-    #------
-    kappa_co_ETG          = 0.4          # will select less than
-    colddense_limit       = 0.15    # will include kappa above but for which colddensefraction is below this
-    #------
+    #==========================================
+    # List presets, will kick out soap_indicies matching criteria
     
-    if create_example_sample:
+    if name_of_preset == 'example_sample':
+        # Used parameters
+        min_halomass = 1e11
+        max_halomass = 2e11                              
+        select_first = 5
+        selection_criteria = {'min_halomass': min_stelmass, 'max_halomass': max_stelmass, 'select_first': select_first}
+        
         # Example
         m200c = swiftdata.spherical_overdensity_200_crit.total_mass
         m200c.convert_to_units('Msun')       # Specify units
         m200c.convert_to_physical()          # Specify physical/comoving
-        soap_indicies = np.argwhere(np.logical_and(m200c > cosmo_quantity(1e11, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                   m200c < cosmo_quantity(2e11, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0))).squeeze()
-    else:
-        # Select candidates that meet mass sample
-        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
-        stelmass50.convert_to_units('Msun')
+        soap_indicies = np.argwhere(np.logical_and(m200c > cosmo_quantity(min_halomass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                   m200c < cosmo_quantity(max_halomass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0))).squeeze()
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
         
-        central_sat = swiftdata.input_halos.is_central
+        # Select sub-set  
+        soap_indicies = soap_indicies[:select_first]
+        if print_sample:
+            print('  Selected first %s in sample.' %(select_first))
+            mask_sort = np.argsort(trackID[soap_indicies])
+            print('soap_indicies:\n', soap_indicies[mask_sort])
+            print('trackID:\n', ((trackID[soap_indicies])[mask_sort]).to_value())
+    elif name_of_preset == 'galaxy_visual_test':     # uses 30 kpc
+        # Used parameters
+        min_stelmass     = 1e10
+        max_stelmass     = 1e15
+        only_centrals    = True
+        select_random = 20
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'only_centrals': only_centrals, 'select_random': select_random}
         
-        kappa_co    = swiftdata.exclusive_sphere_50kpc.kappa_corot_stars
-        colddense50 = swiftdata.exclusive_sphere_30kpc.gas_mass_in_cold_dense_gas
-        colddensefraction = cosmo_array(np.zeros(stelmass50.shape), u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
-        colddensefraction[stelmass50 > 0.0] = colddense50[stelmass50 > 0.0] / stelmass50[stelmass50 > 0.0]
-        
-        
-        # Centrals (1) or satellites + centrals (1 + 0)
+        # Create additional criteria
         if only_centrals:
             central_sat_condition = cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # central
         else:
             central_sat_condition = cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # satellite + central
         
-        # Kappa
-        if use_kappa:
-            kappa_condition = cosmo_quantity(kappa_co_ETG, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
-        else:
-            kappa_condition = cosmo_quantity(1, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
-            
-        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), central_sat >= central_sat_condition, kappa_co < kappa_condition])).squeeze() 
-        
-        
-        # The warning is complaining that 1e11 * u.Msun doesn't include information about whether and how the quantity depends on the scale factor (while m200c does). The mass doesn't depend on the scale factor (and we're at a=1 anyway) so we can safely ignore it.
+        # Select candidates that meet mass sample
+        stelmass30  = swiftdata.exclusive_sphere_30kpc.stellar_mass
+        stelmass30.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass30 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass30 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           central_sat >= central_sat_condition])).squeeze() 
         if print_sample:
-            print('\n=================')
-            print('%s\t%s' %(simulation_run, simulation_type))
-            print('Snapshot:  %s' %snapshot_no)
-            print('Redshift:  %.2f' %swiftdata.metadata.redshift)
-            print('csv:               ->  %s' %csv_name)
             print('Initial sample size:   %s' %len(soap_indicies))
         
-        if include_colddensefraction:
-            # Cold dense fraction for above kappa
-            colddense_condition = cosmo_quantity(colddense_limit, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
-            soap_indicies_extra = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                                     stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
-                                                                     central_sat >= central_sat_condition, 
-                                                                     kappa_co > kappa_condition, 
-                                                                     colddensefraction < colddense_condition])).squeeze() 
-            soap_indicies = np.concatenate([soap_indicies, soap_indicies_extra])
-            if print_sample:
-                print('  >0.4 kappa sample:   %s' %len(soap_indicies_extra))
-        
-    trackid_list = trackID[soap_indicies]     
-        
-    # Print first 10 just to check
-    #print(swiftdata.exclusive_sphere_50kpc.stellar_mass[soap_indicies][:10])
-    
-    if print_sample:
-        print('  Final sample size:   %s   <--' %len(soap_indicies))
-    if select_random:
+        # Select sub-set
         soap_indicies = np.random.choice(soap_indicies, select_random, replace=False)
         if print_sample:
             print('  Selected %s random sample: %s' %(select_random, len(soap_indicies)))
-        print(soap_indicies)
-    elif select_first:
-        soap_indicies = soap_indicies[:select_first]
-        if print_sample:
-            print('  Selected first %s in sample.' %(select_first))
-        print(soap_indicies)
+            mask_sort = np.argsort(trackID[soap_indicies])
+            print('soap_indicies:\n', soap_indicies[mask_sort])
+            print('trackID:\n', ((trackID[soap_indicies])[mask_sort]).to_value())
+    elif name_of_preset == 'gas_rich_ETGs':
+        # Used parameters
+        min_stelmass     = 1e10
+        max_stelmass     = 1e15
+        only_centrals    = False
+        kappa_co_ETG     = 0.4          # will select less than
+        min_h2mass       = 1e9
+        select_random    = 40
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'only_centrals': only_centrals, 'kappa_co_ETG': kappa_co_ETG}
         
+        # Create additional criteria
+        if only_centrals:
+            central_sat_condition = cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # central
+        else:
+            central_sat_condition = cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # satellite + central
+        kappa_condition = cosmo_quantity(kappa_co_ETG, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        h2mass50  = swiftdata.exclusive_sphere_50kpc.molecular_hydrogen_mass
+        h2mass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        kappa_co    = swiftdata.exclusive_sphere_50kpc.kappa_corot_stars
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           h2mass50 > cosmo_quantity(min_h2mass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           central_sat >= central_sat_condition, 
+                                                           kappa_co < kappa_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
+        soap_indicies = np.random.choice(soap_indicies, select_random, replace=False)
+        if print_sample:
+            print('  Selected %s random sample: %s' %(select_random, len(soap_indicies)))
+            mask_sort = np.argsort(trackID[soap_indicies])
+            print('soap_indicies:\n', soap_indicies[mask_sort])
+            print('trackID:\n', ((trackID[soap_indicies])[mask_sort]).to_value())
+    elif name_of_preset == 'all_galaxies':
+        # Used parameters
+        min_stelmass     = 1e10
+        max_stelmass     = 1e15
+        only_centrals    = False
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'only_centrals': only_centrals}
+        
+        # Create additional criteria
+        if only_centrals:
+            central_sat_condition = cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # central
+        else:
+            central_sat_condition = cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # satellite + central
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           central_sat >= central_sat_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
+    elif name_of_preset == 'all_ETGs':
+        # Used parameters
+        min_stelmass     = 1e10
+        max_stelmass     = 1e15
+        only_centrals    = False
+        kappa_co_ETG     = 0.4          # will select less than
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'only_centrals': only_centrals, 'kappa_co_ETG': kappa_co_ETG}
+        
+        # Create additional criteria
+        if only_centrals:
+            central_sat_condition = cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # central
+        else:
+            central_sat_condition = cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # satellite + central
+        kappa_condition = cosmo_quantity(kappa_co_ETG, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        kappa_co    = swiftdata.exclusive_sphere_50kpc.kappa_corot_stars
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           central_sat >= central_sat_condition, 
+                                                           kappa_co < kappa_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
+    elif name_of_preset == 'all_ETGs_plus_lowgasfrac':
+        # Used parameters
+        min_stelmass     = 1e10
+        max_stelmass     = 1e15
+        only_centrals    = False
+        kappa_co_ETG     = 0.4
+        colddense_limit  = 0.15    # will include kappa above but for which colddensefraction is below this
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'only_centrals': only_centrals, 'kappa_co_ETG': kappa_co_ETG, 'colddense_limit': colddense_limit}
+        
+        # Create additional criteria
+        if only_centrals:
+            central_sat_condition = cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # central
+        else:
+            central_sat_condition = cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # satellite + central
+        kappa_condition = cosmo_quantity(kappa_co_ETG, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        kappa_co    = swiftdata.exclusive_sphere_50kpc.kappa_corot_stars
+        colddense50 = swiftdata.exclusive_sphere_30kpc.gas_mass_in_cold_dense_gas
+        colddensefraction = cosmo_array(np.zeros(stelmass50.shape), u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        colddensefraction[stelmass50 > 0.0] = colddense50[stelmass50 > 0.0] / stelmass50[stelmass50 > 0.0]
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           central_sat >= central_sat_condition, 
+                                                           kappa_co < kappa_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select additional: Cold dense fraction for above kappa
+        colddense_condition = cosmo_quantity(colddense_limit, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        soap_indicies_extra = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 central_sat >= central_sat_condition, 
+                                                                 kappa_co > kappa_condition, 
+                                                                 colddensefraction < colddense_condition])).squeeze() 
+        soap_indicies = np.concatenate([soap_indicies, soap_indicies_extra])
+        if print_sample:
+            print('  >0.4 kappa sample:   %s' %len(soap_indicies_extra))
+        # Select sub-set
+    else:
+        raise Exception('name of preset not recognised')
+    
+    trackid_list = trackID[soap_indicies]
+    if print_sample:
+        print('  Final sample size:   %s   <--' %len(soap_indicies))
+    
+    
     
     
     # He fraction plot
@@ -168,13 +287,8 @@ def _create_soap_sample(simulation_run = '',
                     'virtual_snapshot_file': virtual_snapshot_file,
                     'snapshot_no': snapshot_no,
                     'redshift': swiftdata.metadata.redshift,
-                        'min_stelmass': min_stelmass,
-                        'max_stelmass': max_stelmass,
-                        'only_centrals': only_centrals,
-                        'use_kappa': use_kappa,
-                          'kappa_co_ETG': kappa_co_ETG,
-                        'include_colddensefraction': include_colddensefraction,
-                          'colddense_limit': colddense_limit,
+                    'selection_criteria': selection_criteria,
+                    'name_of_preset': name_of_preset,
                     'csv_name': csv_name}
     
     
@@ -199,8 +313,8 @@ def _create_soap_sample(simulation_run = '',
                     'redshift': swiftdata.metadata.redshift,
                     'sample_input':  sample_input}
                     
-        json.dump(csv_dict, open('%s/%s_%s_%ssample_%s_%s.csv' %(sample_dir, simulation_run, simulation_type, str(snapshot_no), len(soap_indicies), csv_name), 'w'), cls=NumpyEncoder)
-        print('\n  SAVED: %s/%s_%s_%ssample_%s_%s.csv' %(sample_dir, simulation_run, simulation_type, str(snapshot_no), len(soap_indicies), csv_name))
+        json.dump(csv_dict, open('%s/%s_%s_%s_sample%s_%s%s.csv' %(sample_dir, simulation_run, simulation_type, str(snapshot_no), len(soap_indicies), name_of_preset, csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/%s_%s_%s_sample%s_%s%s.csv' %(sample_dir, simulation_run, simulation_type, str(snapshot_no), len(soap_indicies), name_of_preset, csv_name))
         
     return soap_indicies, sample_input
     
@@ -209,50 +323,40 @@ def _create_soap_sample(simulation_run = '',
 # Create sample from example (change to halo limit, not stelmass)
 """_create_soap_sample(simulation_run = 'L0025N0752', simulation_type = 'THERMAL_AGN_m5_obsolete', 
                     snapshot_no = 123,
-                      create_example_sample = True,
-                      select_first = 5,
-                    csv_file = True,
-                    csv_name = 'example_sample')"""
+                      name_of_preset = 'L025_example_sample',
+                    csv_file = True)"""
 
 #----------------
 # Select 20 random central galaxies
-"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
-                    select_random = 20,
-                      min_stelmass     = 10**10,
-                      only_centrals    = True,
-                    csv_file = True,
-                      csv_name = 'galaxy_visual')"""
-
+                      name_of_preset = 'galaxy_visual_test',
+                    csv_file = True)
+# Select 40 random gas-rich ETGs (h2 > 1e9), both central or satellite
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 119,
+                      name_of_preset = 'gas_rich_ETGs',
+                    csv_file = True)
 
 
 #=======================================
 # Create samples of massive >1010 galaxies:
 _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 119,
-                      min_stelmass     = 10**10,
-                      only_centrals    = False,
-                    csv_file = True,
-                      csv_name = 'all_galaxies')
+                      name_of_preset = 'all_galaxies',
+                    csv_file = True)
 
 # Create samples of massive >1010 galaxies that are ETGs (kappa < 0.4):
 _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 119,
-                      min_stelmass     = 10**10,
-                      only_centrals    = False,
-                      use_kappa        = True,      # set to 0.4, using 50 kpc
-                    csv_file = True,
-                      csv_name = 'all_ETGs')
+                      name_of_preset = 'all_ETGs',
+                    csv_file = True)
 
 # Create samples of massive >1010 galaxies that are ETGs (kappa < 0.4), and include disky candidates with kappa > 0.4 and colddensegasfraction < 0.1:
 _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 119,
-                      min_stelmass     = 10**10,
-                      only_centrals    = False,
-                      use_kappa        = True,      # set to 0.4, using 50 kpc
-                      include_colddensefraction = True,         # includes galaxies above kappa 0.4 if they have low cold gas fraction
-                    csv_file = True,
-                      csv_name = 'all_ETGs_plus_lowgasfrac')
+                      name_of_preset = 'all_ETGs_plus_lowgasfrac',
+                    csv_file = True)
                     
                     
                     

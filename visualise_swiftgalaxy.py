@@ -223,7 +223,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
                       print_galaxy = True,
                       #=====================================
                       # fig settings
-                        disc_radius= 30 * u.kpc,           # gas/stars disc radius 
+                        disc_radius= 50 * u.kpc,           # gas/stars disc radius 
                         orientation = 'both',               # [ 'face' / 'edge' / 'none' / 'both' ] Orientates to face within 10 kpc
                       #=====================================
                       showfig       = False,
@@ -657,7 +657,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     #--------------
     ### Title
-    sp2.set_title(f"soap_index={soap_index}, track_id={track_id}, redshift={redshift}", fontsize=14)
+    sp2.set_title(f"soap_index={soap_index}, track_id={track_id}, redshift=%.3f"%redshift, fontsize=14)
     
     
     #--------------
@@ -670,8 +670,8 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     if savefig:
         savefig_txt_save = ('' if savefig_txt_in == None else savefig_txt_in) + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
 
-        plt.savefig("%s/galaxy_visuals/%s_gasvis_%s_%i_%s.%s" %(fig_dir, run_name, orientation, track_id, savefig_txt_save, file_format), format=file_format, metadata=metadata_plot, bbox_inches='tight', dpi=600)    
-        print("\n  SAVED: %s/galaxy_visuals/%s_gasvis_%s_%i_%s.%s" %(fig_dir, run_name, orientation, track_id, savefig_txt_save, file_format)) 
+        plt.savefig("%s/galaxy_visuals/%s/%s_gasvis_%s_%i_%s.%s" %(fig_dir, save_folder_visual, run_name, orientation, track_id, savefig_txt_save, file_format), format=file_format, metadata=metadata_plot, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/galaxy_visuals/%s/%s_gasvis_%s_%i_%s.%s" %(fig_dir, save_folder_visual, run_name, orientation, track_id, savefig_txt_save, file_format)) 
     if showfig:
         plt.show()
     plt.close()
@@ -682,10 +682,12 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
 
 #========================================================================
 # Load a sample from a given snapshot
-soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_centrals_sample_20_galaxy_visual')
-savefig_txt_in = ''                                                                 # L100_m6_THERMAL_AGN_m6_127_centrals_sample_20_galaxy_visual
+soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_119_sample40_gas_rich_ETGs')
+savefig_txt_in = ''                                                                 # L100_m6_THERMAL_AGN_m6_127_sample20_galaxy_visual_test
+                                                                                    # L100_m6_THERMAL_AGN_m6_119_sample40_gas_rich_ETGs
                                                                                     # L0025N0752_THERMAL_AGN_m5_123_sample_5_example_sample
                                                                                             # change kpc
+save_folder_visual = sample_input['name_of_preset']
 #========================================================================
 
 
