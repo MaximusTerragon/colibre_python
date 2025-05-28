@@ -328,11 +328,51 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     ellip, triax            = _compute_intrinsic_ellipticity_triaxiality()
     ellip_proj, triax_proj  = _compute_projected_ellipticity_triaxiality()
     
-    #---------------
-    # Add H2 halfmass radius and other properties here:
+    #-----------------------
+    # find halfmass radius of H2, and stars (for check)
+    def _half_rad(particle_masses, particle_coord, trim_rad= 50):
+        
+        trim_rad = cosmo_quantity(trim_rad, u.kpc, comoving=False, scale_factor=sg.metadata.a, scale_exponent=1)
+        
+        # H2 masses and coords
+        particle_masses = particle_masses.to(u.Msun)
+        particle_masses.convert_to_physical()
+        particle_coord  = particle_coord.to(u.kpc)
+        particle_coord.convert_to_physical()
+        
+        # Mask all within trim_rad
+        mask = np.where(np.linalg.norm(particle_coord, axis=1) <= trim_rad)
+        particle_masses = particle_masses[mask]
+        particle_coord  = particle_coord[mask]
+        
+        # Mask by distance from center
+        r = np.linalg.norm(particle_coord, axis=1)
+        mask_sort = np.argsort(r)
+        r = r[mask_sort]
+        
+        # Compute cumulative mass
+        cmass = np.cumsum(particle_masses[mask_sort])
+        total_mass_in_rad = np.sum(particle_masses[mask_sort])
+        
+        # Find index where cumulative mass is first greater than total_mass_in_rad
+        index = np.where(cmass >= (total_mass_in_rad*0.5).to(u.Msun))[0][0]
+        radius = r[index]
+        
+        return radius
     
-    # ...
+
+    r50stars_manual = _half_rad(sg.stars.masses, sg.stars.coordinates)
+    print('SOAP:     %.5f'%r50stars.squeeze())
+    print('manual:   %.5f'%r50stars_manual)
     
+    if H2mass50 > 0:
+        r50H2    = _half_rad(sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * (sg.gas.species_fractions.H2 * 2), sg.gas.coordinates)
+    else:
+        r50H2 = math.nan
+    if HImass50 > 0:
+        r50HI    = _half_rad(sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * sg.gas.species_fractions.HI, sg.gas.coordinates)
+    else:
+        r50HI = math.nan
     #---------------
     
     
@@ -341,7 +381,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         print('\nSOAP index:                 %i   at    z = %.3f   in   %s' %(soap_index, redshift, run_name))
         print('   trackID:                     %i' %track_id)
         #print('   descendantID:         %i' %descendent_id)
-        print('   central or satellite:  ->  %s' %('central' if is_central==1 else 'satellite'))
+        print('   central or satellite:  ->  %s' %('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'))
         print('   stelmass50:            ->  %.3e      Msun' %stelmass50.squeeze())
         print('   m200 crit              ->  %.3e      Msun' %m200c.squeeze())
         print('   gasmass50:                 %.3e      Msun' %gasmass50.squeeze())
@@ -352,6 +392,8 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         print('      H2+He (H2 x 1.36):  ->    %.3e    Msun' %H2Hemass50.squeeze())
         print('   r50 stars:             ->  %.2f      pkpc' %r50stars.squeeze())
         print('    r50 gas:                    %.2f    pkpc' %r50gas.squeeze())
+        print('    r50 HI:                     %.2f    pkpc' %r50HI.squeeze())
+        print('    r50 H2:               ->    %.2f    pkpc' %r50H2.squeeze())
         print('   kappa stars 50:        ->  %.3f'           %kappastars.squeeze())
         print('    kappa gas 50:               %.3f'         %kappagas.squeeze())
         print('    ellip:                  ->  %.3f'         %ellip.squeeze())
@@ -363,8 +405,8 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         print('   u - r (no dust):           %.3f      mag' %(u_mag50-r_mag50))
         print('    M_r (no dust):            %.3f      mag' %(r_mag50))
         
-    metadata_plot = {'Title': 'stelmass50: %.1e\nm200crit: %.1e\ngasmass50: %.1e\ngassf50: %.1e\ngascolddensemass50: %.1e\nHImass50: %.1e\nH2mass50: %.1e\nH2Hemass50: %.1e\nr50stars: %.2f\nr50gas: %.2f\nellipstars: %.2f\ntriaxstars: %.2f\nellipstars (proj): %.2f\ntriaxstars (proj): %.2f\nkappastars: %.2f\nkappagas: %.2f\nsfr50: %.2e\nssfr50: %.2e\nu-r (nodust): %.2f\nMr (nodust): %.2f'%(stelmass50.squeeze(), m200c.squeeze(), gasmass50.squeeze(), gassfmass50.squeeze(), gascoldmass50.squeeze(), HImass50.squeeze(), H2mass50.squeeze(), H2Hemass50.squeeze(), r50stars.squeeze(), r50gas.squeeze(), ellip.squeeze(), triax.squeeze(), ellip_proj.squeeze(), triax_proj.squeeze(), kappastars.squeeze(), kappagas.squeeze(), sfr50.squeeze(), ssfr50.squeeze(), (u_mag50-r_mag50), r_mag50),
-                     'Author': 'SOAP index: %i\nredshift: %.2f\nTrackID: %i\ncen/sat: %s'%(soap_index, redshift, track_id, 'central' if is_central==1 else 'satellite'),
+    metadata_plot = {'Title': 'stelmass50: %.1e\nm200crit: %.1e\ngasmass50: %.1e\ngassf50: %.1e\ngascolddensemass50: %.1e\nHImass50: %.1e\nH2mass50: %.1e\nH2Hemass50: %.1e\nr50stars: %.2f\nr50gas: %.2f\nr50HI: %.2f\nr50H2: %.2f\nellipstars: %.2f\ntriaxstars: %.2f\nellipstars (proj): %.2f\ntriaxstars (proj): %.2f\nkappastars: %.2f\nkappagas: %.2f\nsfr50: %.2e\nssfr50: %.2e\nu-r (nodust): %.2f\nMr (nodust): %.2f'%(stelmass50.squeeze(), m200c.squeeze(), gasmass50.squeeze(), gassfmass50.squeeze(), gascoldmass50.squeeze(), HImass50.squeeze(), H2mass50.squeeze(), H2Hemass50.squeeze(), r50stars.squeeze(), r50gas.squeeze(), r50HI, r50H2, ellip.squeeze(), triax.squeeze(), ellip_proj.squeeze(), triax_proj.squeeze(), kappastars.squeeze(), kappagas.squeeze(), sfr50.squeeze(), ssfr50.squeeze(), (u_mag50-r_mag50), r_mag50),
+                     'Author': 'SOAP index: %i\nredshift: %.2f\nTrackID: %i\ncen/sat: %s'%(soap_index, redshift, track_id, 'central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'),
                      'Subject': run_name,
                      'Producer': ''}    
     
@@ -495,18 +537,18 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
         #--------------
         ### Annotation
-        sp1.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp1.transAxes)
-        sp2.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp2.transAxes)
-        sp3.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas,SF}}$", color="white", ha="right", va="top", transform=sp3.transAxes)
+        sp1.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp1.transAxes, fontsize=14)
+        sp2.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp2.transAxes, fontsize=14)
+        sp3.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas,SF}}$", color="white", ha="right", va="top", transform=sp3.transAxes, fontsize=14)
 
         #sp4.text(0.9, 0.9, "$\Sigma_{\mathrm{SFR}}$", color="white", ha="right", va="top", transform=sp4.transAxes)
-        sp4.text(0.9, 0.9, "Velocity", color="white", ha="right", va="top", transform=sp4.transAxes)
-        sp5.text(0.9, 0.9, "Temperature", color="white", ha="right", va="top", transform=sp5.transAxes)
-        sp6.text(0.9, 0.9, "Metallicity", color="white", ha="right", va="top", transform=sp6.transAxes)
+        sp4.text(0.9, 0.9, "Velocity", color="white", ha="right", va="top", transform=sp4.transAxes, fontsize=14)
+        sp5.text(0.9, 0.9, "Temperature", color="white", ha="right", va="top", transform=sp5.transAxes, fontsize=14)
+        sp6.text(0.9, 0.9, "Metallicity", color="white", ha="right", va="top", transform=sp6.transAxes, fontsize=14)
     
-        sp7.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp7.transAxes)
-        sp8.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp8.transAxes)
-        sp9.text(0.9, 0.9, r"$\Sigma_{\mathrm{HII}}$", color="k", ha="right", va="top", transform=sp9.transAxes)
+        sp7.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp7.transAxes, fontsize=14)
+        sp8.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp8.transAxes, fontsize=14)
+        sp9.text(0.9, 0.9, r"$\Sigma_{\mathrm{HII}}$", color="k", ha="right", va="top", transform=sp9.transAxes, fontsize=14)
     if orientation == 'both':
         
         # Rotation matrix
@@ -633,31 +675,29 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
         #--------------
         ### Annotation
-        sp1.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp1.transAxes)
-        sp2.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp2.transAxes)
-        sp3.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas,SF}}$", color="white", ha="right", va="top", transform=sp3.transAxes)
-        sp4.text(0.9, 0.9, "Velocity", color="white", ha="right", va="top", transform=sp4.transAxes)
-        sp5.text(0.9, 0.9, "Temperature", color="white", ha="right", va="top", transform=sp5.transAxes)
-        sp6.text(0.9, 0.9, "Metallicity", color="white", ha="right", va="top", transform=sp6.transAxes)
-        sp7.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp7.transAxes)
-        sp8.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp8.transAxes)
-        sp9.text(0.9, 0.9, r"$\Sigma_{\mathrm{HII}}$", color="k", ha="right", va="top", transform=sp9.transAxes)
-        sp10.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp10.transAxes)
-        sp11.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp11.transAxes)
-        sp12.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas,SF}}$", color="white", ha="right", va="top", transform=sp12.transAxes)
-        sp13.text(0.9, 0.9, "Velocity", color="white", ha="right", va="top", transform=sp13.transAxes)
-        sp14.text(0.9, 0.9, "Temperature", color="white", ha="right", va="top", transform=sp14.transAxes)
-        sp15.text(0.9, 0.9, "Metallicity", color="white", ha="right", va="top", transform=sp15.transAxes)
-        sp16.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp16.transAxes)
-        sp17.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp17.transAxes)
-        sp18.text(0.9, 0.9, r"$\Sigma_{\mathrm{HII}}$", color="k", ha="right", va="top", transform=sp18.transAxes)
-        
-    
+        sp1.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp1.transAxes, fontsize=14)
+        sp2.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp2.transAxes, fontsize=14)
+        sp3.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas,SF}}$", color="white", ha="right", va="top", transform=sp3.transAxes, fontsize=14)
+        sp4.text(0.9, 0.9, "Velocity", color="white", ha="right", va="top", transform=sp4.transAxes, fontsize=14)
+        sp5.text(0.9, 0.9, "Temperature", color="white", ha="right", va="top", transform=sp5.transAxes, fontsize=14)
+        sp6.text(0.9, 0.9, "Metallicity", color="white", ha="right", va="top", transform=sp6.transAxes, fontsize=14)
+        sp7.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp7.transAxes, fontsize=14)
+        sp8.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp8.transAxes, fontsize=14)
+        sp9.text(0.9, 0.9, r"$\Sigma_{\mathrm{HII}}$", color="k", ha="right", va="top", transform=sp9.transAxes, fontsize=14)
+        sp10.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp10.transAxes, fontsize=14)
+        sp11.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp11.transAxes, fontsize=14)
+        sp12.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas,SF}}$", color="white", ha="right", va="top", transform=sp12.transAxes, fontsize=14)
+        sp13.text(0.9, 0.9, "Velocity", color="white", ha="right", va="top", transform=sp13.transAxes, fontsize=14)
+        sp14.text(0.9, 0.9, "Temperature", color="white", ha="right", va="top", transform=sp14.transAxes, fontsize=14)
+        sp15.text(0.9, 0.9, "Metallicity", color="white", ha="right", va="top", transform=sp15.transAxes, fontsize=14)
+        sp16.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp16.transAxes, fontsize=14)
+        sp17.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp17.transAxes, fontsize=14)
+        sp18.text(0.9, 0.9, r"$\Sigma_{\mathrm{HII}}$", color="k", ha="right", va="top", transform=sp18.transAxes, fontsize=14)
     
     
     #--------------
     ### Title
-    sp2.set_title(f"soap_index={soap_index}, track_id={track_id}, redshift=%.3f"%redshift, fontsize=14)
+    sp1.set_title(f"soap_index=%i, track_id=%i, redshift=%.3f, M*= %.2e Msun, kappa_co= %.3f, r50= %.2f pkpc, r50H2= %.2f pkpc, %s"%(soap_index, track_id.squeeze(), redshift, stelmass50.squeeze(), kappastars.squeeze(), r50stars.squeeze(), r50H2, ('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite')), fontsize=14, loc='left')
     
     
     #--------------
