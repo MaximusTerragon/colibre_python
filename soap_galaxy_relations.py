@@ -604,6 +604,7 @@ def _stelmass_gasmass_compare_radii(simulation_run = ['L100_m6', 'L0025N0752'],
             dict_plot.update({'%s'%aperture : {'stellar_mass': 0, 'gas_mass': 0}})
             
             stellar_mass = attrgetter('%s.%s'%('exclusive_sphere_50kpc', 'stellar_mass'))(data)
+            stellar_mass_at_r = attrgetter('%s.%s'%('exclusive_sphere_%skpc'%aperture, 'stellar_mass'))(data)
             central_sat = attrgetter('input_halos.is_central')(data)
             kappa_stars = attrgetter('%s.%s'%('exclusive_sphere_50kpc', 'kappa_corot_stars'))(data)
             
@@ -626,6 +627,7 @@ def _stelmass_gasmass_compare_radii(simulation_run = ['L100_m6', 'L0025N0752'],
                 candidates = np.argwhere(np.logical_and(central_sat == cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0), 
                                                         stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=data.metadata.a, scale_exponent=0))).squeeze()
                 stellar_mass = stellar_mass[candidates]
+                stellar_mass_at_r = stellar_mass[candidates]
                 gas_mass = gas_mass[candidates]
                 kappa_stars = kappa_stars[candidates]
                 print('Masking only centrals: ', len(stellar_mass))
@@ -633,18 +635,21 @@ def _stelmass_gasmass_compare_radii(simulation_run = ['L100_m6', 'L0025N0752'],
                 candidates = np.argwhere(np.logical_and(central_sat == cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0), 
                                                         stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=data.metadata.a, scale_exponent=0))).squeeze()
                 stellar_mass = stellar_mass[candidates]
+                stellar_mass_at_r = stellar_mass[candidates]
                 gas_mass = gas_mass[candidates]
                 kappa_stars = kappa_stars[candidates]
                 print('Masking only satellites: ', len(stellar_mass))
             else:
                 candidates = np.argwhere(stellar_mass > cosmo_quantity(lower_mass_limit, u.Msun, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)).squeeze()
                 stellar_mass = stellar_mass[candidates]
+                stellar_mass_at_r = stellar_mass[candidates]
                 gas_mass = gas_mass[candidates]
                 kappa_stars = kappa_stars[candidates]
                 print('Masking all galaxies: ', len(stellar_mass))
 
             if plot_fractions:
-                gas_mass = gas_mass/(gas_mass + stellar_mass)
+                gas_mass = gas_mass/(gas_mass + stellar_mass_at_r)
+                raise Exception('tweak the fraction to include total gas here')
                 
             dict_plot['%s'%aperture]['gas_mass'] = gas_mass
             dict_plot['%s'%aperture]['stellar_mass'] = stellar_mass
@@ -1007,9 +1012,9 @@ def _stelmass_u_r_correa2017(simulation_run = ['L100_m6'],
                    centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                    aperture = 'exclusive_sphere_50kpc', 
                    #----------
-                   add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
+                   add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                    format_z          = False,        # For variations in z graphs
-                   lower_mass_limit  = 10**10,
+                   lower_mass_limit  = 10**9.5,
                    #=====================================
                    showfig       = False,
                    savefig       = True,
@@ -1148,12 +1153,14 @@ def _stelmass_u_r_correa2017(simulation_run = ['L100_m6'],
     #-----------------
     # Add observations
     if add_observational:
-        print('no obs available') 
+        # Schawinski+14, used in Correa+17
+        # with equation (u∗ −r∗) = 0.25 log10(M∗/ M) − 0.495
+        ax_scat.plot([10**9, 10**15], [(0.25*np.log10(10**9))-0.495, (0.25*np.log10(10**15))-0.495], lw=1.3, ls='--', color='k', label='Schawinski+14', zorder=10)
         
         
     #-----------
     # Axis formatting
-    ax_scat.set_xlim(10**10, 10**12)
+    ax_scat.set_xlim(10**(9.5), 10**12)
     ax_hist.set_ylim(0.5, 3)
     ax_scat.set_ylim(0.5, 3)
     ax_scat.set_xscale("log")
@@ -1182,6 +1189,9 @@ def _stelmass_u_r_correa2017(simulation_run = ['L100_m6'],
         ax_scat.text(10**11.5, 2.8, '${z=%.2f}$' %z, fontsize=7)
     if centrals_or_satellites != 'both':
         ax_hist.set_title(r'%s' %(centrals_or_satellites), size=7, loc='left', pad=3)
+    if add_observational:
+        ax_scat.text(10**11.9, 2.65, '↑ red sequence', fontsize=7, color='r', rotation=14, rotation_mode='anchor', horizontalalignment='right', verticalalignment='top')
+        ax_scat.text(10**11.9, 2.4, '↓ blue cloud', fontsize=7, color='b', rotation=14, rotation_mode='anchor', horizontalalignment='right', verticalalignment='top')
 
     
     #-----------
@@ -1214,7 +1224,7 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
                    centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                    aperture = 'exclusive_sphere_50kpc', 
                    #----------
-                   add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
+                   add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                    format_z          = False,        # For variations in z graphs
                    hist_bin_width = 0.25,
                      lower_mass_limit = 10**8.8,
@@ -1333,12 +1343,23 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
         
         # Normalise colormap
         norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
-        mapper = cm.ScalarMappable(norm=norm, cmap='mymap')         #cmap=cm.coolwarm)
+        mapper = cm.ScalarMappable(norm=norm, cmap=mymap)         #cmap=cm.coolwarm)
+        
+        mask_kappa = (kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)).squeeze()
+        print('Total sample:  ', len(stellar_mass))
+        print('Number of LTG: ', len(stellar_mass[mask_kappa]))
+        print('Number of ETG: ', len(stellar_mass[~mask_kappa]))
+        
         
         # Plot 2 scatters: one for H2 detections and one for non-detections
         mask_h2 = H2_mass > ((10**6)*u.Msun)
-        plt.scatter(stellar_mass[mask_h2], mag_plot[mask_h2], c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])**3)/192, cmap='mymap', norm=norm, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        plt.scatter(stellar_mass[~mask_h2], mag_plot[~mask_h2], c=kappa_stars[~mask_h2], s=2, cmap='mymap', norm=norm, marker='P', alpha=0.5, linewidths=0)
+        plt.scatter(stellar_mass[mask_h2], mag_plot[mask_h2], c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])**3)/192, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
+        plt.scatter(stellar_mass[~mask_h2], mag_plot[~mask_h2], c=kappa_stars[~mask_h2], s=1.5, cmap=mymap, norm=norm, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        
+        
+        # Plot scatter
+        #ax_scat.scatter(stellar_mass, mag_plot, c=kappa_stars, s=1.5, cmap=mymap, norm=norm, marker='o', linewidths=0, edgecolor='none', alpha=0.75)
+        
         
         #-----------------
         # Define binning parameters
@@ -1373,7 +1394,9 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
     #-----------------
     # Add observations
     if add_observational:
-        print('no obs available') 
+        # Schawinski+14, used in Correa+17
+        # with equation (u∗ −r∗) = 0.25 log10(M∗/ M) − 0.495
+        plt.plot([10**9, 10**15], [(0.25*np.log10(10**9))-0.495, (0.25*np.log10(10**15))-0.495], lw=1.3, ls='--', color='k', label='Schawinski+14', zorder=10)
         
         
     #-----------
@@ -1402,6 +1425,10 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
         plt.text(10**11.2, 3.1, '${z=%.2f}$' %z, fontsize=7)
     if centrals_or_satellites != 'both':
         axs.set_title(r'%s' %(centrals_or_satellites), size=7, loc='left', pad=3)
+    if add_observational:
+        plt.text(10**11.9, 2.65, '↑ red sequence', fontsize=7, color='r', rotation=14, rotation_mode='anchor', horizontalalignment='right', verticalalignment='top')
+        plt.text(10**11.9, 2.4, '↓ blue cloud', fontsize=7, color='b', rotation=14, rotation_mode='anchor', horizontalalignment='right', verticalalignment='top')
+
 
     
     #-----------
@@ -1439,7 +1466,7 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
 
 
 
-for snap_i in [119, 127]:
+for snap_i in [127]:
     #--------------------
     # Plots stellarmass against cold dense gas (T<10**4.5, n>0.1)
     """_stelmass_gasmass(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
@@ -1595,7 +1622,7 @@ for snap_i in [119, 127]:
                         aperture_list = [30, 50], 
                          plot_fractions = True,
                     savefig = True)
-    # Atomic gas aperture check 30 vs 50
+    # H2 gas aperture check 30 vs 50
     _stelmass_gasmass_compare_aperture(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
                     mass_type = 'molecular_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                      centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
@@ -1638,10 +1665,10 @@ for snap_i in [119, 127]:
                     mass_type = 'atomic_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                      centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
                         aperture_list = [1, 3, 10, 30, 50], 
-                    savefig = True)
+                    savefig = True)"""
 
     # Hydrogen gas
-    _stelmass_gasmass_compare_radii(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
+    """_stelmass_gasmass_compare_radii(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
                     mass_type = 'molecular_hydrogen_mass',    # [ molecular_and_atomic_hydrogen_mass / molecular_hydrogen_mass / atomic_hydrogen_mass ]
                      centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                         aperture_list = [1, 3, 10, 30, 50], 
@@ -1703,7 +1730,7 @@ for snap_i in [119, 127]:
     
     #====================================
     # Plots stellarmass against u-r, with point size by molecular hydrogen mass
-    """_stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
+    _stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
                     magnitudes = 'u-r',    # [ u-r / u-g ]
                      centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                     savefig = True)
@@ -1714,7 +1741,7 @@ for snap_i in [119, 127]:
     _stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
                     magnitudes = 'u-r',    # [ u-r / u-g ]
                      centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                    savefig = True)"""
+                    savefig = True)
     # Plots r-band magnitude M_r against u-r, with point size by molecular hydrogen mass
     """_Mr_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
                     magnitudes = 'u-r',    # [ u-r / u-g ]
