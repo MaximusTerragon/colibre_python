@@ -1075,12 +1075,16 @@ def _stelmass_u_r_correa2017(simulation_run = ['L100_m6'],
         if magnitudes == 'u-r':
             u_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,0])
             r_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,2])
+            u_mag = cosmo_array(u_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
+            r_mag = cosmo_array(r_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
             mag_plot = u_mag - r_mag
             u_mag = 0
             r_mag = 0
         if magnitudes == 'u-g':
             u_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,0])
             g_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,1])
+            u_mag = cosmo_array(u_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
+            g_mag = cosmo_array(g_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
             mag_plot = u_mag - g_mag
             u_mag = 0
             g_mag = 0
@@ -1214,7 +1218,7 @@ def _stelmass_u_r_correa2017(simulation_run = ['L100_m6'],
         plt.show()
     plt.close()
 #-----------------
-# Returns stelmass - sfr or stelmass - ssfr, coloured by kappa stars
+# Returns stelmass - sfr or stelmass - ssfr, coloured by kappa stars, size by H2 mass
 def _stelmass_u_r(simulation_run = ['L100_m6'], 
                    simulation_type = ['THERMAL_AGN_m6'],
                     snapshot_no   = [127],        # available for L100_m6: 127, 119, 114, 102, 092
@@ -1288,12 +1292,16 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
             u_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,0])
             r_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,2])
             mag_plot = u_mag - r_mag
+            u_mag = cosmo_array(u_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
+            r_mag = cosmo_array(r_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
             u_mag = 0
             r_mag = 0
         if magnitudes == 'u-g':
             u_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,0])
             g_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,1])
             mag_plot = u_mag - g_mag
+            u_mag = cosmo_array(u_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
+            g_mag = cosmo_array(g_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
             u_mag = 0
             g_mag = 0
         
