@@ -115,23 +115,35 @@ def _sample_stelmass_u_r(csv_sample = '',
     norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
     mapper = cm.ScalarMappable(norm=norm, cmap=mymap)         #cmap=cm.coolwarm)
     
-    # Masking LTGs (ETGs are mask_kappa):
-    mask_kappa    = (kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)).squeeze()
+    # Masking LTGs (ETGs are mask_high_kappa):
+    mask_high_kappa    = (kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)).squeeze()
     # Masking blue LTGs: (ETGs are ~mask_blue_LTG)
     mask_blue_LTG = np.logical_and.reduce([kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0), 
                                               mag_plot < cosmo_quantity(2, u.dimensionless, comoving=False, scale_factor= data.metadata.a, scale_exponent=0)]).squeeze()
-
+    # Mask all red galaxies u-r>2
+    mask_red = (mag_plot > cosmo_quantity(2, u.dimensionless, comoving=False, scale_factor= data.metadata.a, scale_exponent=0)).squeeze()
+    
     dict_sample_numbers = {'total': len(stellar_mass),
-                           'kappa_cut': {'LTG': len(stellar_mass[mask_kappa]),
-                                         'ETG': len(stellar_mass[~mask_kappa])},
+                           'kappa_cut': {'LTG': len(stellar_mass[mask_high_kappa]),
+                                         'ETG': len(stellar_mass[~mask_high_kappa]),
+                                         'LTG_red': len(stellar_mass[np.logical_and.reduce([mask_red, mask_high_kappa]).squeeze()]),
+                                         'ETG_red': len(stellar_mass[np.logical_and.reduce([mask_red, ~mask_high_kappa]).squeeze()])
+                                         },
                            'kappa_mag_cut': {'LTG': len(stellar_mass[mask_blue_LTG]),
-                                             'ETG': len(stellar_mass[~mask_blue_LTG])}}
+                                             'ETG': len(stellar_mass[~mask_blue_LTG]),
+                                             'LTG_red': len(stellar_mass[np.logical_and.reduce([mask_red, mask_blue_LTG]).squeeze()]),
+                                             'ETG_red': len(stellar_mass[np.logical_and.reduce([mask_red, ~mask_blue_LTG]).squeeze()])
+                                         }}
     print('Total sample:  ', dict_sample_numbers['total'])
-    print('Number of LTG kappa>0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['LTG'], dict_sample_numbers['kappa_cut']['LTG']/dict_sample_numbers['total']))
-    print('Number of ETG kappa<0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['ETG'], dict_sample_numbers['kappa_cut']['ETG']/dict_sample_numbers['total']))
-    print('Number of LTG kappa>0.4 and u-r<2:             %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['LTG'], dict_sample_numbers['kappa_mag_cut']['LTG']/dict_sample_numbers['total']))
-    print('Number of ETG kappa<0.4 or kappa>0.4 + u-r>2:  %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG'], dict_sample_numbers['kappa_mag_cut']['ETG']/dict_sample_numbers['total']))
-        
+    print('Number of kappa>0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['LTG'], dict_sample_numbers['kappa_cut']['LTG']/dict_sample_numbers['total']))
+    print('     of which u-r>2:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['LTG_red'], dict_sample_numbers['kappa_cut']['LTG_red']/dict_sample_numbers['kappa_cut']['LTG']))
+    print('Number of kappa<0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['ETG'], dict_sample_numbers['kappa_cut']['ETG']/dict_sample_numbers['total']))
+    print('     of which u-r>2:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['ETG_red'], dict_sample_numbers['kappa_cut']['ETG_red']/dict_sample_numbers['kappa_cut']['ETG']))
+    print('Number of LTG kappa>0.4 and u-r<2:               %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['LTG'], dict_sample_numbers['kappa_mag_cut']['LTG']/dict_sample_numbers['total']))
+    print('                   of which u-r>2:               %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['LTG_red'], dict_sample_numbers['kappa_mag_cut']['LTG_red']/dict_sample_numbers['kappa_mag_cut']['LTG']))
+    print('Number of ETG kappa<0.4 or kappa>0.4 + u-r>2:    %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG'], dict_sample_numbers['kappa_mag_cut']['ETG']/dict_sample_numbers['total']))
+    print('                              of which u-r>2:    %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG_red'], dict_sample_numbers['kappa_mag_cut']['ETG_red']/dict_sample_numbers['kappa_mag_cut']['ETG']))
+    
     # Plot scatter
     ax_scat.scatter(stellar_mass, mag_plot, c=kappa_stars, s=1.5, cmap=mymap, norm=norm, marker='o', linewidths=0, edgecolor='none', alpha=0.75)
 
@@ -140,11 +152,11 @@ def _sample_stelmass_u_r(csv_sample = '',
     # Histogram
     hist_bins = np.arange(0.5, 3.1, 0.05)  # Binning edges
     
-    n_LTG, _    = np.histogram(mag_plot[mask_kappa], weights=(np.ones(len(stellar_mass[mask_kappa]))/len(stellar_mass[mask_kappa])), bins=hist_bins)
-    n_LTG, _, _ = ax_hist.hist(mag_plot[mask_kappa], weights=(np.ones(len(stellar_mass[mask_kappa]))/len(stellar_mass[mask_kappa])), bins=hist_bins, alpha=0.5, facecolor='b', orientation='horizontal', label='$\kappa_{\mathrm{co}}^{*}>0.4$')
+    n_LTG, _    = np.histogram(mag_plot[mask_high_kappa], weights=(np.ones(len(stellar_mass[mask_high_kappa]))/len(stellar_mass[mask_high_kappa])), bins=hist_bins)
+    n_LTG, _, _ = ax_hist.hist(mag_plot[mask_high_kappa], weights=(np.ones(len(stellar_mass[mask_high_kappa]))/len(stellar_mass[mask_high_kappa])), bins=hist_bins, alpha=0.5, facecolor='b', orientation='horizontal', label='$\kappa_{\mathrm{co}}^{*}>0.4$')
         
-    n_ETG, _    = np.histogram(mag_plot[~mask_kappa], weights=(np.ones(len(stellar_mass[~mask_kappa]))/len(stellar_mass[~mask_kappa])), bins=hist_bins)
-    n_ETG, _, _ = ax_hist.hist(mag_plot[~mask_kappa], weights=(np.ones(len(stellar_mass[~mask_kappa]))/len(stellar_mass[~mask_kappa])), bins=hist_bins, alpha=0.5, facecolor='r', orientation='horizontal', label='$\kappa_{\mathrm{co}}^{*}<0.4$')
+    n_ETG, _    = np.histogram(mag_plot[~mask_high_kappa], weights=(np.ones(len(stellar_mass[~mask_high_kappa]))/len(stellar_mass[~mask_high_kappa])), bins=hist_bins)
+    n_ETG, _, _ = ax_hist.hist(mag_plot[~mask_high_kappa], weights=(np.ones(len(stellar_mass[~mask_high_kappa]))/len(stellar_mass[~mask_high_kappa])), bins=hist_bins, alpha=0.5, facecolor='r', orientation='horizontal', label='$\kappa_{\mathrm{co}}^{*}<0.4$')
         
         
     #-----------------
@@ -178,10 +190,10 @@ def _sample_stelmass_u_r(csv_sample = '',
       
     #-----------  
     # Annotations
-    ax_scat.text(0.8, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = ax_scat.transAxes)
+    ax_scat.text(0.78, 0.92, '${z=%.2f}$' %z, fontsize=7, transform = ax_scat.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_ETGs': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$)',
-                  'all_ETGs_plus_redspiral': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ and 'red spirals')"
+                  'all_ETGs_plus_redspiral': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. red FRs)"
                   }
     ax_hist.set_title(r'%s' %(title_dict[sample_input['name_of_preset']]), size=7, loc='left', pad=3) 
     #if add_ur2_line:
@@ -233,7 +245,7 @@ def _sample_stellar_mass_function(csv_samples = [],
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                    'all_ETGs': 'ETGs',
-                   'all_ETGs_plus_redspiral': 'ETGs (incl. red spirals)'}
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
                    'all_ETGs_plus_redspiral': 'C1'}
@@ -420,7 +432,7 @@ def _sample_H2_mass_function(csv_samples = [],
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                    'all_ETGs': 'ETGs',
-                   'all_ETGs_plus_redspiral': 'ETGs (incl. red spirals)'}
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
                    'all_ETGs_plus_redspiral': 'C1'}
@@ -447,6 +459,11 @@ def _sample_H2_mass_function(csv_samples = [],
     
         #-------------------------------
         # Get stelmass, molecular hydrogen, and magnitude data
+        stellar_mass = attrgetter('%s.%s'%(aperture, 'stellar_mass'))(data)
+        stellar_mass.convert_to_units('Msun')
+        stellar_mass.convert_to_physical()
+        stellar_mass = stellar_mass[soap_indicies_sample]
+        
         H2_mass = attrgetter('%s.%s'%(aperture_h2, 'molecular_hydrogen_mass'))(data)
         H2_mass.convert_to_units('Msun')
         H2_mass = H2_mass[soap_indicies_sample]
@@ -544,7 +561,7 @@ def _sample_H2_mass_function(csv_samples = [],
     
     #-----------
     # Axis formatting
-    plt.xlim(10**5, 10**11)
+    plt.xlim(10**6, 10**11)
     plt.ylim(10**(-6), 10**(-1))
     plt.xscale("log")
     plt.yscale("log")
@@ -554,7 +571,7 @@ def _sample_H2_mass_function(csv_samples = [],
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
                      'exclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'$M_{\mathrm{H_{2}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture]))
+    plt.xlabel(r'$M_{\mathrm{H_{2}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h2]))
     plt.ylabel(r'dn/dlog$_{10}$($M$) [cMpc$^{-3}$]')
       
     #-----------  
@@ -570,7 +587,7 @@ def _sample_H2_mass_function(csv_samples = [],
     plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = aperture + '_' + savefig_txt
+        savefig_txt_save = aperture_h2 + '_' + savefig_txt
         
         plt.savefig("%s/etg_sample_plots/%s_%s_ALL_SAMPLES_sample_H2massfunc_%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_sample_plots/%s_%s_ALL_SAMPLES_sample_H2massfunc_%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], savefig_txt_save, file_format))
@@ -603,14 +620,15 @@ def _sample_H2_mass_function(csv_samples = [],
 """_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                      aperture_h2 = 'exclusive_sphere_50kpc',
                      showfig       = False,
-                     savefig       = True)"""
+                     savefig       = True)
 _sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                      aperture_h2 = 'exclusive_sphere_10kpc',
                      showfig       = False,
-                     savefig       = True)
+                     savefig       = True)"""
 
 
-
+#-------------------
+# H2 mass fraction function of samples
 
 
 

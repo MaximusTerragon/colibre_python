@@ -1361,7 +1361,7 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
         
         # Plot 2 scatters: one for H2 detections and one for non-detections
         mask_h2 = H2_mass > ((10**6)*u.Msun)
-        plt.scatter(stellar_mass[mask_h2], mag_plot[mask_h2], c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])**3)/192, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
+        plt.scatter(stellar_mass[mask_h2], mag_plot[mask_h2], c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         plt.scatter(stellar_mass[~mask_h2], mag_plot[~mask_h2], c=kappa_stars[~mask_h2], s=1.5, cmap=mymap, norm=norm, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
         
         
@@ -1441,13 +1441,14 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
     
     #-----------
     # Legend
-    msizes = np.array([5, 6, 7, 8, 9])
-    msizes = (msizes**3)/192
-    l1, = plt.plot([],[], 'or', markersize=msizes[1])
-    l2, = plt.plot([],[], 'or', markersize=msizes[2])
-    l3, = plt.plot([],[], 'or', markersize=msizes[3])
-    labels = [r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=6.0$', '7.0', '8.0']
-    leg = plt.legend([l1, l2, l3], labels, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left')
+    for i, h2_i in enumerate([7, 8, 9, 10]):
+        s = (h2_i-(np.log10(h2_detection_limit)-1))**2.5
+        if i == 0:
+            plt.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
+        else:
+            plt.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
+    plt.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left')
+    
         
     #-----------
     # other
