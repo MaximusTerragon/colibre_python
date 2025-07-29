@@ -56,7 +56,6 @@ This applies to both halo_catalogue and particle data (.stars):
 7*u.Msun                    -> applies a unit to a value
 
 """
-
 #--------------------------------
 # We can define a function that uses some of swiftsimio's visualisation tools to make some quick images of a given galaxy. Requires a SOAP index
 # Visualises stars, gas out to 15 kpc, and DM out to 200 kpc
@@ -287,6 +286,19 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     is_central      = sg.halo_catalogue.input_halos.is_central
     
     
+    
+    
+    print(sg.gas.masses)
+    print(' ')
+    print(sg.gas.coordinates)
+    print(' ')
+    print(sg.stars.masses)
+    print(' ')
+    print(sg.stars.coordinates)
+    
+    
+    
+    
     #---------------
     # Triaxiality and ellipticity
     """ ϵ = 0 -> Perfectly spherical galaxy 
@@ -324,10 +336,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         # Compute eigenvalues (sorted in descending order)
         eigenvalues = np.linalg.eigvalsh(inertiatensor)[::-1]  # Sorted: I1 >= I2 >= I3
         length_a2, length_b2, length_c2 = eigenvalues  # Assign to principal moments, length_a2 == a**2, so length = sqrt length_a2. a = longest axis, b = intermediate, c = shortest
-        #print(length_a2)
-        #print(length_b2)
-        #print(length_c2)
-    
+
         # Compute Triaxiality Parameter
         triaxiality = (length_a2 - length_b2) / (length_a2 - length_c2) if (length_a2 - length_c2) != 0 else np.nan  # Avoid division by zero
         ellipticity = 1 - (np.sqrt(length_c2)/np.sqrt(length_a2))
@@ -347,7 +356,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         
         return stellar_vel_disp
     
-    def _compute_eta_kin(aperture='50'):        # Msun^1/3 km-1 s
+    def _compute_eta_kin(aperture='50'):        # Msun^1/3 / sigma, Msun^1/3 km-1 s
         stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_%skpc.stellar_velocity_dispersion_matrix'%(aperture))(sg.halo_catalogue)).to(u.km**2 / u.s**2)
         stellar_vel_disp = np.sqrt((stellar_vel_disp_matrix[0][0] + stellar_vel_disp_matrix[0][1] + stellar_vel_disp_matrix[0][2])/3)
         
@@ -459,6 +468,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
                      'Author': 'SOAP index: %i\nredshift: %.2f\nTrackID: %i\ncen/sat: %s'%(soap_index, redshift, track_id, 'central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'),
                      'Subject': run_name,
                      'Producer': ''}    
+    
     
     
     #-----------------------
@@ -821,23 +831,23 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
 #========================================================================
 # Manual sample or load input:
 
-#soap_indicies_sample = [1921622, 10192609] 
-#sample_input = {'name_of_preset': 'gas_rich_ETGs_z0',
-#                'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP/colibre_with_SOAP_membership_0127.hdf5'),
-#                'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP/halo_properties_0127.hdf5')
-#                }
-
-#=====================================
+soap_indicies_sample = [11117101, 10192609] 
+sample_input = {'name_of_preset': 'gas_rich_ETGs_z0',
+                'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP/colibre_with_SOAP_membership_0127.hdf5'),
+                'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP/halo_properties_0127.hdf5')
+                }
+savefig_txt_in = ''
+save_folder_visual = sample_input['name_of_preset']
+#------------------------------------------------------------------------
 # Load a sample from a given snapshot
-soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample25_gas_rich_ETGs_z0')
+#soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample25_gas_rich_ETGs_z0')
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample20_galaxy_visual_test
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample25_gas_rich_ETGs_z0
                                                                                     # L0025N0752_THERMAL_AGN_m5_123_sample_5_example_sample
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample2_test_galaxies.csv
                                                                                             # change kpc
-#========================================================================
-savefig_txt_in = ''
-save_folder_visual = sample_input['name_of_preset']
+#savefig_txt_in = ''
+#save_folder_visual = sample_input['name_of_preset']
 #========================================================================
 
 
