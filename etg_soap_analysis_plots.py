@@ -181,7 +181,8 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
         axs.scatter(stellar_mass[~mask_h2], mag_plot[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], mag_plot[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], mag_plot[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], mag_plot[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], mag_plot[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -210,7 +211,7 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -278,8 +279,8 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
       
     #-----------  
     # Annotations
-    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -499,8 +500,8 @@ def _aperture_fdet(csv_samples = [], title_text_in = '',
     
     #-----------  
     # Annotations
-    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     axs.set_title(r'%s' %(title_text_in), size=7, loc='left', pad=3)
     
 
@@ -721,7 +722,7 @@ def _aperture_fdet_rings(csv_samples = [], title_text_in = '',
     #-----------  
     # Annotations
     axs.text(0.80, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     axs.set_title(r'%s' %(title_text_in), size=7, loc='left', pad=3)
     
     #-----------
@@ -932,7 +933,7 @@ def _aperture_fdet_missing_gas(csv_samples = [], title_text_in = '',
     #-----------  
     # Annotations
     axs.text(0.80, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     axs.set_title(r'%s' %(title_text_in), size=7, loc='left', pad=3)
     
     #-----------
@@ -965,6 +966,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -1086,7 +1088,8 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
         axs.scatter(stellar_mass[~mask_h2], sfr50[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], sfr50[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], sfr50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], sfr50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], sfr50[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -1115,7 +1118,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -1139,6 +1142,39 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
+    
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = sfr50.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     
     #-----------------
@@ -1186,8 +1222,8 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -1214,7 +1250,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.1, alignment='left', markerfirst=True)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -1239,6 +1275,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -1360,7 +1397,8 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
         axs.scatter(stellar_mass[~mask_h2], ssfr50[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], ssfr50[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], ssfr50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], ssfr50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], ssfr50[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     
     #----------------
@@ -1390,7 +1428,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -1414,7 +1452,39 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
     
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = ssfr50.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     #-----------------
     # Add observations
@@ -1461,7 +1531,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
@@ -1489,7 +1559,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.1, alignment='left', markerfirst=True)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -1514,6 +1584,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -1635,7 +1706,8 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
         axs.scatter(stellar_mass[~mask_h2], sfe50[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], sfe50[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], sfe50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], sfe50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], sfe50[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     
     #----------------
@@ -1665,7 +1737,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -1689,7 +1761,39 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
     
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = sfe50.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     #-----------------
     # Add observations
@@ -1736,8 +1840,8 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -1764,7 +1868,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.1, alignment='left', markerfirst=True)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -1795,6 +1899,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
                    add_median_line = True,
                    #---------------
                    print_fdet         = False,
+                   print_stats        = True,       # median galaxy properties of detected ETG
                    #=====================================
                    showfig       = False,
                    savefig       = True,
@@ -1907,8 +2012,9 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
         axs.scatter(stellar_mass[~mask_h2], H2_mass[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], H2_mass[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], H2_mass[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
-    
+        #axs.scatter(stellar_mass[~mask_h2], H2_mass[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], H2_mass[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
+        
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
     if add_detection_hist:
@@ -1936,7 +2042,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
         ax_hist.barh(10**((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(10**((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -1964,11 +2070,33 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     f_detected_err_lower = f_detected - f_detected_err[0]
     f_detected_err_upper = f_detected_err[1] - f_detected
     print('--------------------------------')
-    print('TOTAL GAS DETECTION RATE in ETG sample:')
+    print('TOTAL H2 GAS DETECTION RATE in ETG sample:   %s'%sample_input['name_of_preset'])
     print('  >  f_det:    %.3f (-%.3f + %.3f), \tcount: %s / %s'%(f_detected, f_detected_err_lower, f_detected_err_upper, len(stellar_mass[mask_h2]), len(stellar_mass)))
     
     
+    #-----------------
+    # Print median properties of H2-detected galaxy
+    if print_stats:
+        H2_mass_fraction = np.divide(H2_mass, H2_mass + stellar_mass)
+        sfr50 = attrgetter('%s.%s'%(aperture, 'star_formation_rate'))(data)[soap_indicies_sample]
+        sfr50.convert_to_units(u.Msun/u.yr)
+        sfr50.convert_to_physical()
+        sfr50_log_masked = np.log10(sfr50[mask_h2])
+        ssfr50 = np.divide(sfr50, stellar_mass)
+    
+        print('--------------------------------')
+        print('MEDIAN VALUES OF H2-DETECTED GALAXY sample:   %s' %sample_input['name_of_preset'])
+        print('    Median stelmass:             %.3e'%np.median(stellar_mass[mask_h2]))
+        print('      Median H2mass:             %.3e'%np.median(H2_mass[mask_h2]))
+        print('      Median H2mass fraction:    %.3e'%np.median(H2_mass_fraction[mask_h2]))
+        print('      Median SFR:                %.3e'%(10**np.median(sfr50_log_masked)))
+        print('      Median sSFR:               %.3e'%np.median(ssfr50[mask_h2]))
+        print('      Median kappaco:            %.3f'%np.median(kappa_stars[mask_h2]))
+        print('      Median u-r:                %.3f'%np.median(mag_plot[mask_h2]))
+        
+    
     #------------
+    # Median line of detected ETGs
     if add_median_line:
         #-----------------
         # Define binning parameters
@@ -1996,7 +2124,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
         # Convert bin centers back to linear space for plotting
         bin_centers = 10**np.array(bin_centers)
     
-        axs.plot(bin_centers, medians, color='k', linewidth=1, label='median', zorder=20)
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
         axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
         #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
@@ -2046,8 +2174,8 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -2086,6 +2214,337 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
         
         plt.savefig("%s/etg_soap_analysis/Mstar_MH2/%s_%s_%s_Mstar_MH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_MH2/%s_%s_%s_Mstar_MH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
+    if showfig:
+        plt.show()
+    plt.close()
+# Returns stelmass - H1 mass, coloured by H1 detection, size by H1 mass
+def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in = '',
+                   #=====================================
+                   # Graph settings
+                   aperture = 'exclusive_sphere_50kpc', 
+                     aperture_h2 = 'exclusive_sphere_50kpc', 
+                   add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
+                   add_kappa_colourbar = False,
+                     add_detection_hist = False,
+                     h1_detection_limit = 10**7,
+                   add_median_line = True,
+                   #---------------
+                   print_fdet         = False,
+                   print_stats        = True,       # median galaxy properties of detected ETG
+                   #=====================================
+                   showfig       = False,
+                   savefig       = True,
+                     file_format = 'png',
+                     savefig_txt = '', 
+                   #--------------------------
+                   print_progress = False,
+                     debug = False):
+                    
+
+    #---------------------------
+    # Graph initialising and base formatting
+    if not add_detection_hist:
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    else:
+        fig = plt.figure(figsize=(10/3, 2.5))
+        gs  = fig.add_gridspec(1, 2,  width_ratios=(4, 1),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0.1, hspace=0.1)
+        # Create the Axes.
+        axs = fig.add_subplot(gs[0])
+        ax_hist = fig.add_subplot(gs[1])
+                        
+    #---------------------------
+    # Extract data from samples:
+    dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_ETGs': 'ETGs',
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
+    dict_colors = {'all_galaxies': 'k',
+                   'all_ETGs': 'C0',
+                   'all_ETGs_plus_redspiral': 'C1'}
+    dict_ls     = {'all_galaxies': '-',
+                   'all_ETGs': '--',
+                   'all_ETGs_plus_redspiral': '-.'}
+    #-----------------
+    # Add SOAP data
+    simulation_run  = sample_input['simulation_run']
+    simulation_type = sample_input['simulation_type']
+    snapshot_no     = sample_input['snapshot_no']
+    simulation_dir  = sample_input['simulation_dir']
+    soap_catalogue_file = sample_input['soap_catalogue_file']
+    data = sw.load(f'%s'%soap_catalogue_file)
+
+    # Get metadata from file
+    z = data.metadata.redshift
+    run_name = data.metadata.run_name
+    box_size = data.metadata.boxsize[0]
+
+
+    #-------------------------------
+    # Get essential SOAP data for analysis
+    stellar_mass = attrgetter('%s.%s'%(aperture, 'stellar_mass'))(data)[soap_indicies_sample]
+    stellar_mass.convert_to_units('Msun')
+    stellar_mass.convert_to_physical()
+    
+    H1_mass = attrgetter('%s.%s'%(aperture_h2, 'atomic_hydrogen_mass'))(data)[soap_indicies_sample]
+    H1_mass.convert_to_units('Msun')
+    H1_mass.convert_to_physical()
+
+    u_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,0])[soap_indicies_sample]
+    r_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,2])[soap_indicies_sample]
+    u_mag = cosmo_array(u_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
+    r_mag = cosmo_array(r_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
+    mag_plot = u_mag - r_mag
+
+    central_sat = attrgetter('input_halos.is_central')(data)[soap_indicies_sample]
+
+    kappa_stars = attrgetter('%s.%s'%(aperture, 'kappa_corot_stars'))(data)[soap_indicies_sample]
+    
+    #================================
+    # Calculated values
+    
+    #--------------
+    # Kappa and colourbar [not used]
+    vmin = 0
+    vmax = 0.8
+    # sample the colormaps that you want to use. Use 128 from each so we get 256
+    # colors in total
+    colors1 = plt.cm.seismic_r(np.linspace(0, 0.45, 128))
+    colors2 = plt.cm.seismic_r(np.linspace(0.55, 1, 128))
+    # combine them and build a new colormap
+    colors_combined = np.vstack((colors1, colors2))
+    mymap = colors.LinearSegmentedColormap.from_list('my_colormap', colors_combined)
+    # Normalise colormap
+    norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
+    mapper = cm.ScalarMappable(norm=norm, cmap=mymap)         #cmap=cm.coolwarm)
+    # Masking LTGs (ETGs are mask_high_kappa):
+    mask_high_kappa    = (kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)).squeeze()
+    # Masking blue LTGs: (ETGs are ~mask_blue_LTG)
+    mask_blue_LTG = np.logical_and.reduce([kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0), 
+                                              mag_plot < cosmo_quantity(2, u.dimensionless, comoving=False, scale_factor= data.metadata.a, scale_exponent=0)]).squeeze()
+    dict_sample_numbers = {'total': len(stellar_mass),
+                           'kappa_cut': {'LTG': len(stellar_mass[mask_high_kappa]),
+                                         'ETG': len(stellar_mass[~mask_high_kappa])},
+                           'kappa_mag_cut': {'LTG': len(stellar_mass[mask_blue_LTG]),
+                                             'ETG': len(stellar_mass[~mask_blue_LTG])}}
+    print('Total sample:  ', dict_sample_numbers['total'])
+    print('Number of LTG kappa>0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['LTG'], dict_sample_numbers['kappa_cut']['LTG']/dict_sample_numbers['total']))
+    print('Number of ETG kappa<0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['ETG'], dict_sample_numbers['kappa_cut']['ETG']/dict_sample_numbers['total']))
+    print('Number of LTG kappa>0.4 and u-r<2:             %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['LTG'], dict_sample_numbers['kappa_mag_cut']['LTG']/dict_sample_numbers['total']))
+    print('Number of ETG kappa<0.4 or kappa>0.4 + u-r>2:  %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG'], dict_sample_numbers['kappa_mag_cut']['ETG']/dict_sample_numbers['total']))
+    
+    
+    #---------------------
+    # Plot 2 scatters: one for H2 detections and one for non-detections
+    mask_h1 = H1_mass > cosmo_quantity(h1_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+    if add_kappa_colourbar:
+        sc_points = axs.scatter(stellar_mass[mask_h1], H1_mass[mask_h1], c=kappa_stars[mask_h1], s=(np.log10(H1_mass[mask_h1])-(np.log10(h1_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h1], H1_mass[~mask_h1], c=kappa_stars[~mask_h1], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
+    else:
+        sc_points = axs.scatter(stellar_mass[mask_h1], H1_mass[mask_h1], c='r', s=(np.log10(H1_mass[mask_h1])-(np.log10(h1_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h1], H1_mass[~mask_h1], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h1], H1_mass[~mask_h1], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
+        
+    #----------------
+    # Add H2 detection rate within a bin above he_detection_limit
+    if add_detection_hist:
+        # we want the fraction within a bin, not normalised
+        bin_width = 0.2
+        hist_bins = np.arange(5, 13, bin_width)  # Binning edges
+        bin_n, _           = np.histogram(np.log10(H1_mass), bins=hist_bins)
+        bin_n_detected, _  = np.histogram(np.log10(H1_mass[mask_h1]), bins=hist_bins)
+        mask_positive_n     = bin_n > 0
+        bin_f_detected      = bin_n_detected[mask_positive_n]/bin_n[mask_positive_n]
+        
+        # returns a % upper and a % lower
+        bin_f_detected_err = binom_conf_interval(k=bin_n_detected[mask_positive_n], n=bin_n[mask_positive_n], confidence_level= 0.68269, interval='jeffreys')
+        bin_f_detected_err_lower = bin_f_detected - bin_f_detected_err[0]
+        bin_f_detected_err_upper = bin_f_detected_err[1] - bin_f_detected
+        
+        # Total sample
+        f_detected = len(stellar_mass[mask_h1])/len(stellar_mass) 
+        f_detected_err = binom_conf_interval(k=len(stellar_mass[mask_h1]), n=len(stellar_mass), confidence_level= 0.68269, interval='jeffreys')
+        f_detected_err_lower = f_detected - f_detected_err[0]
+        f_detected_err_upper = f_detected_err[1] - f_detected
+        
+        
+        # barh
+        ax_hist.barh(10**((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
+        ax_hist.barh(10**((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
+        
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        
+        # errorbar
+        hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
+        #mask_positive_n_det = bin_n_detected[mask_positive_n] > 0
+        ax_hist.errorbar(100*bin_f_detected, 10**hist_bins_midpoint, xerr=[100*bin_f_detected_err_lower, 100*bin_f_detected_err_upper], yerr=None, ecolor='k', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=0.7, alpha=0.7)
+        
+        # print
+        if print_fdet:
+            print('--------------------------------')
+            print('HI Gas detection rate bins in ETGs:   sample: %s' %sample_input['name_of_preset'])
+            print('   bins with galaxies:   %s'%hist_bins[:-1][mask_positive_n])  
+            print('   bin counts:           %s'%bin_n[mask_positive_n])
+            print('   f_det:                %s'%np.around(bin_f_detected,3))  
+            print('     f_deterr lower: %s'%np.around(bin_f_detected_err_lower,3))  
+            print('     f_deterr upper: %s'%np.around(bin_f_detected_err_upper,3)) 
+            #print('--------------------------------')
+            #print('TOTAL GAS DETECTION RATE in ETG sample:')
+            #print('  >  f_det:    %.3f (-%.3f + %.3f), \tcount: %s / %s'%(f_detected, f_detected_err_lower, f_detected_err_upper, len(stellar_mass[mask_h1]), len(stellar_mass)))
+            #answer_fdet = input("\n-----------------\nContinue? y/n? ")
+            #if answer_fdet == 'n':
+            #    raise Exception('Manual break at fdet')  
+
+    f_detected = len(stellar_mass[mask_h1])/len(stellar_mass) 
+    f_detected_err = binom_conf_interval(k=len(stellar_mass[mask_h1]), n=len(stellar_mass), confidence_level= 0.68269, interval='jeffreys')
+    f_detected_err_lower = f_detected - f_detected_err[0]
+    f_detected_err_upper = f_detected_err[1] - f_detected
+    print('--------------------------------')
+    print('TOTAL HI GAS DETECTION RATE in ETG sample:   %s'%sample_input['name_of_preset'])
+    print('  >  f_det:    %.3f (-%.3f + %.3f), \tcount: %s / %s'%(f_detected, f_detected_err_lower, f_detected_err_upper, len(stellar_mass[mask_h1]), len(stellar_mass)))
+    
+    
+    #-----------------
+    # Print median properties of H2-detected galaxy
+    if print_stats:
+        H1_mass_fraction = np.divide(H1_mass, H1_mass + stellar_mass)
+        sfr50 = attrgetter('%s.%s'%(aperture, 'star_formation_rate'))(data)[soap_indicies_sample]
+        sfr50.convert_to_units(u.Msun/u.yr)
+        sfr50.convert_to_physical()
+        sfr50_log_masked = np.log10(sfr50[mask_h1])
+        ssfr50 = np.divide(sfr50, stellar_mass)
+    
+        print('--------------------------------')
+        print('MEDIAN VALUES OF HI-DETECTED GALAXY sample:   %s' %sample_input['name_of_preset'])
+        print('    Median stelmass:             %.3e'%np.median(stellar_mass[mask_h1]))
+        print('      Median H2mass:             %.3e'%np.median(H1_mass[mask_h1]))
+        print('      Median H2mass fraction:    %.3e'%np.median(H1_mass_fraction[mask_h1]))
+        print('      Median SFR:                %.3e'%(10**np.median(sfr50_log_masked)))
+        print('      Median sSFR:               %.3e'%np.median(ssfr50[mask_h1]))
+        print('      Median kappaco:            %.3f'%np.median(kappa_stars[mask_h1]))
+        print('      Median u-r:                %.3f'%np.median(mag_plot[mask_h1]))
+        
+    
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
+    
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = H1_mass.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[y_bin > h1_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (16th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (84th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
+    
+    #-----------------
+    # Add observations
+    if add_observational:
+        # Schawinski+14, used in Correa+17
+        # with equation (u∗ −r∗) = 0.25 log10(M∗/ M) − 0.495
+        #plt.plot([10**9, 10**15], [(0.25*np.log10(10**9))-0.495, (0.25*np.log10(10**15))-0.495], lw=1.3, ls='--', color='k', label='Schawinski+14', zorder=10)
+        print('no obs available yet')
+        
+    #-----------
+    # Axis formatting
+    axs.set_xlim(10**9.5, 10**12)
+    axs.set_ylim(10**6, 10**12)
+    axs.set_xscale("log")
+    axs.set_yscale("log")
+    #plt.yticks(np.arange(-5, -1.4, 0.5))
+    #plt.xticks(np.arange(9.5, 12.5, 0.5))
+    axs.minorticks_on()
+    axs.tick_params(axis='x', which='minor')
+    axs.tick_params(axis='y', which='minor')
+    dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
+                     'exclusive_sphere_30kpc': '30 pkpc', 
+                     'exclusive_sphere_50kpc': '50 pkpc'}
+    dict_aperture_h2 = {'exclusive_sphere_3kpc': '3 pkpc',
+                        'exclusive_sphere_10kpc': '10 pkpc',
+                        'exclusive_sphere_30kpc': '30 pkpc', 
+                        'exclusive_sphere_50kpc': '50 pkpc'}
+    axs.set_xlabel(r'$M_{*}$ (%s) [M$_{\odot}$]'%dict_aperture[aperture])
+    axs.set_ylabel(r'$M_{\mathrm{H_{I}}}$ [M$_{\odot}$]')
+    if add_detection_hist:
+        #ax_hist.set_xscale("log")
+        ax_hist.minorticks_on()
+        ax_hist.set_xlim(0, 100)
+        ax_hist.set_ylim(10**6, 10**12)
+        #ax_hist.xaxis.set_major_formatter(mtick.PercentFormatter())
+        ax_hist.set_yticks([])
+        ax_hist.set_xlabel(r'Det. [\%]')
+        #ax_hist.set_ylabel(r'$u^{*} - r^{*}$')
+        
+    #------------
+    # colorbar
+    if add_kappa_colourbar:
+        fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
+      
+    #-----------  
+    # Annotations
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    title_dict = {'all_galaxies': 'All galaxies',
+                  'all_galaxies_centrals': 'All central galaxies',
+                  'all_galaxies_satellites': 'All satellite galaxies',
+                  'all_ETGs': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$)',
+                  'all_ETGs_centrals': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$), centrals',
+                  'all_ETGs_satellites': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$), satellites',
+                  'all_ETGs_cluster': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$), cluster',
+                  'all_ETGs_groupfield': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$), group/field',
+                  'all_ETGs_plus_redspiral': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs)",
+                  'all_ETGs_plus_redspiral_centrals': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs), centrals",
+                  'all_ETGs_plus_redspiral_satellites': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs), satellites",
+                  'all_ETGs_plus_redspiral_cluster': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs), cluster',
+                  'all_ETGs_plus_redspiral_groupfield': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs), group/field',
+                  'all_LTGs': 'LTGs ($\kappa_{\mathrm{co}}^{*}>0.4$)',
+                  'all_LTGs_excl_redspiral': 'LTGs ($\kappa_{\mathrm{co}}^{*}>0.4$, excl. red FRs)'
+                  }
+    axs.set_title(r'%s%s' %(title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
+    # Legend
+    for i, h2_i in enumerate([7, 8, 9, 10]):
+        s = (h2_i-(np.log10(h1_detection_limit)-1))**2.5
+        if i == 0:
+            axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{I}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
+        else:
+            axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
+    
+    
+    #-----------
+    # other
+    #plt.tight_layout()
+    
+    if savefig:
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        
+        plt.savefig("%s/etg_soap_analysis/Mstar_MH1/%s_%s_%s_Mstar_MH1_%s_H1ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
+        print("\n  SAVED: %s/etg_soap_analysis/Mstar_MH1/%s_%s_%s_Mstar_MH1_%s_H1ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
     if showfig:
         plt.show()
     plt.close()
@@ -2221,7 +2680,8 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
         axs.scatter(stellar_mass[~mask_h2], H2_mass_fraction[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], H2_mass_fraction[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], H2_mass_fraction[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], H2_mass_fraction[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], H2_mass_fraction[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -2250,7 +2710,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -2303,7 +2763,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
         # Convert bin centers back to linear space for plotting
         bin_centers = 10**np.array(bin_centers)
     
-        axs.plot(bin_centers, medians, color='k', linewidth=1, label='median', zorder=20)
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
         axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
         #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
@@ -2354,8 +2814,8 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -2394,6 +2854,312 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
         
         plt.savefig("%s/etg_soap_analysis/Mstar_fracH2/%s_%s_%s_Mstar_fracH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_fracH2/%s_%s_%s_Mstar_fracH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
+    if showfig:
+        plt.show()
+    plt.close()
+# Returns stelmass - H2 mass fraction ( H1 / H1 + M* ), coloured by H2 detection, size by H1 mass
+def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title_text_in = '',
+                   #=====================================
+                   # Graph settings
+                   aperture = 'exclusive_sphere_50kpc', 
+                     aperture_h1 = 'exclusive_sphere_50kpc', 
+                   add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
+                   add_kappa_colourbar = False,
+                     add_detection_hist = False,
+                     h1_detection_limit = 10**7,
+                   add_median_line = True,
+                   #---------------
+                   print_fdet         = False,
+                   #=====================================
+                   showfig       = False,
+                   savefig       = True,
+                     file_format = 'png',
+                     savefig_txt = '', 
+                   #--------------------------
+                   print_progress = False,
+                     debug = False):
+                    
+
+    #---------------------------
+    # Graph initialising and base formatting
+    if not add_detection_hist:
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    else:
+        fig = plt.figure(figsize=(10/3, 2.5))
+        gs  = fig.add_gridspec(1, 2,  width_ratios=(4, 1),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0.1, hspace=0.1)
+        # Create the Axes.
+        axs = fig.add_subplot(gs[0])
+        ax_hist = fig.add_subplot(gs[1])
+                        
+    #---------------------------
+    # Extract data from samples:
+    dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_ETGs': 'ETGs',
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
+    dict_colors = {'all_galaxies': 'k',
+                   'all_ETGs': 'C0',
+                   'all_ETGs_plus_redspiral': 'C1'}
+    dict_ls     = {'all_galaxies': '-',
+                   'all_ETGs': '--',
+                   'all_ETGs_plus_redspiral': '-.'}
+    #-----------------
+    # Add SOAP data
+    simulation_run  = sample_input['simulation_run']
+    simulation_type = sample_input['simulation_type']
+    snapshot_no     = sample_input['snapshot_no']
+    simulation_dir  = sample_input['simulation_dir']
+    soap_catalogue_file = sample_input['soap_catalogue_file']
+    data = sw.load(f'%s'%soap_catalogue_file)
+
+    # Get metadata from file
+    z = data.metadata.redshift
+    run_name = data.metadata.run_name
+    box_size = data.metadata.boxsize[0]
+
+
+    #-------------------------------
+    # Get essential SOAP data for analysis
+    stellar_mass = attrgetter('%s.%s'%(aperture, 'stellar_mass'))(data)[soap_indicies_sample]
+    stellar_mass.convert_to_units('Msun')
+    stellar_mass.convert_to_physical()
+    
+    H1_mass = attrgetter('%s.%s'%(aperture_h1, 'atomic_hydrogen_mass'))(data)[soap_indicies_sample]
+    H1_mass.convert_to_units('Msun')
+    H1_mass.convert_to_physical()
+
+    u_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,0])[soap_indicies_sample]
+    r_mag = -2.5*np.log10((attrgetter('%s.%s'%(aperture, 'stellar_luminosity'))(data))[:,2])[soap_indicies_sample]
+    u_mag = cosmo_array(u_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
+    r_mag = cosmo_array(r_mag, u.dimensionless, comoving=True, scale_factor=data.metadata.a, scale_exponent=0)
+    mag_plot = u_mag - r_mag
+
+    central_sat = attrgetter('input_halos.is_central')(data)[soap_indicies_sample]
+
+    kappa_stars = attrgetter('%s.%s'%(aperture, 'kappa_corot_stars'))(data)[soap_indicies_sample]
+    
+    #======================
+    # Calculated values
+    H1_mass_fraction = np.divide(H1_mass, H1_mass + stellar_mass)
+    
+
+    
+    #--------------
+    # Kappa and colourbar [not used]
+    vmin = 0
+    vmax = 0.8
+    # sample the colormaps that you want to use. Use 128 from each so we get 256
+    # colors in total
+    colors1 = plt.cm.seismic_r(np.linspace(0, 0.45, 128))
+    colors2 = plt.cm.seismic_r(np.linspace(0.55, 1, 128))
+    # combine them and build a new colormap
+    colors_combined = np.vstack((colors1, colors2))
+    mymap = colors.LinearSegmentedColormap.from_list('my_colormap', colors_combined)
+    # Normalise colormap
+    norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
+    mapper = cm.ScalarMappable(norm=norm, cmap=mymap)         #cmap=cm.coolwarm)
+    # Masking LTGs (ETGs are mask_high_kappa):
+    mask_high_kappa    = (kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)).squeeze()
+    # Masking blue LTGs: (ETGs are ~mask_blue_LTG)
+    mask_blue_LTG = np.logical_and.reduce([kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0), 
+                                              mag_plot < cosmo_quantity(2, u.dimensionless, comoving=False, scale_factor= data.metadata.a, scale_exponent=0)]).squeeze()
+    dict_sample_numbers = {'total': len(stellar_mass),
+                           'kappa_cut': {'LTG': len(stellar_mass[mask_high_kappa]),
+                                         'ETG': len(stellar_mass[~mask_high_kappa])},
+                           'kappa_mag_cut': {'LTG': len(stellar_mass[mask_blue_LTG]),
+                                             'ETG': len(stellar_mass[~mask_blue_LTG])}}
+    print('Total sample:  ', dict_sample_numbers['total'])
+    print('Number of LTG kappa>0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['LTG'], dict_sample_numbers['kappa_cut']['LTG']/dict_sample_numbers['total']))
+    print('Number of ETG kappa<0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['ETG'], dict_sample_numbers['kappa_cut']['ETG']/dict_sample_numbers['total']))
+    print('Number of LTG kappa>0.4 and u-r<2:             %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['LTG'], dict_sample_numbers['kappa_mag_cut']['LTG']/dict_sample_numbers['total']))
+    print('Number of ETG kappa<0.4 or kappa>0.4 + u-r>2:  %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG'], dict_sample_numbers['kappa_mag_cut']['ETG']/dict_sample_numbers['total']))
+    
+    
+    
+    #---------------------
+    # Plot 2 scatters: one for H2 detections and one for non-detections
+    mask_h1 = H1_mass > cosmo_quantity(h1_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+    if add_kappa_colourbar:
+        sc_points = axs.scatter(stellar_mass[mask_h1], H1_mass_fraction[mask_h1], c=kappa_stars[mask_h1], s=(np.log10(H1_mass[mask_h1])-(np.log10(h1_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h1], H1_mass_fraction[~mask_h1], c=kappa_stars[~mask_h1], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
+    else:
+        sc_points = axs.scatter(stellar_mass[mask_h1], H1_mass_fraction[mask_h1], c='r', s=(np.log10(H1_mass[mask_h1])-(np.log10(h1_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h1], H1_mass_fraction[~mask_h1], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h1], H1_mass_fraction[~mask_h1], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
+    
+    #----------------
+    # Add H2 detection rate within a bin above he_detection_limit
+    if add_detection_hist:
+        # we want the fraction within a bin, not normalised
+        bin_width = 0.2
+        hist_bins = np.arange(-7, 0, bin_width)  # Binning edges
+        bin_n, _           = np.histogram(np.log10(H1_mass_fraction), bins=hist_bins)
+        bin_n_detected, _  = np.histogram(np.log10(H1_mass_fraction[mask_h1]), bins=hist_bins)
+        mask_positive_n     = bin_n > 0
+        bin_f_detected      = bin_n_detected[mask_positive_n]/bin_n[mask_positive_n]
+        
+        # returns a % upper and a % lower
+        bin_f_detected_err = binom_conf_interval(k=bin_n_detected[mask_positive_n], n=bin_n[mask_positive_n], confidence_level= 0.68269, interval='jeffreys')
+        bin_f_detected_err_lower = bin_f_detected - bin_f_detected_err[0]
+        bin_f_detected_err_upper = bin_f_detected_err[1] - bin_f_detected
+        
+        # Total sample
+        f_detected = len(stellar_mass[mask_h1])/len(stellar_mass) 
+        f_detected_err = binom_conf_interval(k=len(stellar_mass[mask_h1]), n=len(stellar_mass), confidence_level= 0.68269, interval='jeffreys')
+        f_detected_err_lower = f_detected - f_detected_err[0]
+        f_detected_err_upper = f_detected_err[1] - f_detected
+        
+        
+        # barh
+        ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
+        ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
+        
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        
+        # errorbar
+        hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
+        #mask_positive_n_det = bin_n_detected[mask_positive_n] > 0
+        ax_hist.errorbar(100*bin_f_detected, hist_bins_midpoint, xerr=[100*bin_f_detected_err_lower, 100*bin_f_detected_err_upper], yerr=None, ecolor='k', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=0.7, alpha=0.7)
+        
+        # print
+        if print_fdet:
+            print('--------------------------------')
+            print('HI Gas detection rate bins in ETGs:   sample: %s' %sample_input['name_of_preset'])
+            print('   bins with galaxies:   %s'%hist_bins[:-1][mask_positive_n])  
+            print('   bin counts:           %s'%bin_n[mask_positive_n])
+            print('   f_det:                %s'%np.around(bin_f_detected,3))  
+            print('     f_deterr lower: %s'%np.around(bin_f_detected_err_lower,3))  
+            print('     f_deterr upper: %s'%np.around(bin_f_detected_err_upper,3)) 
+            print('--------------------------------')
+            print('TOTAL HI GAS DETECTION RATE in ETG sample:')
+            print('  >  f_det:    %.3f (-%.3f + %.3f), \tcount: %s / %s'%(f_detected, f_detected_err_lower, f_detected_err_upper, len(stellar_mass[mask_h1]), len(stellar_mass)))
+            #answer_fdet = input("\n-----------------\nContinue? y/n? ")
+            #if answer_fdet == 'n':
+            #    raise Exception('Manual break at fdet')
+        
+    
+    #------------
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
+    
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin    = H1_mass_fraction.value[mask]
+            y_bin_h1 = H1_mass.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[y_bin_h1 > h1_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (16th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (84th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
+    
+    
+    #-----------------
+    # Add observations
+    if add_observational:
+        # Schawinski+14, used in Correa+17
+        # with equation (u∗ −r∗) = 0.25 log10(M∗/ M) − 0.495
+        #plt.plot([10**9, 10**15], [(0.25*np.log10(10**9))-0.495, (0.25*np.log10(10**15))-0.495], lw=1.3, ls='--', color='k', label='Schawinski+14', zorder=10)
+        print('no obs available yet')
+        
+    #-----------
+    # Axis formatting
+    axs.set_xlim(10**9.5, 10**12)
+    axs.set_ylim(10**-6, 10**0)
+    axs.set_xscale("log")
+    axs.set_yscale("log")
+    #plt.yticks(np.arange(-5, -1.4, 0.5))
+    #plt.xticks(np.arange(9.5, 12.5, 0.5))
+    axs.minorticks_on()
+    axs.tick_params(axis='x', which='minor')
+    axs.tick_params(axis='y', which='minor')
+    dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
+                     'exclusive_sphere_30kpc': '30 pkpc', 
+                     'exclusive_sphere_50kpc': '50 pkpc'}
+    dict_aperture_h1 = {'exclusive_sphere_3kpc': '3 pkpc',
+                        'exclusive_sphere_10kpc': '10 pkpc',
+                        'exclusive_sphere_30kpc': '30 pkpc', 
+                        'exclusive_sphere_50kpc': '50 pkpc'}
+    axs.set_xlabel(r'$M_{*}$ (%s) [M$_{\odot}$]'%dict_aperture[aperture])
+    axs.set_ylabel(r'$f_{\mathrm{H_{I}}}$')
+    if add_detection_hist:
+        #ax_hist.set_xscale("log")
+        ax_hist.minorticks_on()
+        ax_hist.set_xlim(0, 100)
+        ax_hist.set_ylim(-6, 0)
+        #ax_hist.xaxis.set_major_formatter(mtick.PercentFormatter())
+        ax_hist.set_yticks([])
+        ax_hist.set_xlabel(r'Det. [\%]')
+        #ax_hist.set_ylabel(r'$u^{*} - r^{*}$')
+        
+    #------------
+    # colorbar
+    if add_kappa_colourbar:
+        fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
+      
+    #-----------  
+    # Annotations
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    title_dict = {'all_galaxies': 'All galaxies',
+                  'all_galaxies_centrals': 'All central galaxies',
+                  'all_galaxies_satellites': 'All satellite galaxies',
+                  'all_ETGs': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$)',
+                  'all_ETGs_centrals': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$), centrals',
+                  'all_ETGs_satellites': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$), satellites',
+                  'all_ETGs_cluster': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$), cluster',
+                  'all_ETGs_groupfield': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$), group/field',
+                  'all_ETGs_plus_redspiral': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs)",
+                  'all_ETGs_plus_redspiral_centrals': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs), centrals",
+                  'all_ETGs_plus_redspiral_satellites': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs), satellites",
+                  'all_ETGs_plus_redspiral_cluster': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs), cluster',
+                  'all_ETGs_plus_redspiral_groupfield': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. FRs), group/field',
+                  'all_LTGs': 'LTGs ($\kappa_{\mathrm{co}}^{*}>0.4$)',
+                  'all_LTGs_excl_redspiral': 'LTGs ($\kappa_{\mathrm{co}}^{*}>0.4$, excl. red FRs)'
+                  }
+    axs.set_title(r'%s%s' %(title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
+    # Legend
+    for i, h2_i in enumerate([7, 8, 9, 10]):
+        s = (h2_i-(np.log10(h1_detection_limit)-1))**2.5
+        if i == 0:
+            axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{I}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
+        else:
+            axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
+    
+    
+    #-----------
+    # other
+    #plt.tight_layout()
+    
+    if savefig:
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        
+        plt.savefig("%s/etg_soap_analysis/Mstar_fracH1/%s_%s_%s_Mstar_fracH1_%s_H1ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h1, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
+        print("\n  SAVED: %s/etg_soap_analysis/Mstar_fracH1/%s_%s_%s_Mstar_fracH1_%s_H1ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h1, savefig_txt_save, file_format))
     if showfig:
         plt.show()
     plt.close()
@@ -2546,7 +3312,8 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
         axs.scatter(stellar_mass[~mask_h2], m200c[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], m200c[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], m200c[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], m200c[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], m200c[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -2575,7 +3342,7 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -2645,8 +3412,8 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -2701,6 +3468,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -2819,7 +3587,8 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
         axs.scatter(stellar_mass[~mask_h2], r50[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], r50[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], r50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], r50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], r50[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -2848,7 +3617,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -2871,6 +3640,39 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
+    
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = r50.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     
     #-----------------
@@ -2918,8 +3720,8 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
       
     #-----------  
     # Annotations
-    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -2946,7 +3748,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.1, alignment='right', markerfirst=False)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -2971,6 +3773,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -3092,7 +3895,8 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
         axs.scatter(stellar_mass[~mask_h2], r50H2[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], r50H2[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], r50H2[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], r50H2[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], r50H2[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -3121,7 +3925,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -3144,7 +3948,39 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
     
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = r50H2.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     #-----------------
     # Add observations
@@ -3191,8 +4027,8 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -3219,7 +4055,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.1, alignment='right', markerfirst=False)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -3244,6 +4080,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -3368,7 +4205,8 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
         axs.scatter(r50[~mask_h2], r50H2[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(r50[mask_h2], r50H2[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(r50[~mask_h2], r50H2[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(r50[~mask_h2], r50H2[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(r50[~mask_h2], r50H2[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -3397,7 +4235,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -3420,7 +4258,39 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(np.log10(0.5), np.log10(30), 0.2)  # Binning edges
     
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(r50) < hist_bins[i + 1])
+            y_bin = r50H2.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     #-----------------
     # Add observations
@@ -3467,8 +4337,8 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -3495,7 +4365,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.1, alignment='right', markerfirst=False)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -3639,7 +4509,8 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
         axs.scatter(r50[~mask_h2], H2_mass[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(r50[mask_h2], H2_mass[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(r50[~mask_h2], H2_mass[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(r50[~mask_h2], H2_mass[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(r50[~mask_h2], H2_mass[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -3668,7 +4539,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -3720,7 +4591,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
         # Convert bin centers back to linear space for plotting
         bin_centers = 10**np.array(bin_centers)
     
-        axs.plot(bin_centers, medians, color='k', linewidth=1, label='median', zorder=20)
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
         axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
         #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
@@ -3771,8 +4642,8 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -3827,6 +4698,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -3992,7 +4864,8 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
         axs.scatter(stellar_mass[~mask_h2], ellip[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], ellip[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], ellip[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], ellip[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], ellip[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -4021,7 +4894,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -4044,6 +4917,39 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
+    
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = ellip.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     
     #-----------------
@@ -4091,8 +4997,8 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -4119,7 +5025,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.1, alignment='right', markerfirst=False)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -4144,6 +5050,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -4309,7 +5216,8 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
         axs.scatter(stellar_mass[~mask_h2], triax[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], triax[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], triax[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], triax[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], triax[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -4338,7 +5246,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -4361,7 +5269,39 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
     
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = triax.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     #-----------------
     # Add observations
@@ -4408,8 +5348,8 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -4436,7 +5376,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.1, alignment='left', markerfirst=True)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -4461,6 +5401,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -4577,7 +5518,8 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
         axs.scatter(stellar_mass[~mask_h2], kappa_stars[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], kappa_stars[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], kappa_stars[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], kappa_stars[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], kappa_stars[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -4606,7 +5548,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh((hist_bins[:-1])[mask_positive_n], 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -4629,7 +5571,39 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
     
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = kappa_stars.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     #-----------------
     # Add observations
@@ -4676,8 +5650,8 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
       
     #-----------  
     # Annotations
-    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -4704,7 +5678,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.1, alignment='right', markerfirst=False)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -4732,6 +5706,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -4807,15 +5782,15 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
     #================================
     # Extra / Calculated values
     
-    # Stellar velocity dispersion and dispersion parameter from Davis+19
-    def _compute_velocity_dispersion(aperture_veldisp='50'):        # km/s
+    # Stellar velocity dispersion
+    def _compute_vel_disp(aperture_veldisp='50'):        # Msun^1/3 / sigma, Msun^1/3 km-1 s
         stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_%skpc.stellar_velocity_dispersion_matrix'%(aperture_veldisp))(data))[soap_indicies_sample]
         stellar_vel_disp_matrix.convert_to_units(u.km**2 / u.s**2)
         stellar_vel_disp_matrix.convert_to_physical()
         stellar_vel_disp = np.sqrt((stellar_vel_disp_matrix[:,0] + stellar_vel_disp_matrix[:,1] + stellar_vel_disp_matrix[:,2])/3)
-        
+
         return stellar_vel_disp
-    stellar_vel_disp50 = _compute_velocity_dispersion(aperture_veldisp='50')
+    stellar_vel_disp50 = _compute_vel_disp(aperture_veldisp='50')
     
     
     #--------------
@@ -4857,7 +5832,8 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
         axs.scatter(stellar_mass[~mask_h2], stellar_vel_disp50[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], stellar_vel_disp50[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], stellar_vel_disp50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], stellar_vel_disp50[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], stellar_vel_disp50[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -4886,7 +5862,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -4909,7 +5885,39 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
     
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = stellar_vel_disp50.value[mask]
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     #-----------------
     # Add observations
@@ -4956,8 +5964,8 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -4985,7 +5993,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.1, alignment='left', markerfirst=True)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -5010,6 +6018,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = False,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -5130,7 +6139,8 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
         axs.scatter(stellar_mass[~mask_h2], np.log10(specific_L_stars[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], np.log10(specific_L_stars[mask_h2]), c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], np.log10(specific_L_stars[~mask_h2]), c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], np.log10(specific_L_stars[~mask_h2]), c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], np.log10(specific_L_stars[~mask_h2]), s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -5159,7 +6169,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -5182,7 +6192,6 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
             #if answer_fdet == 'n':
             #    raise Exception('Manual break at fdet')
         
-    
     
     #-----------------
     # Add observations
@@ -5229,8 +6238,8 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -5257,7 +6266,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower left', handletextpad=0.1, alignment='left', markerfirst=True)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -5282,6 +6291,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
                    add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
+                   add_median_line = True,          # Median of detected
                    #---------------
                    print_fdet         = False,
                    #=====================================
@@ -5418,7 +6428,8 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
         axs.scatter(stellar_mass[~mask_h2], np.log10(eta_kin50[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(stellar_mass[mask_h2], np.log10(eta_kin50[mask_h2]), c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(stellar_mass[~mask_h2], np.log10(eta_kin50[~mask_h2]), c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(stellar_mass[~mask_h2], np.log10(eta_kin50[~mask_h2]), c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(stellar_mass[~mask_h2], np.log10(eta_kin50[~mask_h2]), s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -5447,7 +6458,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -5471,6 +6482,39 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
             #    raise Exception('Manual break at fdet')
         
     
+    #------------
+    # Median line of detected ETGs
+    if add_median_line:
+        #-----------------
+        # Define binning parameters
+        hist_bins = np.arange(9.5, 13.1, 0.25)  # Binning edges
+    
+        # Compute statistics in each bin
+        medians = []
+        lower_1sigma = []
+        upper_1sigma = []
+        bin_centers = []
+        for i in range(len(hist_bins) - 1):
+            mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
+            y_bin = np.log10(eta_kin50.value[mask])
+        
+            # Remove <107 H2 mass from sample
+            y_bin = y_bin[H2_mass.value[mask] > h2_detection_limit]
+        
+            if len(y_bin) >= 10:  # Ensure the bin contains data
+                medians.append(np.median(y_bin))
+                lower_1sigma.append(np.percentile(y_bin, 25))  # -1σ (25th percentile)
+                upper_1sigma.append(np.percentile(y_bin, 75))  # +1σ (75th percentile)
+                bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
+    
+
+        # Convert bin centers back to linear space for plotting
+        bin_centers = 10**np.array(bin_centers)
+    
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
+        axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
+        #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
     
     #-----------------
     # Add observations
@@ -5517,8 +6561,8 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
       
     #-----------  
     # Annotations
-    axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -5545,7 +6589,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower left', handletextpad=0.1, alignment='left', markerfirst=True)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -5691,7 +6735,8 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         axs.scatter(np.log10(specific_L_stars[~mask_h2]), H2_mass[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
         sc_points = axs.scatter(np.log10(specific_L_stars[mask_h2]), H2_mass[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
-        axs.scatter(np.log10(specific_L_stars[~mask_h2]), H2_mass[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        #axs.scatter(np.log10(specific_L_stars[~mask_h2]), H2_mass[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(np.log10(specific_L_stars[~mask_h2]), H2_mass[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -5720,7 +6765,7 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='w', edgecolor='k', linewidth=0.7) 
         ax_hist.barh(((hist_bins[:-1])[mask_positive_n]), 100*bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='k', linewidth=0.7, alpha=0.7) 
         
-        ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
+        #ax_hist.axvline(100*f_detected, ls='--', c='grey', lw=0.7)
         
         # errorbar
         hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
@@ -5772,7 +6817,7 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
     
-        axs.plot(bin_centers, medians, color='k', linewidth=1, label='median', zorder=20)
+        axs.plot(bin_centers, medians, color='k', linewidth=1, label='detected median', zorder=20)
         axs.plot(bin_centers, lower_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, upper_1sigma, color='k', linewidth=0.7, ls='--', zorder=20)
         #axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color='k', alpha=0.3)
@@ -5822,8 +6867,8 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
       
     #-----------  
     # Annotations
-    #axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
-    axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    ##axs.text(0.77, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    #axs.text(0.05, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -5910,7 +6955,7 @@ soap_indicies_sample_44, _, sample_input_44 = _load_soap_sample(sample_dir, csv_
 
 
 #===================================
-# Plot per Young+11 as just red and black pluses and circles, with hist bars for detection limit
+# Plot per Young+11 as just red and black circles and circles, with hist bars for detection limit
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
     _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         aperture_h2 = 'exclusive_sphere_50kpc',
@@ -5958,7 +7003,7 @@ soap_indicies_sample_44, _, sample_input_44 = _load_soap_sample(sample_dir, csv_
                           print_fdet = True,
                          title_text_in = ' 30pkpc H2',
                         savefig       = True)"""
-
+                        
 #---------------------
 # Plot fdet with H2_aperture as an errorplot line plot. DOESNT USE LOADED SAMPLES FROM ABOVE
 """_aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
@@ -5979,7 +7024,7 @@ _aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxie
                           print_fdet = True,
                          title_text_in = 'satellites',
                          savefig_txt = '_satellite',
-                        savefig       = True)  """
+                        savefig       = True) """ 
                         
 #----------------------       
 # Plot fraction with H2 / HI / gas holes in 3kpc and 10kpc w.r.t sample detected with H2 > h2_detection_limit. DOESNT USE LOADED SAMPLES FROM ABOVE
@@ -6055,20 +7100,15 @@ _aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450
     _etg_stelmass_sfr(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
-                        savefig       = True)"""
+                        savefig       = True)
 # Plot stelmass - sSFR
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
     _etg_stelmass_ssfr(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
-                        savefig       = True)"""
+                        savefig       = True)
 # Plot stelmass - SFE = SFR / M_H2
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222]):
-    _etg_stelmass_sfe(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
-                        add_detection_hist = True,
-                          print_fdet = True,
-                        savefig       = True)"""
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_111, soap_indicies_sample_222], [sample_input_111, sample_input_222]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222]):
     _etg_stelmass_sfe(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
@@ -6082,6 +7122,14 @@ _aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450
     _etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
+                          print_stats = True,
+                        savefig       = True)"""
+# Plot stelmass - H1 mass
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222, soap_indicies_sample_3, soap_indicies_sample_4, soap_indicies_sample_33, soap_indicies_sample_44], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222, sample_input_3, sample_input_4, sample_input_33, sample_input_44]):
+    _etg_stelmass_h1mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        add_detection_hist = False,
+                        add_median_line = True,
+                          print_stats = True,
                         savefig       = True)"""
 
 
@@ -6089,6 +7137,13 @@ _aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450
 # Plot stelmass - H2 mass fraction (H2 / H2 + M*)
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222, soap_indicies_sample_3, soap_indicies_sample_4, soap_indicies_sample_33, soap_indicies_sample_44], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222, sample_input_3, sample_input_4, sample_input_33, sample_input_44]):
     _etg_stelmass_h2massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        add_detection_hist = True,
+                          print_fdet = True,
+                        add_median_line = True,
+                        savefig       = True)"""
+# Plot stelmass - H1 mass fraction (H1 / H1 + M*)
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222, soap_indicies_sample_3, soap_indicies_sample_4, soap_indicies_sample_33, soap_indicies_sample_44], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222, sample_input_3, sample_input_4, sample_input_33, sample_input_44]):
+    _etg_stelmass_h1massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
                         add_median_line = True,
@@ -6120,10 +7175,10 @@ _aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450
     _etg_stelmass_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
-                        savefig       = True)
+                        savefig       = True)"""
 #-------------------- 
 # Plot r50  - r50 H2
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
     _etg_r50_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
@@ -6152,15 +7207,15 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_
     _etg_stelmass_triax(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
-                        savefig       = True)"""
-
+                        savefig       = True)
 #-------------------
 # Plot stelmass - kappa_co stars
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
     _etg_stelmass_kappaco(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
                         savefig       = True)"""
+
 
 #===================================
 # Stellar kinematics 
@@ -6169,25 +7224,25 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_
     _etg_stelmass_veldisp(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
-                        savefig       = True)"""
+                        savefig       = True)
 #-------------------
 # Plot stelmass - stellar specific angular momentum. (note we use 50 kpc aperture, observations use r50)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
     _etg_stelmass_lstar(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
-                        savefig       = True)"""
+                        savefig       = True)
 #-------------------
 # Plot stellar specific angular momentum - H2 mass (note we use 50 kpc aperture, observations use r50)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
     _etg_lstar_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                           print_fdet = False,
                         add_median_line = True,
-                        savefig       = True)"""
+                        savefig       = True)
 #-------------------
 # Plot stelmass - etakin = Msun^1/3 / sigma, Msun^1/3 km-1 s. (note we use 50 kpc aperture, observations use r50)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
     _etg_stelmass_etakin(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,

@@ -251,8 +251,8 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     #print('Using manual recenter due to velocity bug')
     # Manual recentre because bugged velocity in L00250752 simulation
     # REMOVE FROM L100 RUN
-    sg.recentre(sg.halo_catalogue.centre)
-    vcentre = sg.halo_catalogue.velocity_centre
+    sg.recentre(sg.halo_catalogue.centre)               # Defaults to The centre of the subhalo as given by the halo finder. For HBTplus this is equal to the position of the most bound particle in the subhalo.
+    vcentre = sg.halo_catalogue.velocity_centre         # Defaults to CentreOfMassVelocity of bound subhalo
     vcentre.cosmo_factor = cosmo_factor(a**0, sg.metadata.scale_factor)
     sg.recentre_velocity(vcentre)
     
@@ -284,20 +284,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     r_mag50           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_luminosity.squeeze()[2])
     
     is_central      = sg.halo_catalogue.input_halos.is_central
-    
-    
-    
-    
-    print(sg.gas.masses)
-    print(' ')
-    print(sg.gas.coordinates)
-    print(' ')
-    print(sg.stars.masses)
-    print(' ')
-    print(sg.stars.coordinates)
-    
-    
-    
+        
     
     #---------------
     # Triaxiality and ellipticity
