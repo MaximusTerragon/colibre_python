@@ -1021,10 +1021,10 @@ def _create_soap_sample(simulation_run = '',
                       name_of_preset = 'random_ETGs_z0',
                     csv_file = True)"""
 # Select 20 random ETGs that have at least 1e7 H2
-_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'random_h2_ETGs_z0',
-                    csv_file = True)
+                    csv_file = True)"""
 
 
 

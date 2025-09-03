@@ -313,7 +313,7 @@ def _create_Lagos2014_H1():
         grp.attrs["bibcode"]      = "2014MNRAS.443.1002L"
         grp.attrs["citation"]     = "Lagos et al. (2014)"
         grp.attrs["comment"]      = "Original data from ATLAS3D. No cosmology correction needed."
-        grp.attrs["name"]         = "HI mass function and mass function fraction from ATLAS3D"
+        grp.attrs["name"]         = "HI mass function and mass function fraction from ATLAS3D ready to be plotted"
         grp.attrs["plot_as"]      = "points" 
         grp.attrs["redshift"]     = 0.0
         grp.attrs["redshift_lower"] = 0.0
@@ -336,21 +336,22 @@ def _create_Lagos2014_H1():
         
         
         #-----------
-        # y-values: ATLAS3D 1/V corrected
+        # y-values: ATLAS3D 1/V corrected mass function
         grp = f.create_group("data/massfunc/1Vcorr/x")
         grp.attrs["comoving"]    = True
         grp.attrs["description"] = 'HI mass function 1/V corrected'
         grp = f.create_group("data/massfunc/1Vcorr/y")
         grp.attrs["comoving"]    = True
-        grp.attrs["description"] = 'Phi (GSMF)'
+        grp.attrs["description"] = 'Phi (H1MF)'
         
         # Data
-        log_x      = 
-        y          = 
-        y_upper_y    = 
-        y_lower_y    = 
+        log_x      = np.array([6.3705, 6.6187, 6.8696, 7.1201, 7.3697, 7.6227, 7.8690, 8.1228, 8.3732, 8.6220, 8.8718, 9.1232, 9.3746, 9.6232, 9.8744])
+        x          = 10**log_x
+        y            = 10**np.array([-1.9976, -2.3729, -2.0529, -3.1306, -3.5021, -3.5780, -3.1822, -3.1736, -3.0329, -3.0392, -3.1097, -3.4006, -3.0342, -3.8781, -3.8833])
+        y_upper_y    = 10**np.array([-1.5712, -1.9505, -1.8618, -2.6953, -3.0720, -3.2750, -2.9915, -2.9947, -2.8776, -2.8750, -2.9285, -3.1580, -2.8804, -3.4530, -3.4486])
+        y_lower_y    = 10**np.array([-2.4372, -2.8106, -2.2528, -3.5604, -3.9403, -3.8790, -3.3820, -3.3700, -3.2017, -3.1992, -3.2821, -3.6550, -3.2023, -4.3141, -4.3190])
         y_scat = np.stack((y-y_lower_y, y_upper_y-y), axis=0)
-            
+        
         # Create dataset
         dset = f.create_dataset("data/massfunc/1Vcorr/x/values", data=x)
         dset.attrs["units"]    = 'Msun'
@@ -360,15 +361,145 @@ def _create_Lagos2014_H1():
         dset.attrs["units"]    = 'Mpc**(-3)'
         
         
+        #-----------
+        # y-values: ATLAS3D non-1/V corrected mass FRACTION function
+        grp = f.create_group("data/massfracfunc/x")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'HI mass fraction, not 1/V corrected, taken from HI/L_K distribution with conversions already applied'
+        grp = f.create_group("data/massfracfunc/y")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'HI mass fraction function, not 1/V corrected, taken from HI/L_K distribution function with conversions already applied'
         
+        # Data
+        log_x      = np.array([-4.1236, -3.8745, -3.6268, -3.3784, -3.1290, -2.8775, -2.6269, -2.3756, -2.1283, -1.8792, -1.6309, -1.3787, -1.1305, -0.88018, -0.37902])
+        x          = 10**log_x
+        y            = 10**np.array([-3.8781, -3.5823, -3.2749, -3.3948, -3.5706, -3.4017, -3.1747, -3.4025, -3.1708, -3.0969, -2.9185, -3.1816, -3.5793, -3.5786, -3.8797])
+        y_upper_y    = 10**np.array([-3.4462, -3.2696, -3.0628, -3.1508, -3.2674, -3.1495, -2.9833, -3.1469, -2.9889, -2.9224, -2.7776, -2.9817, -3.2694, -3.2704, -3.4409])
+        y_lower_y    = 10**np.array([-4.3150, -3.8849, -3.4909, -3.6460, -3.8802, -3.6419, -3.3684, -3.6461, -3.3737, -3.2766, -3.0663, -3.3711, -3.8790, -3.8817, -4.3111])
+        y_scat = np.stack((y-y_lower_y, y_upper_y-y), axis=0)
+        
+        # Unit conversions -> given as M*/L -> * L/M* to get M*/M* | mass-to-light ratio of K_S band for ETGs, with mass-to-light ratio of 0.5 M*/L* for ETGs
+        x      = x * (1/0.5)
+        #y      = 
+        #y_scat = 
+        
+        # Create dataset
+        dset = f.create_dataset("data/massfracfunc/x/values", data=x)
+        dset.attrs["units"]    = 'dimensionless'
+        dset = f.create_dataset("data/massfracfunc/y/values", data=y)
+        dset.attrs["units"]    = 'Mpc**(-3)'
+        dset = f.create_dataset("data/massfracfunc/y/scatter", data=y_scat)
+        dset.attrs["units"]    = 'Mpc**(-3)'
         
         
         print("Successfully created: %s/GalaxyHIMassFunction/Lagos2014_H1.hdf5"%obs_dir)
 
+# H1 mass func and mass fraction func
+def _create_Lagos2014_H2():
+    # Create and write
+    with h5py.File("%s/GalaxyH2MassFunction/Lagos2014_H2.hdf5"%obs_dir, "a") as f:
+        
+        # Creating metadata
+        grp = f.create_group("metadata")
+        grp.attrs["bibcode"]      = "2014MNRAS.443.1002L"
+        grp.attrs["citation"]     = "Lagos et al. (2014)"
+        grp.attrs["comment"]      = "Original data from ATLAS3D. No cosmology correction needed."
+        grp.attrs["name"]         = "H2 mass function and mass function fraction from ATLAS3D ready to be plotted, divided by 1.36 to remove He"
+        grp.attrs["plot_as"]      = "points" 
+        grp.attrs["redshift"]     = 0.0
+        grp.attrs["redshift_lower"] = 0.0
+        grp.attrs["redshift_upper"] = 0.0
+        
+        # Creating cosmology metadata
+        grp = f.create_group("cosmology")
+        grp.attrs["H0"]         = 68.1
+        grp.attrs["Neff"]       = 3.046
+        grp.attrs["Ob0"]        = 0.0486
+        grp.attrs["Ode0"]       = 0.693922
+        grp.attrs["Om0"]        = 0.306
+        grp.attrs["Tcmb0"]      = 2.7255
+        grp.attrs["m_nu"]       = np.array([0.0, 0.0, 0.0])
+        grp.attrs["m_nu_units"] = 'eV'
+        grp.attrs["name"]       = 'Abbott22'
+        
+        #-------------------------------
+        # Creating dataset + cosmology
+        
+        
+        #-----------
+        # y-values: ATLAS3D 1/V corrected mass function
+        grp = f.create_group("data/massfunc/1Vcorr/x")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'H2 mass function 1/V corrected, divided by 1.36 for He'
+        grp = f.create_group("data/massfunc/1Vcorr/y")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'Phi (H2MF)'
+        
+        # Data
+        log_x      = np.array([7.0929, 7.2954, 7.4958, 7.6934, 7.8960, 8.0955, 8.2971, 8.4990, 8.6996, 8.8991, 9.0979, 9.2980])
+        x          = 10**log_x
+        y            = 10**np.array([-2.6063, -1.9020, -2.7252, -2.8998, -3.0271, -2.9406, -2.8971, -3.0543, -2.9409, -3.8937, -3.5951, -3.8995])
+        y_upper_y    = 10**np.array([-2.1748, -1.7718, -2.4802, -2.6863, -2.8508, -2.7971, -2.7642, -2.8928, -2.8028, -3.4681, -3.2932, -3.4711])
+        y_lower_y    = 10**np.array([-3.0360, -2.0460, -2.9777, -3.1211, -3.2110, -3.0813, -3.0370, -3.2202, -3.0873, -4.3301, -3.9023, -4.3271])
+        y_scat = np.stack((y-y_lower_y, y_upper_y-y), axis=0)
+        
+        # Unit conversions -> given as M*/L -> * L/M* to get M*/M* | mass-to-light ratio of K_S band for ETGs, with mass-to-light ratio of 0.5 M*/L* for ETGs, divided by 1.36 for He
+        x      = x / 1.36
+        
+        # Create dataset
+        dset = f.create_dataset("data/massfunc/1Vcorr/x/values", data=x)
+        dset.attrs["units"]    = 'Msun'
+        dset = f.create_dataset("data/massfunc/1Vcorr/y/values", data=y)
+        dset.attrs["units"]    = 'Mpc**(-3)'
+        dset = f.create_dataset("data/massfunc/1Vcorr/y/scatter", data=y_scat)
+        dset.attrs["units"]    = 'Mpc**(-3)'
+        
+        
+        #-----------
+        # y-values: ATLAS3D 1/V uncorrected mass FRACTION function
+        grp = f.create_group("data/massfracfunc/x")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'H2 mass fraction, not 1/V corrected, taken from HI/L_K distribution with conversions already applied, divided by 1.36'
+        grp = f.create_group("data/massfracfunc/y")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'H2 mass fraction function, not 1/V corrected, taken from HI/L_K distribution function with conversions already applied'
+        
+        # Data
+        log_x      = np.array([-3.5051, -3.3019, -3.1039, -2.9018, -2.7025, -2.5027, -2.3029, -2.1024, -1.9027, -1.7029, -1.5041, -1.2996])
+        x          = 10**log_x
+        y            = 10**np.array([-3.1985, -3.2931, -3.8958, -2.9894, -3.2928, -2.8905, -3.4152, -3.0510, -2.9930, -3.2941, -3.2911, -3.1944])
+        y_upper_y    = 10**np.array([-2.9971, -3.0758, -3.4584, -2.8369, -3.0733, -2.7578, -3.1684, -2.8875, -2.8355, -3.0714, -3.0754, -3.0001])
+        y_lower_y    = 10**np.array([-3.3898, -3.5090, -4.3300, -3.1455, -3.5111, -3.0317, -3.6673, -3.2095, -3.1377, -3.5041, -3.5089, -3.3912])
+        y_scat = np.stack((y-y_lower_y, y_upper_y-y), axis=0)
+        
+        # Unit conversions -> mass-to-light ratio of K_S band for ETGs, with mass-to-light ratio of 0.5 M*/L* for ETGs, divided by 1.36 for He
+        x      = (x * (1/0.5))/1.36        
+        #y      = 
+        #y_scat = 
+        
+        # Create dataset
+        dset = f.create_dataset("data/massfracfunc/x/values", data=x)
+        dset.attrs["units"]    = 'dimensionless'
+        dset = f.create_dataset("data/massfracfunc/y/values", data=y)
+        dset.attrs["units"]    = 'Mpc**(-3)'
+        dset = f.create_dataset("data/massfracfunc/y/scatter", data=y_scat)
+        dset.attrs["units"]    = 'Mpc**(-3)'
+        
+        
+        print("Successfully created: %s/GalaxyH2MassFunction/Lagos2014_H2.hdf5"%obs_dir)
 
 
-
-#pd.read_csv('file.csv', delimiter=' ', delim_whitespace=True)
+#--------------
+# Read ATLAS3D results from Davis+19 from csv, export as hdf5
+def _convert_Davis2019_ATLAS3D():
+    # Read CSV from Tim
+    
+    #pd.read_csv('file.csv', sep='\s+', )
+    
+    # Create and write
+    # divide 1.36 for H2, un-log values
+    
+    print('a')
 
       
 #================================   

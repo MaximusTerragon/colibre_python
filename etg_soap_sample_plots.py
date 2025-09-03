@@ -76,7 +76,7 @@ def _sample_stelmass_u_r(csv_sample = '',
     # Get metadata from file
     z = data.metadata.redshift
     run_name = data.metadata.run_name
-    box_size = data.metadata.boxsize[0]
+    box_size = data.metadata.boxsize[0].to(u.Mpc)
     
     
     #-------------------------------
@@ -142,7 +142,7 @@ def _sample_stelmass_u_r(csv_sample = '',
     print('                              of which u-r>2:    %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG_red'], dict_sample_numbers['kappa_mag_cut']['ETG_red']/dict_sample_numbers['kappa_mag_cut']['ETG']))
     
     # Plot scatter
-    ax_scat.scatter(stellar_mass, mag_plot, c=kappa_stars, s=1.5, cmap=mymap, norm=norm, marker='o', linewidths=0, edgecolor='none', alpha=0.75)
+    ax_scat.scatter(np.log10(stellar_mass), mag_plot, c=kappa_stars, s=1.5, cmap=mymap, norm=norm, marker='o', linewidths=0, edgecolor='none', alpha=0.75)
 
         
     #-----------------
@@ -165,10 +165,10 @@ def _sample_stelmass_u_r(csv_sample = '',
         
     #-----------
     # Axis formatting
-    ax_scat.set_xlim(10**(9.5), 10**12)
+    ax_scat.set_xlim(9.5, 12.5)
     ax_hist.set_ylim(0.5, 3)
     ax_scat.set_ylim(0.5, 3)
-    ax_scat.set_xscale("log")
+    #ax_scat.set_xscale("log")
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
     ax_scat.minorticks_on()
@@ -176,7 +176,7 @@ def _sample_stelmass_u_r(csv_sample = '',
     ax_scat.tick_params(axis='x', which='minor')
     dict_aperture = {'exclusive_sphere_30kpc': '30', 
                      'exclusive_sphere_50kpc': '50'}
-    ax_scat.set_xlabel(r'$M_{*}$ ($%s$ pkpc) [M$_{\odot}$]'%dict_aperture[aperture])
+    ax_scat.set_xlabel(r'log$_{10}$ $M_{*}$ ($%s$ pkpc) [M$_{\odot}$]'%dict_aperture[aperture])
     ax_hist.set_xlabel(r'Normalised freq.')
     ax_scat.set_yticklabels([])
     ax_hist.set_ylabel(r'$u^{*} - r^{*}$')
@@ -249,6 +249,9 @@ def _sample_stellar_mass_function(csv_samples = [],
     dict_ls     = {'all_galaxies': '-',
                    'all_ETGs': '--',
                    'all_ETGs_plus_redspiral': '-.'}
+    dict_ms     = {'all_galaxies': 'o',
+                   'all_ETGs': 's',
+                   'all_ETGs_plus_redspiral': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -264,7 +267,7 @@ def _sample_stellar_mass_function(csv_samples = [],
         # Get metadata from file
         z = data.metadata.redshift
         run_name = data.metadata.run_name
-        box_size = data.metadata.boxsize[0]
+        box_size = data.metadata.boxsize[0].to(u.Mpc)
     
     
         #-------------------------------
@@ -299,19 +302,25 @@ def _sample_stellar_mass_function(csv_samples = [],
         hist_err    = hist_err[hist_mask_finite]
         hist_n      = hist_n[hist_mask_finite]
         
-        # Find bins with more than 1 entry
-        hist_mask_n = hist_n > 1
-    
-    
+        # Find bins with more than 10 entry
+        hist_mask_n = hist_n >= 10
+        
+        # Make fake arrays to add to plotted entries to manually get math.nan values, thus a break
+        fa_good = np.zeros(len(bin_midpoints))
+        fa_bad = np.zeros(len(bin_midpoints))
+        fa_good[~hist_mask_n] = math.nan
+        fa_bad[hist_mask_n] = math.nan
+        
         #-----------
-        # Plotting error for n >= 1, and single dots for others
+        # Plotting error for n >= 10, and single dots for others
         label_i = dict_labels[sample_input['name_of_preset']]
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
-            
-        axs.fill_between(10**bin_midpoints[hist_mask_n], 10**(np.log10(hist_masses[hist_mask_n]-hist_err[hist_mask_n])), 10**(np.log10(hist_masses[hist_mask_n]+hist_err[hist_mask_n])), alpha=0.4, fc=linecol)
-        lines = axs.plot(10**bin_midpoints[hist_mask_n], 10**np.log10(hist_masses[hist_mask_n]), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol)
-        axs.plot(10**bin_midpoints[~hist_mask_n], 10**np.log10(hist_masses[~hist_mask_n]), 'o', color=lines[0].get_color(), ms=2)
+        ms_i    = dict_ms[sample_input['name_of_preset']]
+        
+        axs.fill_between(bin_midpoints+fa_good, (10**(np.log10(hist_masses-hist_err)))+fa_good, (10**(np.log10(hist_masses+hist_err)))+fa_good, alpha=0.4, fc=linecol)
+        lines = axs.plot(bin_midpoints+fa_good, (10**np.log10(hist_masses))+fa_good, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, marker=ms_i, ms=1.5)
+        axs.plot(bin_midpoints+fa_bad, (10**np.log10(hist_masses))+fa_bad, marker=ms_i, color=lines[0].get_color(), ms=1.5, ls='None')
         
     #-----------------
     # Add observations
@@ -362,7 +371,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             h_new = 0.681
             obs_mass = obs_mass * (h_old/h_new)**2
             
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Leja+20 ($z=0.2$)', ls='-', linewidth=1, alpha=0.8, zorder=-20, c='C2')      
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Leja+20 ($z=0.2$)', ls='-', linewidth=1, alpha=0.9, zorder=-20, c='C2')      
         if add_driver2022_old:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyStellarMassFunction/Driver2022.hdf5'%obs_dir, 'r') as file:
@@ -389,7 +398,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             h_new = 0.681
             obs_mass = obs_mass * (h_old/h_new)**2
             
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Driver+22 (GAMA-DR4)', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.2, alpha=0.8, zorder=-20, c='C0')              
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Driver+22 (GAMA-DR4)', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.5, alpha=0.9, zorder=-20, c='C0')              
         if add_driver2022:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyStellarMassFunction/Driver2022_complete.hdf5'%obs_dir, 'r') as file:
@@ -411,7 +420,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
                         
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Driver+22 (GAMA-DR4)', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.2, alpha=0.8, zorder=-20, c='C7')
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Driver+22 (GAMA-DR4)', ls='none', linewidth=1, elinewidth=0.7, marker='o', ms=1.5, alpha=0.9, zorder=-20, c='C7')
         if add_driver2022_etg:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyStellarMassFunction/Driver2022_complete.hdf5'%obs_dir, 'r') as file:
@@ -433,7 +442,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
                         
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Driver+22 ETGs', ls='none', linewidth=1, elinewidth=0.7, marker='o', ms=1.2, alpha=0.8, zorder=-20, c='C4')
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Driver+22 ETGs', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.5, alpha=0.9, zorder=-20, c='C4')
         if add_driver2022_ltg:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyStellarMassFunction/Driver2022_complete.hdf5'%obs_dir, 'r') as file:
@@ -455,7 +464,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
                         
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Driver+22 LTGs', ls='none', linewidth=1, elinewidth=0.7, marker='D', ms=1.2, alpha=0.8, zorder=-20, c='C4')
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Driver+22 LTGs', ls='none', linewidth=1, elinewidth=0.7, marker='D', ms=1.5, alpha=0.9, zorder=-20, c='C4')
         
         if add_kelvin2014:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
@@ -478,7 +487,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
                         
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Kelvin+14 (GAMA-DR1)', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.2, alpha=0.8, zorder=-20, c='C5')
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Kelvin+14 (GAMA-DR1)', ls='none', linewidth=1, elinewidth=0.7, marker='o', ms=1.5, alpha=0.9, zorder=-20, c='C5')
         if add_kelvin2014_etg:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyStellarMassFunction/Kelvin2014.hdf5'%obs_dir, 'r') as file:
@@ -500,7 +509,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
                         
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Kelvin+14 ETGs', ls='none', linewidth=1, elinewidth=0.7, marker='o', ms=1.2, alpha=0.8, zorder=-20, c='C6')
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Kelvin+14 ETGs', ls='none', linewidth=1, elinewidth=0.7, marker='v', ms=1.5, alpha=0.9, zorder=-20, c='C6')
         if add_kelvin2014_etg_plus_lbs:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyStellarMassFunction/Kelvin2014.hdf5'%obs_dir, 'r') as file:
@@ -522,7 +531,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
                         
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Kelvin+14 ETGs incl. LBS', ls='none', linewidth=1, elinewidth=0.7, marker='s', ms=1.2, alpha=0.8, zorder=-20, c='C3')
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Kelvin+14 ETGs incl. LBS', ls='none', linewidth=1, elinewidth=0.7, marker='v', ms=1.5, alpha=0.9, zorder=-20, c='C3')
         if add_kelvin2014_ltg:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyStellarMassFunction/Kelvin2014.hdf5'%obs_dir, 'r') as file:
@@ -544,7 +553,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
                         
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Kelvin+14 LTGs', ls='none', linewidth=1, elinewidth=0.7, marker='D', ms=1.2, alpha=0.8, zorder=-20, c='C8')
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Kelvin+14 LTGs', ls='none', linewidth=1, elinewidth=0.7, marker='D', ms=1.5, alpha=0.9, zorder=-20, c='C8')
         
         if add_kelvin2014_schechter:  # ($z=0.0$)
             # Schechter line values, see Schechter 1976
@@ -585,7 +594,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             phi_M_2 = schechter_mass(M, 10**log_Mstar_2, add_kelvin2014['SchechterFunc_2']['alpha'], add_kelvin2014['SchechterFunc_2']['phi_star']) * dlogM * 0.01     # multiply by bin width, and remove dex**-1 dependence
             
             # Plot double schechter
-            axs.plot(M, phi_M_1 + phi_M_2, label='Kelvin+14 (GAMA-DR1)', ls='-', linewidth=1, alpha=0.8, zorder=-30, c='C6')  
+            axs.plot(np.log10(M), phi_M_1 + phi_M_2, label='Kelvin+14 (GAMA-DR1)', ls='-', linewidth=1, alpha=0.9, zorder=-30, c='C6')  
         if add_kelvin2014_etg_schechter:  # ($z=0.0$)
             # Schechter line values, see Schechter 1976
             dict_kelvin2014_etg = {'SchechterFunc': {'log_Mstar': 10.60,
@@ -612,7 +621,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             # Evaluate Schechter function
             phi_M = schechter_mass(M, 10**log_Mstar, dict_kelvin2014_etg['SchechterFunc']['alpha'], dict_kelvin2014_etg['SchechterFunc']['phi_star']) * dlogM * 0.01     # multiply by bin width, and remove dex**-1 dependence
                 
-            axs.plot(M, phi_M, label='Kelvin+14 ETGs (GAMA-DR1)', ls='-', linewidth=1, alpha=0.8, zorder=-30, c='C2')  
+            axs.plot(np.log10(M), phi_M, label='Kelvin+14 ETGs (GAMA-DR1)', ls='-', linewidth=1, alpha=0.9, zorder=-30, c='C2')  
         if add_kelvin2014_etg_plus_lbs_schechter:  # ($z=0.0$)
             # Schechter line values, see Schechter 1976
             add_kelvin2014_etg_plus_lbs = {'SchechterFunc_1': {'log_Mstar': 10.65,
@@ -652,7 +661,7 @@ def _sample_stellar_mass_function(csv_samples = [],
             phi_M_2 = schechter_mass(M, 10**log_Mstar_2, add_kelvin2014_etg_plus_lbs['SchechterFunc_2']['alpha'], add_kelvin2014_etg_plus_lbs['SchechterFunc_2']['phi_star']) * dlogM * 0.01     # multiply by bin width, and remove dex**-1 dependence
             
             # Plot double schechter
-            axs.plot(M, phi_M_1 + phi_M_2, label='Kelvin+14 ETGs incl. LBS\n(GAMA-DR1)', ls='-', linewidth=1, alpha=0.8, zorder=-30, c='C5')  
+            axs.plot(np.log10(M), phi_M_1 + phi_M_2, label='Kelvin+14 ETGs incl. LBS\n(GAMA-DR1)', ls='-', linewidth=1, alpha=0.9, zorder=-30, c='C5')  
         if add_kelvin2014_ltg_schechter:
             # Schechter line values, see Schechter 1976
             dict_kelvin2014_ltg = {'SchechterFunc': {'log_Mstar': 10.70,
@@ -679,22 +688,23 @@ def _sample_stellar_mass_function(csv_samples = [],
             # Evaluate Schechter function
             phi_M = schechter_mass(M, 10**log_Mstar, dict_kelvin2014_ltg['SchechterFunc']['alpha'], dict_kelvin2014_ltg['SchechterFunc']['phi_star']) * dlogM * 0.01     # multiply by bin width, and remove dex**-1 dependence
                 
-            axs.plot(M, phi_M, label='Kelvin+14 (LTGs)', ls='-', linewidth=1, alpha=0.8, zorder=-30, c='C4')
+            axs.plot(np.log10(M), phi_M, label='Kelvin+14 (LTGs)', ls='-', linewidth=1, alpha=0.9, zorder=-30, c='C4')
             
             
             
     #-----------
     # Axis formatting
-    plt.xlim(10**9.5, 10**12)
+    plt.xlim(9.5, 12.5)
     plt.ylim(10**(-5.5), 10**(-1.5))
-    plt.xscale("log")
+    axs.minorticks_on()
+    #plt.xscale("log")
     plt.yscale("log")
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
 
     dict_aperture = {'exclusive_sphere_30kpc': '30 pkpc', 
                      'exclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'$M_*$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture]))
+    plt.xlabel(r'log$_{10}$ $M_*$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture]))
     plt.ylabel(r'dn/dlog$_{10}$($M$) [cMpc$^{-3}$]')
       
     #-----------  
@@ -726,7 +736,7 @@ def _sample_H2_mass_function(csv_samples = [],
                           aperture = 'exclusive_sphere_50kpc', 
                           aperture_h2 = 'exclusive_sphere_50kpc', 
                           #----------
-                          add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
+                          add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -753,6 +763,9 @@ def _sample_H2_mass_function(csv_samples = [],
     dict_ls     = {'all_galaxies': '-',
                    'all_ETGs': '--',
                    'all_ETGs_plus_redspiral': '-.'}
+    dict_ms     = {'all_galaxies': 'o',
+                   'all_ETGs': 's',
+                   'all_ETGs_plus_redspiral': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -768,7 +781,7 @@ def _sample_H2_mass_function(csv_samples = [],
         # Get metadata from file
         z = data.metadata.redshift
         run_name = data.metadata.run_name
-        box_size = data.metadata.boxsize[0]
+        box_size = data.metadata.boxsize[0].to(u.Mpc)
     
     
         #-------------------------------
@@ -807,19 +820,25 @@ def _sample_H2_mass_function(csv_samples = [],
         hist_err    = hist_err[hist_mask_finite]
         hist_n      = hist_n[hist_mask_finite]
         
-        # Find bins with more than 1 entry
-        hist_mask_n = hist_n > 1
-    
-    
+        # Find bins with more than 10 entry
+        hist_mask_n = hist_n >= 10
+        
+        # Make fake arrays to add to plotted entries to manually get math.nan values, thus a break
+        fa_good = np.zeros(len(bin_midpoints))
+        fa_bad = np.zeros(len(bin_midpoints))
+        fa_good[~hist_mask_n] = math.nan
+        fa_bad[hist_mask_n] = math.nan
+        
         #-----------
-        # Plotting error for n >= 1, and single dots for others
+        # Plotting error for n >= 10, and single dots for others
         label_i = dict_labels[sample_input['name_of_preset']]
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
+        ms_i    = dict_ms[sample_input['name_of_preset']]
         
-        axs.fill_between(10**bin_midpoints[hist_mask_n], 10**(np.log10(hist_masses[hist_mask_n]-hist_err[hist_mask_n])), 10**(np.log10(hist_masses[hist_mask_n]+hist_err[hist_mask_n])), alpha=0.4, fc=linecol)
-        lines = axs.plot(10**bin_midpoints[hist_mask_n], 10**np.log10(hist_masses[hist_mask_n]), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol)
-        axs.plot(10**bin_midpoints[~hist_mask_n], 10**np.log10(hist_masses[~hist_mask_n]), 'o', color=lines[0].get_color(), ms=2)
+        axs.fill_between(bin_midpoints+fa_good, (10**(np.log10(hist_masses-hist_err)))+fa_good, (10**(np.log10(hist_masses+hist_err)))+fa_good, alpha=0.4, fc=linecol)
+        lines = axs.plot(bin_midpoints+fa_good, (10**np.log10(hist_masses))+fa_good, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, marker=ms_i, ms=1.5)
+        axs.plot(bin_midpoints+fa_bad, (10**np.log10(hist_masses))+fa_bad, marker=ms_i, color=lines[0].get_color(), ms=1.5, ls='None')
         
     #-----------------
     # Add observations
@@ -833,6 +852,8 @@ def _sample_H2_mass_function(csv_samples = [],
         add_lagos2015       = False
         #add_guo2023 = True
         
+        add_lagos2014       = True
+        
         if add_andreani2020:
             logm = np.arange(6.5, 10.2, 0.25)
             phi      = np.array([-2.36, -2.14, -2.02, -1.96, -1.93, -1.94, -1.98, -2.04, -2.12, -2.24, -2.40, -2.64, -3.78, -5.2, -6.00])
@@ -844,8 +865,8 @@ def _sample_H2_mass_function(csv_samples = [],
             #phi_err_lower = 10**phi - (10**(phi-phi_err))
             #phi_err_upper = (10**(phi+phi_err)) - 10**phi
             
-            axs.plot(10**logm, 10**phi, ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
-            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20)                
+            axs.plot(logm, 10**phi, ls='none', linewidth=1, marker='o', ms=1.5, alpha=0.9, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
+            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.5, alpha=0.9, zorder=-20)                
         if add_fletcher2021:
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyH2MassFunction/Fletcher2021.hdf5'%obs_dir, 'r') as file:
@@ -866,23 +887,47 @@ def _sample_H2_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
             
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20)           
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.5, alpha=0.9, zorder=-20)           
         if add_lagos2015:
             print('lagos not available')
+        
+        if add_lagos2014:      # ($z=0.0$)
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyH2MassFunction/Lagos2014_H2.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+                
+                obs_mass     = file['data/massfunc/1Vcorr/x/values'][:] * u.Unit(file['data/massfunc/1Vcorr/x/values'].attrs['units'])
+                obs_fraction = file['data/massfunc/1Vcorr/y/values'][:] * u.Unit(file['data/massfunc/1Vcorr/y/values'].attrs['units'])
+                obs_fraction_scatter = file['data/massfunc/1Vcorr/y/scatter'][:] * u.Unit(file['data/massfunc/1Vcorr/y/scatter'].attrs['units'])
+                
+            obs_mass = obs_mass.to('Msun')
+            obs_size = obs_fraction.to('Mpc**(-3)')
+            obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
+                        
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='ATLAS$^{\mathrm{3D}}$ $1/V_{\mathrm{max}}$ corr', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.5, alpha=0.9, zorder=-20, c='r')
+            
     
     #-----------
     # Axis formatting
-    plt.xlim(10**6, 10**11)
+    plt.xlim(6, 11)
     plt.ylim(10**(-6), 10**(-1))
-    plt.xscale("log")
+    #plt.xscale("log")
     plt.yscale("log")
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
-
+    axs.minorticks_on()
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
                      'exclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'$M_{\mathrm{H_{2}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h2]))
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{2}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h2]))
     plt.ylabel(r'dn/dlog$_{10}$($M$) [cMpc$^{-3}$]')
       
     #-----------  
@@ -891,7 +936,7 @@ def _sample_H2_mass_function(csv_samples = [],
     
     #-----------
     # Legend
-    axs.legend(loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    axs.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
     #-----------
     # other
@@ -912,7 +957,7 @@ def _sample_H2_mass_frac_function(csv_samples = [],
                           aperture = 'exclusive_sphere_50kpc', 
                           aperture_h2 = 'exclusive_sphere_50kpc', 
                           #----------
-                          add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
+                          add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -939,6 +984,9 @@ def _sample_H2_mass_frac_function(csv_samples = [],
     dict_ls     = {'all_galaxies': '-',
                    'all_ETGs': '--',
                    'all_ETGs_plus_redspiral': '-.'}
+    dict_ms     = {'all_galaxies': 'o',
+                   'all_ETGs': 's',
+                   'all_ETGs_plus_redspiral': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -954,7 +1002,7 @@ def _sample_H2_mass_frac_function(csv_samples = [],
         # Get metadata from file
         z = data.metadata.redshift
         run_name = data.metadata.run_name
-        box_size = data.metadata.boxsize[0]
+        box_size = data.metadata.boxsize[0].to(u.Mpc)
     
     
         #-------------------------------
@@ -996,19 +1044,25 @@ def _sample_H2_mass_frac_function(csv_samples = [],
         hist_err    = hist_err[hist_mask_finite]
         hist_n      = hist_n[hist_mask_finite]
         
-        # Find bins with more than 1 entry
-        hist_mask_n = hist_n > 1
-    
-    
+        # Find bins with more than 10 entry
+        hist_mask_n = hist_n >= 10
+        
+        # Make fake arrays to add to plotted entries to manually get math.nan values, thus a break
+        fa_good = np.zeros(len(bin_midpoints))
+        fa_bad = np.zeros(len(bin_midpoints))
+        fa_good[~hist_mask_n] = math.nan
+        fa_bad[hist_mask_n] = math.nan
+        
         #-----------
-        # Plotting error for n >= 1, and single dots for others
+        # Plotting error for n >= 10, and single dots for others
         label_i = dict_labels[sample_input['name_of_preset']]
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
+        ms_i    = dict_ms[sample_input['name_of_preset']]
         
-        axs.fill_between(10**bin_midpoints[hist_mask_n], 10**(np.log10(hist_masses[hist_mask_n]-hist_err[hist_mask_n])), 10**(np.log10(hist_masses[hist_mask_n]+hist_err[hist_mask_n])), alpha=0.4, fc=linecol)
-        lines = axs.plot(10**bin_midpoints[hist_mask_n], 10**np.log10(hist_masses[hist_mask_n]), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol)
-        axs.plot(10**bin_midpoints[~hist_mask_n], 10**np.log10(hist_masses[~hist_mask_n]), 'o', color=lines[0].get_color(), ms=2)
+        axs.fill_between(bin_midpoints+fa_good, (10**(np.log10(hist_masses-hist_err)))+fa_good, (10**(np.log10(hist_masses+hist_err)))+fa_good, alpha=0.4, fc=linecol)
+        lines = axs.plot(bin_midpoints+fa_good, (10**np.log10(hist_masses))+fa_good, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, marker=ms_i, ms=1.5)
+        axs.plot(bin_midpoints+fa_bad, (10**np.log10(hist_masses))+fa_bad, marker=ms_i, color=lines[0].get_color(), ms=1.5, ls='None')
         
     #-----------------
     # Add observations
@@ -1017,27 +1071,11 @@ def _sample_H2_mass_frac_function(csv_samples = [],
         """
         Pick observations we want to add
         """
-        add_andreani2020    = False
-        add_fletcher2021    = False     # most robust where sample bias has been taken into account
-        add_lagos2015       = False
-        #add_guo2023 = True
+        add_lagos2014       = True          # Outputs H2 / M*
         
-        if add_andreani2020:
-            logm = np.arange(6.5, 10.2, 0.25)
-            phi      = np.array([-2.36, -2.14, -2.02, -1.96, -1.93, -1.94, -1.98, -2.04, -2.12, -2.24, -2.40, -2.64, -3.78, -5.2, -6.00])
-            #phi_err  = np.array([])
-            
-            # removing 1.36 multiplier for He correction --> now is pure H2
-            phi = np.log10((10**phi)/1.36)
-            
-            #phi_err_lower = 10**phi - (10**(phi-phi_err))
-            #phi_err_upper = (10**(phi+phi_err)) - 10**phi
-            
-            axs.plot(10**logm, 10**phi, ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
-            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20)                
-        if add_fletcher2021:
+        if add_lagos2014:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
-            with h5py.File('%s/GalaxyH2MassFunction/Fletcher2021.hdf5'%obs_dir, 'r') as file:
+            with h5py.File('%s/GalaxyH2MassFunction/Lagos2014_H2.hdf5'%obs_dir, 'r') as file:
                 
                 """# A description of the file and data is in the metadata
                 print(f'File keys: {file.keys()}')
@@ -1047,31 +1085,34 @@ def _sample_H2_mass_frac_function(csv_samples = [],
                 print(file['x'].keys())
                 print(file['y'].keys())
                 print(' ')"""
-            
-                obs_mass     = file['x/values'][:] * u.Unit(file['x/values'].attrs['units'])
-                obs_fraction = file['y/values'][:] * u.Unit(file['y/values'].attrs['units'])
-                obs_fraction_scatter = file['y/scatter'][:] * u.Unit(file['y/scatter'].attrs['units'])
-            obs_mass = obs_mass.to('Msun')/1.36     # divide to account for x1.36 He correction in observations
+                
+                obs_mass     = file['data/massfracfunc/x/values'][:] * u.Unit(file['data/massfracfunc/x/values'].attrs['units'])
+                obs_fraction = file['data/massfracfunc/y/values'][:] * u.Unit(file['data/massfracfunc/y/values'].attrs['units'])
+                obs_fraction_scatter = file['data/massfracfunc/y/scatter'][:] * u.Unit(file['data/massfracfunc/y/scatter'].attrs['units'])
+                
+            obs_mass = obs_mass.to('dimensionless')
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
             
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20)           
-        if add_lagos2015:
-            print('lagos not available')
-    
+            # Scale to correct fgas
+            obs_mass = obs_mass * (1/(1+obs_mass))
+                        
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='ATLAS$^{\mathrm{3D}}$', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.5, alpha=0.9, zorder=-20, c='r')
+        
     #-----------
     # Axis formatting
-    plt.xlim(10**-6, 10**0)
+    plt.xlim(-6, 0)
     plt.ylim(10**(-6), 10**(-1))
-    plt.xscale("log")
+    #plt.xscale("log")
     plt.yscale("log")
+    axs.minorticks_on()
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
 
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
                      'exclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'$f_{\mathrm{H_{2}}}$ (%s)'%(dict_aperture[aperture_h2]))
+    plt.xlabel(r'log$_{10}$ $f_{\mathrm{H_{2}}}$ (%s)'%(dict_aperture[aperture_h2]))
     plt.ylabel(r'dn/dlog$_{10}$($f_{\mathrm{H_{2}}}$) [cMpc$^{-3}$]')
       
     #-----------  
@@ -1103,7 +1144,7 @@ def _sample_H1_mass_function(csv_samples = [],
                           aperture = 'exclusive_sphere_50kpc', 
                           aperture_h1 = 'exclusive_sphere_50kpc', 
                           #----------
-                          add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
+                          add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -1130,6 +1171,9 @@ def _sample_H1_mass_function(csv_samples = [],
     dict_ls     = {'all_galaxies': '-',
                    'all_ETGs': '--',
                    'all_ETGs_plus_redspiral': '-.'}
+    dict_ms     = {'all_galaxies': 'o',
+                   'all_ETGs': 's',
+                   'all_ETGs_plus_redspiral': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -1145,7 +1189,7 @@ def _sample_H1_mass_function(csv_samples = [],
         # Get metadata from file
         z = data.metadata.redshift
         run_name = data.metadata.run_name
-        box_size = data.metadata.boxsize[0]
+        box_size = data.metadata.boxsize[0].to(u.Mpc)
     
     
         #-------------------------------
@@ -1185,18 +1229,28 @@ def _sample_H1_mass_function(csv_samples = [],
         hist_n      = hist_n[hist_mask_finite]
         
         # Find bins with more than 1 entry
-        hist_mask_n = hist_n > 1
-    
-    
+        hist_mask_n = hist_n >= 10
+        
+        # Make fake arrays to add to plotted entries to manually get math.nan values, thus a break
+        fa_good = np.zeros(len(bin_midpoints))
+        fa_bad = np.zeros(len(bin_midpoints))
+        fa_good[~hist_mask_n] = math.nan
+        fa_bad[hist_mask_n] = math.nan
+        
         #-----------
-        # Plotting error for n >= 1, and single dots for others
+        # Plotting error for n >= 10, and single dots for others
         label_i = dict_labels[sample_input['name_of_preset']]
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
+        ms_i    = dict_ms[sample_input['name_of_preset']]
         
-        axs.fill_between(10**bin_midpoints[hist_mask_n], 10**(np.log10(hist_masses[hist_mask_n]-hist_err[hist_mask_n])), 10**(np.log10(hist_masses[hist_mask_n]+hist_err[hist_mask_n])), alpha=0.4, fc=linecol)
-        lines = axs.plot(10**bin_midpoints[hist_mask_n], 10**np.log10(hist_masses[hist_mask_n]), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol)
-        axs.plot(10**bin_midpoints[~hist_mask_n], 10**np.log10(hist_masses[~hist_mask_n]), 'o', color=lines[0].get_color(), ms=2)
+        axs.fill_between(bin_midpoints+fa_good, (10**(np.log10(hist_masses-hist_err)))+fa_good, (10**(np.log10(hist_masses+hist_err)))+fa_good, alpha=0.4, fc=linecol)
+        lines = axs.plot(bin_midpoints+fa_good, (10**np.log10(hist_masses))+fa_good, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, marker=ms_i, ms=1.5)
+        axs.plot(bin_midpoints+fa_bad, (10**np.log10(hist_masses))+fa_bad, marker=ms_i, color=lines[0].get_color(), ms=1.5, ls='None')
+        
+        #axs.fill_between(bin_midpoints[hist_mask_n], 10**(np.log10(hist_masses[hist_mask_n]-hist_err[hist_mask_n])), 10**(np.log10(hist_masses[hist_mask_n]+hist_err[hist_mask_n])), alpha=0.4, fc=linecol)
+        #lines = axs.plot(bin_midpoints[hist_mask_n], 10**np.log10(hist_masses[hist_mask_n]), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol)
+        #axs.plot(bin_midpoints[~hist_mask_n], 10**np.log10(hist_masses[~hist_mask_n]), 'o', color=lines[0].get_color(), ms=1.5)
         
     #-----------------
     # Add observations
@@ -1209,6 +1263,7 @@ def _sample_H1_mass_function(csv_samples = [],
         add_fletcher2021    = False     # most robust where sample bias has been taken into account
         add_lagos2015       = False
         #add_guo2023 = True
+        add_lagos2014       = True
         
         if add_andreani2020:
             logm = np.arange(6.5, 10.2, 0.25)
@@ -1221,8 +1276,8 @@ def _sample_H1_mass_function(csv_samples = [],
             #phi_err_lower = 10**phi - (10**(phi-phi_err))
             #phi_err_upper = (10**(phi+phi_err)) - 10**phi
             
-            axs.plot(10**logm, 10**phi, ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
-            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20)                
+            axs.plot(logm, 10**phi, ls='none', linewidth=1, marker='o', ms=1.5, alpha=0.9, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
+            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.5, alpha=0.9, zorder=-20)                
         if add_fletcher2021:
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyH2MassFunction/Fletcher2021.hdf5'%obs_dir, 'r') as file:
@@ -1243,23 +1298,47 @@ def _sample_H1_mass_function(csv_samples = [],
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
             
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20)           
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.5, alpha=0.9, zorder=-20)           
         if add_lagos2015:
             print('lagos not available')
-    
+        
+        if add_lagos2014:      # ($z=0.0$)
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyHIMassFunction/Lagos2014_H1.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+                
+                obs_mass     = file['data/massfunc/1Vcorr/x/values'][:] * u.Unit(file['data/massfunc/1Vcorr/x/values'].attrs['units'])
+                obs_fraction = file['data/massfunc/1Vcorr/y/values'][:] * u.Unit(file['data/massfunc/1Vcorr/y/values'].attrs['units'])
+                obs_fraction_scatter = file['data/massfunc/1Vcorr/y/scatter'][:] * u.Unit(file['data/massfunc/1Vcorr/y/scatter'].attrs['units'])
+                
+            obs_mass = obs_mass.to('Msun')
+            obs_size = obs_fraction.to('Mpc**(-3)')
+            obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
+                        
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='ATLAS$^{\mathrm{3D}}$ $1/V_{\mathrm{max}}$ corr', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.5, alpha=0.9, zorder=-20, c='r')
+        
+        
     #-----------
     # Axis formatting
-    plt.xlim(10**6, 10**11)
-    plt.ylim(10**(-6), 10**(-1))
-    plt.xscale("log")
+    plt.xlim(6, 11)
+    plt.ylim(10**(-7), 10**(-1))
+    #plt.xscale("log")
     plt.yscale("log")
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
-
+    axs.minorticks_on()
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
                      'exclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'$M_{\mathrm{H_{I}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h1]))
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{I}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h1]))
     plt.ylabel(r'dn/dlog$_{10}$($M$) [cMpc$^{-3}$]')
       
     #-----------  
@@ -1268,7 +1347,7 @@ def _sample_H1_mass_function(csv_samples = [],
     
     #-----------
     # Legend
-    axs.legend(loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    axs.legend(loc='lower center', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
     #-----------
     # other
@@ -1289,7 +1368,7 @@ def _sample_H1_mass_frac_function(csv_samples = [],
                           aperture = 'exclusive_sphere_50kpc', 
                           aperture_h1 = 'exclusive_sphere_50kpc', 
                           #----------
-                          add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
+                          add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -1316,6 +1395,9 @@ def _sample_H1_mass_frac_function(csv_samples = [],
     dict_ls     = {'all_galaxies': '-',
                    'all_ETGs': '--',
                    'all_ETGs_plus_redspiral': '-.'}
+    dict_ms     = {'all_galaxies': 'o',
+                   'all_ETGs': 's',
+                   'all_ETGs_plus_redspiral': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -1331,7 +1413,7 @@ def _sample_H1_mass_frac_function(csv_samples = [],
         # Get metadata from file
         z = data.metadata.redshift
         run_name = data.metadata.run_name
-        box_size = data.metadata.boxsize[0]
+        box_size = data.metadata.boxsize[0].to(u.Mpc)
     
     
         #-------------------------------
@@ -1374,18 +1456,24 @@ def _sample_H1_mass_frac_function(csv_samples = [],
         hist_n      = hist_n[hist_mask_finite]
         
         # Find bins with more than 1 entry
-        hist_mask_n = hist_n > 1
-    
-    
+        hist_mask_n = hist_n >= 10
+        
+        # Make fake arrays to add to plotted entries to manually get math.nan values, thus a break
+        fa_good = np.zeros(len(bin_midpoints))
+        fa_bad = np.zeros(len(bin_midpoints))
+        fa_good[~hist_mask_n] = math.nan
+        fa_bad[hist_mask_n] = math.nan
+        
         #-----------
-        # Plotting error for n >= 1, and single dots for others
+        # Plotting error for n >= 10, and single dots for others
         label_i = dict_labels[sample_input['name_of_preset']]
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
+        ms_i    = dict_ms[sample_input['name_of_preset']]
         
-        axs.fill_between(10**bin_midpoints[hist_mask_n], 10**(np.log10(hist_masses[hist_mask_n]-hist_err[hist_mask_n])), 10**(np.log10(hist_masses[hist_mask_n]+hist_err[hist_mask_n])), alpha=0.4, fc=linecol)
-        lines = axs.plot(10**bin_midpoints[hist_mask_n], 10**np.log10(hist_masses[hist_mask_n]), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol)
-        axs.plot(10**bin_midpoints[~hist_mask_n], 10**np.log10(hist_masses[~hist_mask_n]), 'o', color=lines[0].get_color(), ms=2)
+        axs.fill_between(bin_midpoints+fa_good, (10**(np.log10(hist_masses-hist_err)))+fa_good, (10**(np.log10(hist_masses+hist_err)))+fa_good, alpha=0.4, fc=linecol)
+        lines = axs.plot(bin_midpoints+fa_good, (10**np.log10(hist_masses))+fa_good, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, marker=ms_i, ms=1.5)
+        axs.plot(bin_midpoints+fa_bad, (10**np.log10(hist_masses))+fa_bad, marker=ms_i, color=lines[0].get_color(), ms=1.5, ls='None')
         
     #-----------------
     # Add observations
@@ -1394,27 +1482,11 @@ def _sample_H1_mass_frac_function(csv_samples = [],
         """
         Pick observations we want to add
         """
-        add_andreani2020    = False
-        add_fletcher2021    = False     # most robust where sample bias has been taken into account
-        add_lagos2015       = False
-        #add_guo2023 = True
+        add_lagos2014       = True          # Outputs H2 / M*
         
-        if add_andreani2020:
-            logm = np.arange(6.5, 10.2, 0.25)
-            phi      = np.array([-2.36, -2.14, -2.02, -1.96, -1.93, -1.94, -1.98, -2.04, -2.12, -2.24, -2.40, -2.64, -3.78, -5.2, -6.00])
-            #phi_err  = np.array([])
-            
-            # removing 1.36 multiplier for He correction --> now is pure H2
-            phi = np.log10((10**phi)/1.36)
-            
-            #phi_err_lower = 10**phi - (10**(phi-phi_err))
-            #phi_err_upper = (10**(phi+phi_err)) - 10**phi
-            
-            axs.plot(10**logm, 10**phi, ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
-            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20)                
-        if add_fletcher2021:
+        if add_lagos2014:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
-            with h5py.File('%s/GalaxyH2MassFunction/Fletcher2021.hdf5'%obs_dir, 'r') as file:
+            with h5py.File('%s/GalaxyHIMassFunction/Lagos2014_H1.hdf5'%obs_dir, 'r') as file:
                 
                 """# A description of the file and data is in the metadata
                 print(f'File keys: {file.keys()}')
@@ -1424,31 +1496,33 @@ def _sample_H1_mass_frac_function(csv_samples = [],
                 print(file['x'].keys())
                 print(file['y'].keys())
                 print(' ')"""
-            
-                obs_mass     = file['x/values'][:] * u.Unit(file['x/values'].attrs['units'])
-                obs_fraction = file['y/values'][:] * u.Unit(file['y/values'].attrs['units'])
-                obs_fraction_scatter = file['y/scatter'][:] * u.Unit(file['y/scatter'].attrs['units'])
-            obs_mass = obs_mass.to('Msun')/1.36     # divide to account for x1.36 He correction in observations
+                
+                obs_mass     = file['data/massfracfunc/x/values'][:] * u.Unit(file['data/massfracfunc/x/values'].attrs['units'])
+                obs_fraction = file['data/massfracfunc/y/values'][:] * u.Unit(file['data/massfracfunc/y/values'].attrs['units'])
+                obs_fraction_scatter = file['data/massfracfunc/y/scatter'][:] * u.Unit(file['data/massfracfunc/y/scatter'].attrs['units'])
+                
+            obs_mass = obs_mass.to('dimensionless')
             obs_size = obs_fraction.to('Mpc**(-3)')
             obs_size_scatter = obs_fraction_scatter.to('Mpc**(-3)')
             
-            axs.errorbar(obs_mass, obs_size, yerr=obs_size_scatter, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=1.2, alpha=0.8, zorder=-20)           
-        if add_lagos2015:
-            print('lagos not available')
-    
+            # Scale to correct fgas
+            obs_mass = obs_mass * (1/(1+obs_mass))
+                                    
+            axs.errorbar(np.log10(obs_mass), obs_size, yerr=obs_size_scatter, label='ATLAS$^{\mathrm{3D}}$', ls='none', linewidth=1, elinewidth=0.7, marker='^', ms=1.5, alpha=0.9, zorder=-20, c='r')
+        
     #-----------
     # Axis formatting
-    plt.xlim(10**-6, 10**0)
+    plt.xlim(-6, 0)
     plt.ylim(10**(-6), 10**(-1))
-    plt.xscale("log")
+    #plt.xscale("log")
     plt.yscale("log")
     #plt.yticks(np.arange(-5, -1.4, 0.5))
     #plt.xticks(np.arange(9.5, 12.5, 0.5))
-
+    axs.minorticks_on()
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
                      'exclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'$f_{\mathrm{H_{I}}}$ (%s)'%(dict_aperture[aperture_h1]))
+    plt.xlabel(r'log$_{10}$ $f_{\mathrm{H_{I}}}$ (%s)'%(dict_aperture[aperture_h1]))
     plt.ylabel(r'dn/dlog$_{10}$($f_{\mathrm{H_{I}}}$) [cMpc$^{-3}$]')
       
     #-----------  
@@ -1488,53 +1562,51 @@ def _sample_H1_mass_frac_function(csv_samples = [],
 
 #-------------------
 # Stellar mass function of samples
-_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+"""_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+                     showfig       = False,
+                     savefig       = True)"""
+
+
+#-------------------
+# H1 mass function of samples
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)
-                     
-raise Exception('current pause 136480')
-
+_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_10kpc',
+                     showfig       = False,
+                     savefig       = True)"""
+# H1 mass fraction = H1 / H1 + M* function of samples
+"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True)
+_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_10kpc',
+                     showfig       = False,
+                     savefig       = True)"""
 
 #-------------------
 # H2 mass function of samples
-_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+"""_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                      aperture_h2 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)
 _sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                      aperture_h2 = 'exclusive_sphere_10kpc',
                      showfig       = False,
-                     savefig       = True)
-# H1 mass function of samples
-_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_50kpc',
-                     showfig       = False,
-                     savefig       = True)
-_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_10kpc',
-                     showfig       = False,
-                     savefig       = True)
-
-
-#-------------------
+                     savefig       = True)"""
 # H2 mass fraction = H2 / H2 + M* function of samples
-_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+"""_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                      aperture_h2 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)
 _sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                      aperture_h2 = 'exclusive_sphere_10kpc',
                      showfig       = False,
-                     savefig       = True)
-# H1 mass fraction = H1 / H1 + M* function of samples
-_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_50kpc',
-                     showfig       = False,
-                     savefig       = True)
-_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_10kpc',
-                     showfig       = False,
-                     savefig       = True)
+                     savefig       = True)"""
+
 
 
 
