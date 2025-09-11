@@ -35,7 +35,6 @@ COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir = _assi
 #====================================
 
 
-
 """ Unyts guide:
 
 This applies to both halo_catalogue and particle data (.stars):
@@ -983,7 +982,6 @@ def _gas_surface_ratios(soap_indicies_sample=[], sample_input=[], title_text_in 
                    gas_type = 'gas',                    # [ 'h2' / 'h1' / 'gas' ]
                      surfdens_aperture_1   = '',                         # Radius 1, smaller
                      surfdens_aperture_2   = '',                         # Radius 2, larger
-                     lower_surfdens_limit  = 10**-4,
                    scatter_or_hexbin       = 'scatter',         # [ scatter / scatter_new / hexbin_count / hexbin_H2 ]
                    #---------------
                    print_fdet         = False,
@@ -1098,6 +1096,9 @@ def _gas_surface_ratios(soap_indicies_sample=[], sample_input=[], title_text_in 
     print('    > median surface density ratio H2 > 0 in %s:                    %.2e' %(surfdens_aperture_2, np.median(surf_density_ratio[mask_positive_H2])))
     print('    > median surface density ratio H2 > 0 in %s and H2 > %.1e:      %.2e' %(surfdens_aperture_2, h2_detection_limit, np.median(surf_density_ratio[mask_positive_and_h2_det])))
     
+    # Set limits
+    log_maximum_ratio = np.log10((surfdens_aperture_2/surfdens_aperture_1)**2)
+    log_minimum_ratio = log_maximum_ratio + np.log10(0.001)         # 0.001 means down to 0.1% of mass in r1
     
     #==============================
     # Plot scatter or hexbin
@@ -1116,36 +1117,40 @@ def _gas_surface_ratios(soap_indicies_sample=[], sample_input=[], title_text_in 
     if scatter_or_hexbin == 'hexbin_count':  
         ### Plots hexbin showing number of galaxies in bin
         
-        # Set lower density ratio of lower_surfdens_limit where there isn't enough H2 in radius_2
-        surf_density_ratio[~mask_positive_H2] = cosmo_quantity(lower_surfdens_limit, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-        # Set lower density ratio of lower_surfdens_limit for any values below lower_surfdens_limit
-        surf_density_ratio[surf_density_ratio < cosmo_quantity(lower_surfdens_limit, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)] = cosmo_quantity(10**-8, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+        # Set lower density ratio of 10**log_minimum_ratio where there isn't enough H2 in radius_2        
+        surf_density_ratio[~mask_positive_H2] = cosmo_quantity(10**log_minimum_ratio, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+        # Set lower density ratio of 10**log_minimum_ratio for any values below 10**log_minimum_ratio
+        surf_density_ratio[surf_density_ratio < cosmo_quantity(10**log_minimum_ratio, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)] = cosmo_quantity(10**-8, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
         
         # hexbin for all values
-        axs.hexbin(np.log10(stellar_mass), np.log10(surf_density_ratio), bins='log', gridsize=(40,20), extent=(9.5,12.5,np.log10(lower_surfdens_limit), np.max(np.log10(surf_density_ratio))), xscale='linear', yscale='linear', vmin=1, vmax=100, mincnt=1, zorder=-4, cmap='plasma', lw=0.05, alpha=0.5)
+        extent = (9.5,12.5,np.log10(10**log_minimum_ratio), np.max(np.log10(surf_density_ratio)))
+        gridsize = (30,15)
+        axs.hexbin(np.log10(stellar_mass), np.log10(surf_density_ratio), bins='log', gridsize=gridsize, extent=extent, xscale='linear', yscale='linear', vmin=1, vmax=100, mincnt=1, zorder=-4, cmap='plasma', lw=0.01, alpha=0.5)
         # normal hexbin with mincnt >= 5: override the grey background of other points first with white background, then plot normal
-        cb = axs.hexbin(np.log10(stellar_mass), np.log10(surf_density_ratio), bins='log', gridsize=(40,20), extent=(9.5,12.5,np.log10(lower_surfdens_limit), np.max(np.log10(surf_density_ratio))), xscale='linear', yscale='linear', vmin=1, vmax=100, mincnt=5, zorder=-3, cmap='plasma', lw=0.05)
+        cb = axs.hexbin(np.log10(stellar_mass), np.log10(surf_density_ratio), bins='log', gridsize=gridsize, extent=extent, xscale='linear', yscale='linear', vmin=1, vmax=100, mincnt=5, zorder=-3, cmap='plasma', lw=0.01)
     if scatter_or_hexbin == 'hexbin_H2':  
         ### Plots hexbin showing median log10 H2_mass
         
-        # Set lower density ratio of lower_surfdens_limit where there isn't enough H2 in radius_2
-        surf_density_ratio[~mask_positive_H2] = cosmo_quantity(lower_surfdens_limit, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-        # Set lower density ratio of lower_surfdens_limit for any values below lower_surfdens_limit
-        surf_density_ratio[surf_density_ratio < cosmo_quantity(lower_surfdens_limit, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)] = cosmo_quantity(10**-8, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+        # Set lower density ratio of 10**log_minimum_ratio where there isn't enough H2 in radius_2
+        surf_density_ratio[~mask_positive_H2] = cosmo_quantity(10**log_minimum_ratio, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+        # Set lower density ratio of 10**log_minimum_ratio for any values below 10**log_minimum_ratio
+        surf_density_ratio[surf_density_ratio < cosmo_quantity(10**log_minimum_ratio, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)] = cosmo_quantity(10**-8, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
         
         # Add a norm
         norm = colors.Normalize(vmin=5, vmax=10)
         
         # hexbin for all values
-        axs.hexbin(np.log10(stellar_mass), np.log10(surf_density_ratio), C=np.log10(H2_mass), reduce_C_function=np.median, norm=norm, gridsize=(40,20), extent=(9.5,12.5,np.log10(lower_surfdens_limit), np.max(np.log10(surf_density_ratio))), xscale='linear', yscale='linear', mincnt=1, zorder=-4, cmap='viridis', edgecolors='w', lw=1.2)
+        extent = (9.5,12.5,np.log10(10**log_minimum_ratio), np.max(np.log10(surf_density_ratio)))
+        gridsize = (30,15)
+        axs.hexbin(np.log10(stellar_mass), np.log10(surf_density_ratio), C=np.log10(H2_mass), reduce_C_function=np.median, norm=norm, gridsize=gridsize, extent=extent, xscale='linear', yscale='linear', mincnt=1, zorder=-4, cmap='viridis', edgecolors='w', lw=1.8)
         # normal hexbin with mincnt >= 5: override the grey background of other points first with white background, then plot normal
-        cb = axs.hexbin(np.log10(stellar_mass), np.log10(surf_density_ratio), C=np.log10(H2_mass), reduce_C_function=np.median, norm=norm, gridsize=(40,20), extent=(9.5,12.5,np.log10(lower_surfdens_limit), np.max(np.log10(surf_density_ratio))), xscale='linear', yscale='linear', mincnt=5, zorder=-3, cmap='viridis', lw=0.05)
+        cb = axs.hexbin(np.log10(stellar_mass), np.log10(surf_density_ratio), C=np.log10(H2_mass), reduce_C_function=np.median, norm=norm, gridsize=gridsize, extent=extent, xscale='linear', yscale='linear', mincnt=5, zorder=-3, cmap='viridis', lw=0.01)
         
          
     #-----------
     # Axis formatting
     axs.set_xlim(9.5, 12.5)
-    axs.set_ylim(bottom=np.log10(lower_surfdens_limit)-0.5)
+    axs.set_ylim(np.floor(log_minimum_ratio), np.ceil(log_maximum_ratio))
     #axs.set_xscale("log")
     #axs.set_yscale("log")
     #plt.yticks(np.arange(-5, -1.4, 0.5))
@@ -1167,10 +1172,10 @@ def _gas_surface_ratios(soap_indicies_sample=[], sample_input=[], title_text_in 
     if scatter_or_hexbin == 'hexbin_count':
         fig.colorbar(cb, ax=axs, label='Number of galaxies', extend='max')
     if scatter_or_hexbin == 'hexbin_H2':
-        fig.colorbar(cb, ax=axs, label='Median log$_{10}$ $M_{\mathrm{H_2}}$/M$_{\odot}$', extend='both')
+        fig.colorbar(cb, ax=axs, label='Median log$_{10}$ $M_{\mathrm{H_2}}$ [M$_{\odot}$]', extend='both')
     
     #-----------  
-    # Annotations
+    # Annotations    
     #axs.text(0.80, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     ##axs.text(0.05, 0.915, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     title_dict = {'all_galaxies': 'All galaxies',
@@ -1190,6 +1195,17 @@ def _gas_surface_ratios(soap_indicies_sample=[], sample_input=[], title_text_in 
                   'all_LTGs_excl_redspiral': 'LTGs ($\kappa_{\mathrm{co}}^{*}>0.4$, excl. red FRs)'
                   }
     axs.set_title(r'%s%s' %(title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
+    # Add ratio lines
+    axs.text(12, log_maximum_ratio + np.log10(0.5) - 0.2, '$50\%$', fontsize=7, color='grey')
+    axs.avhline(log_maximum_ratio + np.log10(0.5), ls='-', c='grey', zorder=-10)
+    
+    axs.text(12, log_maximum_ratio + np.log10(0.1) - 0.2, '$10\%$', fontsize=7, color='grey')
+    axs.avhline(log_maximum_ratio + np.log10(0.1), ls='-', c='grey', zorder=-10)
+    
+    axs.text(12, log_maximum_ratio + np.log10(0.01) - 0.2, '$1\%$', fontsize=7, color='grey')
+    axs.avhline(log_maximum_ratio + np.log10(0.01), ls='-', c='grey', zorder=-10)
     
     #-----------
     # Legend
@@ -2193,7 +2209,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,
-                   scatter_or_hexbin       = 'scatter',         # [ scatter / scatter_new / hexbin_count / hexbin_H2 ]
+                   scatter_or_hexbin       = 'hexbin_H2',         # [ scatter / scatter_new / hexbin_count / hexbin_H2 ]
                    #---------------
                    print_fdet         = False,
                    print_stats        = True,       # median galaxy properties of detected ETG
@@ -2313,11 +2329,36 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
             sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(H2_mass[mask_h2]), c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
             #axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(H2_mass[~mask_h2]), c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
             axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(H2_mass[~mask_h2]), s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
+    if scatter_or_hexbin == 'scatter_new':
+        ### Plots scatter as usual, perhaps with different size markers for H2
         
+        # scatter for kappa < 0.4
+        axs.scatter(np.log10(stellar_mass), np.log10(H2_mass), c='C0', s=1.5, marker='o', linewidths=0, edgecolor='none', alpha=0.75, label='$\kappa_{\mathrm{co}}^{*}<0.4$')
+        # scatter for kappa > 0.4
+        axs.scatter(np.log10(stellar_mass), np.log10(H2_mass), c='C1', s=1.5, marker='s', linewidths=0, edgecolor='none', alpha=0.75, label='$\kappa_{\mathrm{co}}^{*}>0.4$')
+    if scatter_or_hexbin == 'hexbin_count':
+        ### Plots hexbin showing number of galaxies in bin
         
-    #---------------------
-    # Plot 2 scatters: one for H2 detections and one for non-detections
-    
+        # hexbin for all values
+        extent = (9.5, 12.5, 6, 11)
+        gridsize = (30,15)
+        axs.hexbin(np.log10(stellar_mass), np.log10(H2_mass), bins='log', gridsize=gridsize, extent=extent, xscale='linear', yscale='linear', vmin=1, vmax=100, mincnt=1, zorder=-4, cmap='plasma', edgecolors='none', lw=0.01, alpha=0.5)
+        # normal hexbin with mincnt >= 5: override the grey background of other points first with white background, then plot normal
+        cb = axs.hexbin(np.log10(stellar_mass), np.log10(H2_mass), bins='log', gridsize=gridsize, extent=extent, xscale='linear', yscale='linear', vmin=1, vmax=100, mincnt=5, zorder=-3, cmap='plasma', lw=0.01)
+    if scatter_or_hexbin == 'hexbin_H2':  
+        ### Plots hexbin showing median log10 H2_mass
+        
+        # Add a norm
+        norm = colors.Normalize(vmin=5, vmax=10)
+        
+        # hexbin for all values
+        extent = (9.5, 12.5, 6, 11) 
+        gridsize = (30,15)
+        axs.hexbin(np.log10(stellar_mass), np.log10(H2_mass), C=np.log10(H2_mass), reduce_C_function=np.median, norm=norm, gridsize=gridsize, extent=extent, xscale='linear', yscale='linear', mincnt=1, zorder=-4, cmap='viridis', edgecolors='w', lw=1.8)
+        # normal hexbin with mincnt >= 5: override the grey background of other points first with white background, then plot normal
+        cb = axs.hexbin(np.log10(stellar_mass), np.log10(H2_mass), C=np.log10(H2_mass), reduce_C_function=np.median, norm=norm, gridsize=gridsize, extent=extent, xscale='linear', yscale='linear', mincnt=5, zorder=-3, cmap='viridis', lw=0.01)
+                
+            
         
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -2491,7 +2532,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     if scatter_or_hexbin == 'hexbin_count':
         fig.colorbar(cb, ax=axs, label='Number of galaxies', extend='max')
     if scatter_or_hexbin == 'hexbin_H2':
-        fig.colorbar(cb, ax=axs, label='Median log$_{10}$ $M_{\mathrm{H_2}}$/M$_{\odot}$', extend='both')
+        fig.colorbar(cb, ax=axs, label='Median log$_{10}$ $M_{\mathrm{H_2}}$ [M$_{\odot}$]', extend='both')
     
     
     #-----------  
@@ -6495,7 +6536,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
 
 
 #-----------------
-# Returns stelmass - veldisp (in 50 kpc, not r50), coloured by H2 detection, size by H2 mass
+# Returns stelmass - veldisp (interpolated between available SOAP, incl 2r50), coloured by H2 detection, size by H2 mass
 def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                    #=====================================
                    # Graph settings
@@ -6583,8 +6624,8 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
     # Extra / Calculated values
     
     # Stellar velocity dispersion
-    def _compute_vel_disp(aperture_veldisp='50'):        # Msun^1/3 / sigma, Msun^1/3 km-1 s
-        stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_%skpc.stellar_velocity_dispersion_matrix'%(aperture_veldisp))(data))[soap_indicies_sample]
+    def _compute_vel_disp(aperture_veldisp='50kpc'):        # Msun^1/3 / sigma, Msun^1/3 km-1 s
+        stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_%s.stellar_velocity_dispersion_matrix'%(aperture_veldisp))(data))[soap_indicies_sample]
         stellar_vel_disp_matrix.convert_to_units(u.km**2 / u.s**2)
         stellar_vel_disp_matrix.convert_to_physical()
         stellar_vel_disp = np.sqrt((stellar_vel_disp_matrix[:,0] + stellar_vel_disp_matrix[:,1] + stellar_vel_disp_matrix[:,2])/3)
@@ -6592,30 +6633,36 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
         return stellar_vel_disp
         
     if aperture_sigma == 'r50':
-        stellar_vel_disp50 = _compute_vel_disp(aperture_veldisp='50')
-        stellar_vel_disp30 = _compute_vel_disp(aperture_veldisp='30')
-        stellar_vel_disp10 = _compute_vel_disp(aperture_veldisp='10')
-        stellar_vel_disp3 = _compute_vel_disp(aperture_veldisp='3')
-        stellar_vel_disp1 = _compute_vel_disp(aperture_veldisp='1')
-                
         r50 = attrgetter('%s.%s'%(aperture, 'half_mass_radius_stars'))(data)[soap_indicies_sample]
         r50.convert_to_units('kpc')
         r50.convert_to_physical()
         
-        x = cosmo_array(np.array([1, 3, 10, 30, 50]), u.kpc, comoving=False, scale_factor=data.metadata.a, scale_exponent=1)
-        y = np.column_stack([stellar_vel_disp1, stellar_vel_disp3, stellar_vel_disp10, stellar_vel_disp30, stellar_vel_disp50])
+        stellar_vel_disp50 = _compute_vel_disp(aperture_veldisp='50kpc')
+        stellar_vel_disp30 = _compute_vel_disp(aperture_veldisp='30kpc')
+        stellar_vel_disp10 = _compute_vel_disp(aperture_veldisp='10kpc')
+        stellar_vel_disp3 = _compute_vel_disp(aperture_veldisp='3kpc')
+        stellar_vel_disp1 = _compute_vel_disp(aperture_veldisp='1kpc')
+        stellar_vel_disp_2r50 = _compute_vel_disp(aperture_veldisp='2xhalf_mass_radius_stars')
         
         stellar_vel_disp_plot = []
         for i,_ in enumerate(r50):
-            x = cosmo_array(np.array([1, 3, 10, 30, 50]), u.kpc, comoving=False, scale_factor=data.metadata.a, scale_exponent=1)
-            y = np.array([stellar_vel_disp1[i], stellar_vel_disp3[i], stellar_vel_disp10[i], stellar_vel_disp30[i], stellar_vel_disp50[i]])
             r50_i = r50[i]
+            
+            # Make array of available radii, mask sort them
+            x = cosmo_array(np.array([1, 3, 10, 30, 50, 2*r50_i.value]), u.kpc, comoving=False, scale_factor=data.metadata.a, scale_exponent=1)
+            mask_sort = np.argsort(x)
+            x = x[mask_sort]
+            
+            # Repeat for y, then sort
+            y = np.array([stellar_vel_disp1[i], stellar_vel_disp3[i], stellar_vel_disp10[i], stellar_vel_disp30[i], stellar_vel_disp50[i], stellar_vel_disp_2r50[i]])
+            y = y[mask_sort]
+            
             yinterp = np.interp(r50_i, x, y)
             stellar_vel_disp_plot.append(yinterp)
         stellar_vel_disp_plot = np.array(stellar_vel_disp_plot)
         stellar_vel_disp_plot = cosmo_array(stellar_vel_disp_plot, (u.km / u.s), comoving=False, scale_factor=data.metadata.a, scale_exponent=0)        
     else:
-        stellar_vel_disp_plot = _compute_vel_disp(aperture_veldisp='50')
+        stellar_vel_disp_plot = _compute_vel_disp(aperture_veldisp='50kpc')
     
     #--------------
     # Kappa and colourbar [not used]
@@ -7132,7 +7179,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
     if showfig:
         plt.show()
     plt.close()
-# Returns stelmass - eta kin = Msun^1/3 / sigma, Msun^1/3 km-1 s (in 50 kpc, not r50), coloured by H2 detection, size by H2 mass
+# Returns stelmass - eta kin = Msun^1/3 / sigma, Msun^1/3 km-1 s (interpolated between available SOAP, incl 2r50), coloured by H2 detection, size by H2 mass
 def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                    #=====================================
                    # Graph settings
@@ -7219,8 +7266,8 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
     #================================
     # Extra / Calculated values
     # Stellar velocity dispersion
-    def _compute_vel_disp(aperture_veldisp='50'):        # Msun^1/3 / sigma, Msun^1/3 km-1 s
-        stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_%skpc.stellar_velocity_dispersion_matrix'%(aperture_veldisp))(data))[soap_indicies_sample]
+    def _compute_vel_disp(aperture_veldisp='50kpc'):        # Msun^1/3 / sigma, Msun^1/3 km-1 s
+        stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_%s.stellar_velocity_dispersion_matrix'%(aperture_veldisp))(data))[soap_indicies_sample]
         stellar_vel_disp_matrix.convert_to_units(u.km**2 / u.s**2)
         stellar_vel_disp_matrix.convert_to_physical()
         stellar_vel_disp = np.sqrt((stellar_vel_disp_matrix[:,0] + stellar_vel_disp_matrix[:,1] + stellar_vel_disp_matrix[:,2])/3)
@@ -7243,32 +7290,37 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
         
         return eta_kin
     
-    
     if aperture_sigma == 'r50':
-        stellar_vel_disp50 = _compute_vel_disp(aperture_veldisp='50')
-        stellar_vel_disp30 = _compute_vel_disp(aperture_veldisp='30')
-        stellar_vel_disp10 = _compute_vel_disp(aperture_veldisp='10')
-        stellar_vel_disp3 = _compute_vel_disp(aperture_veldisp='3')
-        stellar_vel_disp1 = _compute_vel_disp(aperture_veldisp='1')
-                
         r50 = attrgetter('%s.%s'%(aperture, 'half_mass_radius_stars'))(data)[soap_indicies_sample]
         r50.convert_to_units('kpc')
         r50.convert_to_physical()
         
-        x = cosmo_array(np.array([1, 3, 10, 30, 50]), u.kpc, comoving=False, scale_factor=data.metadata.a, scale_exponent=1)
-        y = np.column_stack([stellar_vel_disp1, stellar_vel_disp3, stellar_vel_disp10, stellar_vel_disp30, stellar_vel_disp50])
+        stellar_vel_disp50 = _compute_vel_disp(aperture_veldisp='50kpc')
+        stellar_vel_disp30 = _compute_vel_disp(aperture_veldisp='30kpc')
+        stellar_vel_disp10 = _compute_vel_disp(aperture_veldisp='10kpc')
+        stellar_vel_disp3 = _compute_vel_disp(aperture_veldisp='3kpc')
+        stellar_vel_disp1 = _compute_vel_disp(aperture_veldisp='1kpc')
+        stellar_vel_disp_2r50 = _compute_vel_disp(aperture_veldisp='2xhalf_mass_radius_stars')
         
         stellar_vel_disp_plot = []
         for i,_ in enumerate(r50):
-            x = cosmo_array(np.array([1, 3, 10, 30, 50]), u.kpc, comoving=False, scale_factor=data.metadata.a, scale_exponent=1)
-            y = np.array([stellar_vel_disp1[i], stellar_vel_disp3[i], stellar_vel_disp10[i], stellar_vel_disp30[i], stellar_vel_disp50[i]])
             r50_i = r50[i]
+            
+            # Make array of available radii, mask sort them
+            x = cosmo_array(np.array([1, 3, 10, 30, 50, 2*r50_i.value]), u.kpc, comoving=False, scale_factor=data.metadata.a, scale_exponent=1)
+            mask_sort = np.argsort(x)
+            x = x[mask_sort]
+            
+            # Repeat for y, then sort
+            y = np.array([stellar_vel_disp1[i], stellar_vel_disp3[i], stellar_vel_disp10[i], stellar_vel_disp30[i], stellar_vel_disp50[i], stellar_vel_disp_2r50[i]])
+            y = y[mask_sort]
+            
             yinterp = np.interp(r50_i, x, y)
             stellar_vel_disp_plot.append(yinterp)
         stellar_vel_disp_plot = np.array(stellar_vel_disp_plot)
-        stellar_vel_disp_plot = cosmo_array(stellar_vel_disp_plot, (u.km / u.s), comoving=False, scale_factor=data.metadata.a, scale_exponent=0)                
+        stellar_vel_disp_plot = cosmo_array(stellar_vel_disp_plot, (u.km / u.s), comoving=False, scale_factor=data.metadata.a, scale_exponent=0)        
     else:
-        stellar_vel_disp_plot = _compute_vel_disp(aperture_veldisp='50')
+        stellar_vel_disp_plot = _compute_vel_disp(aperture_veldisp='50kpc')
     eta_kin_plot = _compute_eta_kin(stellar_vel_disp_plot, aperture_etakin='50')
     
             
@@ -7823,42 +7875,34 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
 
 
 #===================================================================================
-# Load a sample from a given snapshot
-soap_indicies_sample_1, _, sample_input_1 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs')   
-soap_indicies_sample_2, _, sample_input_2 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral')  
-soap_indicies_sample_11, _, sample_input_11 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample1081_all_ETGs_centrals')   
-soap_indicies_sample_22, _, sample_input_22 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample1531_all_ETGs_plus_redspiral_centrals')  
-soap_indicies_sample_111, _, sample_input_111 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample7847_all_LTGs')   
-soap_indicies_sample_222, _, sample_input_222 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample6026_all_LTGs_excl_redspiral')  
-soap_indicies_sample_3, _, sample_input_3 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample488_all_ETGs_cluster')   
-soap_indicies_sample_4, _, sample_input_4 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample1033_all_ETGs_plus_redspiral_cluster') 
-soap_indicies_sample_33, _, sample_input_33 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample1736_all_ETGs_groupfield')   
-soap_indicies_sample_44, _, sample_input_44 = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample3012_all_ETGs_plus_redspiral_groupfield') 
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample5450_all_galaxies_centrals
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxies_satellites
-                                                                                   
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample1081_all_ETGs_centrals
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample1143_all_ETGs_satellites
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample488_all_ETGs_cluster
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample1736_all_ETGs_groupfield
-                                                                                   
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral 
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample1531_all_ETGs_plus_redspiral_centrals
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample2514_all_ETGs_plus_redspiral_satellites
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample1033_all_ETGs_plus_redspiral_cluster
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample3012_all_ETGs_plus_redspiral_groupfield
-                                                                                   
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample7847_all_LTGs
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample4369_all_LTGs_centrals
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample3478_all_LTGs_satellites
-                                                                                   
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample6026_all_LTGs_excl_redspiral
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample3919_all_LTGs_excl_redspiral_centrals
-                                                                                   # L100_m6_THERMAL_AGN_m6_127_sample2107_all_LTGs_excl_redspiral_satellites
-                                                                                   
-                                                                                   
+### Load a sample from a given snapshot and a given run
+sim_box_size_name = 'L100_m6'
+sim_type_name     = 'THERMAL_AGN_m6'
+snapshot_name     = '127'
+
+### Load ETGs w/o FRs
+soap_indicies_sample_all_ETGs,                           _, sample_input_all_ETGs                           = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs'%(sim_box_size_name, sim_type_name, snapshot_name))   
+soap_indicies_sample_all_ETGs_centrals,                  _, sample_input_all_ETGs_centrals                  = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_centrals'%(sim_box_size_name, sim_type_name, snapshot_name))  
+#satellites
+soap_indicies_sample_all_ETGs_cluster,                   _, sample_input_all_ETGs_cluster                   = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_cluster'%(sim_box_size_name, sim_type_name, snapshot_name))   
+soap_indicies_sample_all_ETGs_groupfield,                _, sample_input_all_ETGs_groupfield                = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_groupfield'%(sim_box_size_name, sim_type_name, snapshot_name))  
+
+### Load ETGs incl. FRs
+soap_indicies_sample_all_ETGs_plus_redspiral,            _, sample_input_all_ETGs_plus_redspiral            = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral'%(sim_box_size_name, sim_type_name, snapshot_name))  
+soap_indicies_sample_all_ETGs_plus_redspiral_centrals,   _, sample_input_all_ETGs_plus_redspiral_centrals   = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_centrals'%(sim_box_size_name, sim_type_name, snapshot_name))  
+#satellites
+soap_indicies_sample_all_ETGs_plus_redspiral_cluster,    _, sample_input_all_ETGs_plus_redspiral_cluster    = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_cluster'%(sim_box_size_name, sim_type_name, snapshot_name)) 
+soap_indicies_sample_all_ETGs_plus_redspiral_groupfield, _, sample_input_all_ETGs_plus_redspiral_groupfield = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_groupfield'%(sim_box_size_name, sim_type_name, snapshot_name)) 
+
+### Load LTGs
+soap_indicies_sample_all_LTGs,                           _, sample_input_all_LTGs                           = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_LTGs'%(sim_box_size_name, sim_type_name, snapshot_name))   
+#centrals
+#satellites
+
+### Load LTGs excl. FRs
+soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTGs_excl_redspiral            = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_LTGs_excl_redspiral'%(sim_box_size_name, sim_type_name, snapshot_name))  
+#centrals
+#satellites                                                                                                                                                         
 #===================================================================================
 
 
@@ -7870,14 +7914,14 @@ soap_indicies_sample_44, _, sample_input_44 = _load_soap_sample(sample_dir, csv_
 #===================================
 ### H1 plots:   H1 mass, fraction, and environment
 # Plot stelmass - H1 mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222, soap_indicies_sample_3, soap_indicies_sample_4, soap_indicies_sample_33, soap_indicies_sample_44], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222, sample_input_3, sample_input_4, sample_input_33, sample_input_44]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_cluster, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_groupfield, sample_input_all_ETGs_plus_redspiral_groupfield]):
     _etg_stelmass_h1mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
                           print_stats = True,
                         savefig       = True)"""
 # Plot stelmass - H1 mass fraction (H1 / H1 + M*)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222, soap_indicies_sample_3, soap_indicies_sample_4, soap_indicies_sample_33, soap_indicies_sample_44], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222, sample_input_3, sample_input_4, sample_input_33, sample_input_44]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_cluster, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_groupfield, sample_input_all_ETGs_plus_redspiral_groupfield]):
     _etg_stelmass_h1massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
@@ -7888,25 +7932,33 @@ soap_indicies_sample_44, _, sample_input_44 = _load_soap_sample(sample_dir, csv_
 #==========================================
 ###     H2 plots: H2 mass, fraction, and environment
 # Plot stelmass - H2 mass
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222, soap_indicies_sample_3, soap_indicies_sample_4, soap_indicies_sample_33, soap_indicies_sample_44], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222, sample_input_3, sample_input_4, sample_input_33, sample_input_44]):
-    _etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_cluster, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_groupfield, sample_input_all_ETGs_plus_redspiral_groupfield]):                        
+    """_etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
-                        scatter_or_hexbin       = 'scatter',         # [ scatter / scatter_new / hexbin_count / hexbin_H2 ]
+                        scatter_or_hexbin       = 'hexbin_H2',         # [ scatter / scatter_new / hexbin_count / hexbin_H2 ]
                           print_stats = True,
-                        savefig       = True)
-                        
-    _etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        savefig       = True)"""
+    
+    
+    
+    _etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_all_ETGs_plus_redspiral, sample_input=sample_input_all_ETGs_plus_redspiral,
                         add_detection_hist = False,
                         add_median_line = True,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter / scatter_new / hexbin_count / hexbin_H2 ]
                           print_stats = True,
                         savefig       = True)
-                        
     raise Exception('current pause 8yoihjk')
+    
+    _etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        add_detection_hist = False,
+                        add_median_line = True,
+                        scatter_or_hexbin       = 'hexbin_count',         # [ scatter / scatter_new / hexbin_count / hexbin_H2 ]
+                          print_stats = True,
+                        savefig       = True)
                         
 # Plot stelmass - H2 mass for range of H2 apertures
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2], [sample_input_1, sample_input_2]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_2], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral]):
     # Plot as just red and black pluses and circles, with hist bars for detection limit - 10 kpc aperture
     print('\n##### 3 kpc aperture test:   %s' %sample_input_i['name_of_preset'])
     _etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
@@ -7933,7 +7985,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_
                          title_text_in = ' 30 pkpc H2',
                         savefig       = True)"""
 # Plot stelmass - H2 mass fraction (H2 / H2 + M*)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222, soap_indicies_sample_3, soap_indicies_sample_4, soap_indicies_sample_33, soap_indicies_sample_44], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222, sample_input_3, sample_input_4, sample_input_33, sample_input_44]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_cluster, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_groupfield, sample_input_all_ETGs_plus_redspiral_groupfield]):
     _etg_stelmass_h2massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         add_median_line = True,
@@ -7958,13 +8010,13 @@ _aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxie
                         savefig       = True) """ 
 #------------
 # Plot stelmass - M200c mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_m200c(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #------------
 # Plot M200c mass - H2 mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_m200c_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
@@ -7974,13 +8026,13 @@ _aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxie
 #==========================================
 ###      H2 plots: u-r, SFR, sSFR, SFE
 # Plot per Young+11 as just red and black circles and circles, with hist bars for detection limit
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         aperture_h2 = 'exclusive_sphere_50kpc',
                         add_detection_hist = True,
                         savefig       = True)"""
 # Plot with a lower detection limit of 10**6
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2], [sample_input_1, sample_input_2]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_2], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral]):
     _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                             aperture_h2 = 'exclusive_sphere_50kpc',
                             h2_detection_limit = 10**6,
@@ -7989,14 +8041,14 @@ _aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxie
                              savefig_txt = 'test_lower_h2detection_thresh', 
                             savefig       = True)"""
 # Plot with coloured kappa
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2], [sample_input_1, sample_input_2]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_2], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral]):
     _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         aperture_h2 = 'exclusive_sphere_50kpc',
                         add_kappa_colourbar = True,
                         savefig       = True)"""
                     
 # Plot similar to Young+14: M* vs u-r, size by H2 reservoir >107, but vary the H2 apertures 3 -> 10 -> 30 -> 50
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2], [sample_input_1, sample_input_2]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_2], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral]):
     # Plot as just red and black pluses and circles, with hist bars for detection limit - 10 kpc aperture
     print('\n##### 3 kpc aperture test:   %s' %sample_input_i['name_of_preset'])
     _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
@@ -8018,17 +8070,17 @@ _aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxie
                         savefig       = True)"""
 #------------
 # Plot stelmass - SFR
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_sfr(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)
 # Plot stelmass - sSFR
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_ssfr(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)
 # Plot stelmass - SFE = SFR / M_H2
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22, soap_indicies_sample_111, soap_indicies_sample_222], [sample_input_1, sample_input_2, sample_input_11, sample_input_22, sample_input_111, sample_input_222]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral]):
     _etg_stelmass_sfe(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
@@ -8039,25 +8091,25 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_
 #==========================================
 ###     ETG H2 plots: H2 morph and extent
 # Plot stelmass - r50 stars
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------- 
 # Plot stelmass - r50 H2
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------- 
 # Plot r50  - r50 H2
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_r50_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------- 
 # Plot r50  - H2 mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_r50_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
@@ -8065,7 +8117,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_
 #----------------------
 # Plot surface desity ratio of H2 / HI / gas in several apertures
 """for hole_gas_type_i in ['h2', 'h1', 'gas']:  
-    for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+    for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
         _gas_surface_ratios(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                                 gas_type = hole_gas_type_i,
                                   surfdens_aperture_1   = '3',    # Radius 1
@@ -8153,19 +8205,19 @@ _aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450
 #===================================
 # Morphological proxies
 # Plot stelmass - ellip stars
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_ellip(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------
 # Plot stelmass - triaxiality stars
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_triax(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)
 #-------------------
 # Plot stelmass - kappa_co stars
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_kappaco(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
@@ -8174,26 +8226,26 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_
 #===================================
 # Stellar kinematics 
 # Plot stelmass - stellar velocity dispersion. (note we use 50 kpc aperture, observations use r50)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_veldisp(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------
 # Plot stelmass - stellar specific angular momentum. (note we use 50 kpc aperture, observations use r50)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_lstar(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)
 #-------------------
 # Plot stellar specific angular momentum - H2 mass (note we use 50 kpc aperture, observations use r50)
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_lstar_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
                         savefig       = True)"""
 #-------------------
 # Plot stelmass - etakin = Msun^1/3 / sigma, Msun^1/3 km-1 s. (using sigma interpolated to r50 and Msun in 50kpc)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_1, soap_indicies_sample_2, soap_indicies_sample_11, soap_indicies_sample_22], [sample_input_1, sample_input_2, sample_input_11, sample_input_22]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_etakin(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""

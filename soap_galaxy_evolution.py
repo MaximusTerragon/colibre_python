@@ -65,7 +65,7 @@ def _make_merger_tree(simulation_run   = 'L100_m6',
                       
     # Directories
     simulation_dir = simulation_run + '/' + simulation_type
-    soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+    soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
     
     #================================================ 
     # Creating dictionary to collect all galaxies, labelled after TrackID
@@ -229,7 +229,7 @@ def _plot_galaxy_evolution(simulation_run = 'L100_m6',
     
     # Directories
     simulation_dir = simulation_run + '/' + simulation_type
-    soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+    soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
     
     #------------------
     # Dictionary containing all properties wanted
@@ -706,8 +706,8 @@ def _plot_galaxy_evolution(simulation_run = 'L100_m6',
 
 """trackid_list_sample = [12345, 123456, 1234567]
 sample_input = {'name_of_preset': 'test_galaxies',
-                'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP/colibre_with_SOAP_membership_0127.hdf5'),
-                'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP/halo_properties_0127.hdf5')
+                'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5'),
+                'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5')
             }
 savefig_txt_in = ''
 save_folder_visual = sample_input['name_of_preset']"""

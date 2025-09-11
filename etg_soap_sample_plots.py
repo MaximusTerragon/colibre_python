@@ -35,7 +35,7 @@ COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir = _assi
 
 #-----------------
 # Returns stelmass - sfr or stelmass - ssfr, coloured by kappa stars
-def _sample_stelmass_u_r(csv_sample = '',
+def _sample_stelmass_u_r(csv_sample = '',  title_text_in = '',
                    #=====================================
                    # Graph settings
                    aperture = 'exclusive_sphere_50kpc', 
@@ -192,7 +192,7 @@ def _sample_stelmass_u_r(csv_sample = '',
                   'all_ETGs': 'ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$)',
                   'all_ETGs_plus_redspiral': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. red FRs)"
                   }
-    ax_hist.set_title(r'%s' %(title_dict[sample_input['name_of_preset']]), size=7, loc='left', pad=3) 
+    ax_hist.set_title(r'%s%s' %(title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3) 
     #if add_ur2_line:
         #ax_scat.text(10**11.35, 1.7, "$\kappa_{\mathrm{co}}^{*}>0.4$\nred spirals", fontsize=7, color='k')
         
@@ -218,7 +218,7 @@ def _sample_stelmass_u_r(csv_sample = '',
 
 #------------------
 # Returns stellar mass function for given set of samples
-def _sample_stellar_mass_function(csv_samples = [],
+def _sample_stellar_mass_function(csv_samples = [],  title_text_in = '',
                           #=====================================
                           aperture = 'exclusive_sphere_50kpc', 
                           #----------
@@ -712,6 +712,10 @@ def _sample_stellar_mass_function(csv_samples = [],
     plt.text(0.80, 0.90, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Title
+    axs.set_title(r'%s' %(title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
     # Legend
     axs.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
@@ -731,7 +735,7 @@ def _sample_stellar_mass_function(csv_samples = [],
 
 #------------------
 # Returns H2 mass function for given set of samples
-def _sample_H2_mass_function(csv_samples = [],
+def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
                           #=====================================
                           aperture = 'exclusive_sphere_50kpc', 
                           aperture_h2 = 'exclusive_sphere_50kpc', 
@@ -935,6 +939,10 @@ def _sample_H2_mass_function(csv_samples = [],
     #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Title
+    axs.set_title(r'%s' %(title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
     # Legend
     axs.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
@@ -952,7 +960,7 @@ def _sample_H2_mass_function(csv_samples = [],
     plt.close()
 #------------------
 # Returns H2 mass fraction = H2/H2+M* function for given set of samples
-def _sample_H2_mass_frac_function(csv_samples = [],
+def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
                           #=====================================
                           aperture = 'exclusive_sphere_50kpc', 
                           aperture_h2 = 'exclusive_sphere_50kpc', 
@@ -1120,6 +1128,10 @@ def _sample_H2_mass_frac_function(csv_samples = [],
     #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Title
+    axs.set_title(r'%s' %(title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
     # Legend
     axs.legend(loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
@@ -1139,7 +1151,7 @@ def _sample_H2_mass_frac_function(csv_samples = [],
 
 #------------------
 # Returns H1 mass function for given set of samples
-def _sample_H1_mass_function(csv_samples = [],
+def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
                           #=====================================
                           aperture = 'exclusive_sphere_50kpc', 
                           aperture_h1 = 'exclusive_sphere_50kpc', 
@@ -1346,6 +1358,10 @@ def _sample_H1_mass_function(csv_samples = [],
     #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Title
+    axs.set_title(r'%s' %(title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
     # Legend
     axs.legend(loc='lower center', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
@@ -1363,7 +1379,7 @@ def _sample_H1_mass_function(csv_samples = [],
     plt.close()
 #------------------
 # Returns H1 mass fraction = H1/H1+M* function for given set of samples
-def _sample_H1_mass_frac_function(csv_samples = [],
+def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
                           #=====================================
                           aperture = 'exclusive_sphere_50kpc', 
                           aperture_h1 = 'exclusive_sphere_50kpc', 
@@ -1530,6 +1546,10 @@ def _sample_H1_mass_frac_function(csv_samples = [],
     #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Title
+    axs.set_title(r'%s' %(title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
     # Legend
     axs.legend(loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
@@ -1549,63 +1569,105 @@ def _sample_H1_mass_frac_function(csv_samples = [],
 
 
 #=====================================
-# L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies
-# L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs
-# L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral
 
 #-------------------
 # Similar to the correa+17 plot.   USE WITH ALL GALAXIES
-"""_sample_stelmass_u_r(csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies',
+"""_sample_stelmass_u_r(csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies',
+                     showfig       = False,
+                     savefig       = True)
+_sample_stelmass_u_r(csv_sample = 'L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies',
+                     title_text_in = ', Hybrid AGN', 
+                     showfig       = False,
+                     savefig       = True)
+_sample_stelmass_u_r(csv_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies',
+                     title_text_in = ', L200', 
                      showfig       = False,
                      savefig       = True)"""
 
 
 #-------------------
 # Stellar mass function of samples
-"""_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+"""_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
-                     savefig       = True)"""
+                     savefig       = True)
+_sample_stellar_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     title_text_in = 'Hybrid AGN', 
+                     showfig       = False,
+                     savefig       = True)
+_sample_stellar_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     title_text_in = 'L200', 
+                     showfig       = False,
+                     savefig       = True)
+"""
 
 
 #-------------------
 # H1 mass function of samples
-"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)
-_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_10kpc',
+_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     title_text_in = 'Hybrid AGN', 
+                     showfig       = False,
+                     savefig       = True)
+_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     title_text_in = 'L200', 
                      showfig       = False,
                      savefig       = True)"""
 # H1 mass fraction = H1 / H1 + M* function of samples
-"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
+"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)
-_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_10kpc',
+_sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     title_text_in = 'Hybrid AGN', 
+                     showfig       = False,
+                     savefig       = True)
+_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     title_text_in = 'L200', 
                      showfig       = False,
                      savefig       = True)"""
 
 #-------------------
 # H2 mass function of samples
-"""_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h2 = 'exclusive_sphere_50kpc',
-                     showfig       = False,
-                     savefig       = True)
-_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h2 = 'exclusive_sphere_10kpc',
-                     showfig       = False,
-                     savefig       = True)"""
+"""for aperture_i in ('exclusive_sphere_50kpc', 'exclusive_sphere_10kpc'):
+    _sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = aperture_i,
+                         showfig       = False,
+                         savefig       = True)
+    _sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = aperture_i,
+                         title_text_in = 'Hybrid AGN', 
+                         showfig       = False,
+                         savefig       = True)
+    _sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = aperture_i,
+                         title_text_in = 'L200', 
+                         showfig       = False,
+                         savefig       = True)"""
+                         
+                         
 # H2 mass fraction = H2 / H2 + M* function of samples
-"""_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h2 = 'exclusive_sphere_50kpc',
-                     showfig       = False,
-                     savefig       = True)
-_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
-                     aperture_h2 = 'exclusive_sphere_10kpc',
-                     showfig       = False,
-                     savefig       = True)"""
+"""for aperture_i in ('exclusive_sphere_50kpc', 'exclusive_sphere_10kpc'):
+    _sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = aperture_i,
+                         showfig       = False,
+                         savefig       = True)
+    _sample_H2_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = aperture_i,
+                         title_text_in = 'Hybrid AGN', 
+                         showfig       = False,
+                         savefig       = True)
+    _sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = aperture_i,
+                         title_text_in = 'L200', 
+                         showfig       = False,
+                         savefig       = True)"""
 
 
 

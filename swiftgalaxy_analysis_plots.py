@@ -403,8 +403,8 @@ def _plot_rich_particles_mass_change(output_data = 0, sample_input = 0, soap_ind
 sample_input = {'name_of_preset': 'gas_rich_ETGs_z0',
                 'simulation_run': 'L100N1504',
                 'simulation_type': 'Thermal_non_equilibrium',
-                'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP/colibre_with_SOAP_membership_0127.hdf5'),
-                'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP/halo_properties_0127.hdf5')
+                'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5'),
+                'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5')
             }
 savefig_txt_in = ''
 save_folder_visual = sample_input['name_of_preset']"""

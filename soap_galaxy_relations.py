@@ -97,7 +97,7 @@ def _stelmass_gasmass(simulation_run = ['L100_m6', 'L0025N0752'],
     for sim_run_i, sim_type_i, snap_i in zip(simulation_run_list, simulation_type_list, snapshot_no_list):
         # Load data
         simulation_dir = sim_run_i + '/' + sim_type_i
-        soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+        soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
         snap_i = "{:03d}".format(snap_i)
         data = sw.load(f'{soap_dir}halo_properties_0{snap_i}.hdf5')
     
@@ -336,7 +336,7 @@ def _stelmass_gasmass_compare_aperture(simulation_run = ['L100_m6', 'L0025N0752'
     for sim_run_i, sim_type_i, snap_i in zip(simulation_run_list, simulation_type_list, snapshot_no_list):
         # Load data
         simulation_dir = sim_run_i + '/' + sim_type_i
-        soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+        soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
         snap_i = "{:03d}".format(snap_i)
         data = sw.load(f'{soap_dir}halo_properties_0{snap_i}.hdf5')
     
@@ -583,7 +583,7 @@ def _stelmass_gasmass_compare_radii(simulation_run = ['L100_m6', 'L0025N0752'],
     for sim_run_i, sim_type_i, snap_i in zip(simulation_run_list, simulation_type_list, snapshot_no_list):
         # Load data
         simulation_dir = sim_run_i + '/' + sim_type_i
-        soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+        soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
         snap_i = "{:03d}".format(snap_i)
         data = sw.load(f'{soap_dir}halo_properties_0{snap_i}.hdf5')
     
@@ -831,7 +831,7 @@ def _stelmass_sfr(simulation_run = ['L100_m6'],
     for sim_run_i, sim_type_i, snap_i in zip(simulation_run_list, simulation_type_list, snapshot_no_list):
         # Load data
         simulation_dir = sim_run_i + '/' + sim_type_i
-        soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+        soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
         snap_i = "{:03d}".format(snap_i)
         data = sw.load(f'{soap_dir}halo_properties_0{snap_i}.hdf5')
     
@@ -1052,7 +1052,7 @@ def _stelmass_u_r_correa2017(simulation_run = ['L100_m6'],
     for sim_run_i, sim_type_i, snap_i in zip(simulation_run_list, simulation_type_list, snapshot_no_list):
         # Load data
         simulation_dir = sim_run_i + '/' + sim_type_i
-        soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+        soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
         snap_i = "{:03d}".format(snap_i)
         data = sw.load(f'{soap_dir}halo_properties_0{snap_i}.hdf5')
     
@@ -1264,7 +1264,7 @@ def _stelmass_u_r(simulation_run = ['L100_m6'],
     for sim_run_i, sim_type_i, snap_i in zip(simulation_run_list, simulation_type_list, snapshot_no_list):
         # Load data
         simulation_dir = sim_run_i + '/' + sim_type_i
-        soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+        soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
         snap_i = "{:03d}".format(snap_i)
         data = sw.load(f'{soap_dir}halo_properties_0{snap_i}.hdf5')
     

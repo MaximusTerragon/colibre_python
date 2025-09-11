@@ -47,11 +47,11 @@ def _create_soap_sample(simulation_run = '',
     #--------------------
     # Load data
     simulation_dir = simulation_run + '/' + simulation_type
-    soap_dir       = colibre_base_path + simulation_dir + "/SOAP/"
+    soap_dir       = colibre_base_path + simulation_dir + "/SOAP-HBT/"
     
     # Load SOAP and SOAP+particle files
-    soap_catalogue_file = os.path.join(colibre_base_path, simulation_dir, "SOAP/halo_properties_0%s.hdf5"%snapshot_no,)
-    virtual_snapshot_file = os.path.join(colibre_base_path, simulation_dir, "SOAP/colibre_with_SOAP_membership_0%s.hdf5"%snapshot_no)
+    soap_catalogue_file = os.path.join(colibre_base_path, simulation_dir, "SOAP-HBT/halo_properties_0%s.hdf5"%snapshot_no,)
+    virtual_snapshot_file = os.path.join(colibre_base_path, simulation_dir, "SOAP-HBT/colibre_with_SOAP_membership_0%s.hdf5"%snapshot_no)
     
     # We can load the entire SOAP catalogue using swiftsimio to browse for an interesting galaxy to look at. 
     swiftdata = SWIFTDataset(soap_catalogue_file)
@@ -981,13 +981,13 @@ def _create_soap_sample(simulation_run = '',
                     'redshift': swiftdata.metadata.redshift,
                     'sample_input':  sample_input}
                     
-        json.dump(csv_dict, open('%s/%s_%s_%s_sample%s_%s%s.csv' %(sample_dir, simulation_run, simulation_type, str(snapshot_no), len(soap_indicies), name_of_preset, csv_name), 'w'), cls=NumpyEncoder)
-        print('\n  SAVED: %s/%s_%s_%s_sample%s_%s%s.csv' %(sample_dir, simulation_run, simulation_type, str(snapshot_no), len(soap_indicies), name_of_preset, csv_name))
+        json.dump(csv_dict, open('%s/%s_%s_%s_sample%s_%s%s.csv' %(sample_dir, simulation_run, simulation_type, str(snapshot_no), name_of_preset, csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/%s_%s_%s_sample%s_%s%s.csv' %(sample_dir, simulation_run, simulation_type, str(snapshot_no), name_of_preset, csv_name))
         
     return soap_indicies, sample_input
     
     
-#=======================================
+#=================================================================================
 # Create sample from example (change to halo limit, not stelmass)
 """_create_soap_sample(simulation_run = 'L0025N0752', simulation_type = 'THERMAL_AGN_m5_obsolete', 
                     snapshot_no = 123,
@@ -1030,9 +1030,12 @@ def _create_soap_sample(simulation_run = '',
 
 
 
-#=======================================
+#=================================================================================
+
+# CTRL+F this section to replace with HYBRID_AGN_m6 or L200_m6
+
 # Create samples of massive >109.5 galaxies:
-"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_galaxies',
                     csv_file = True)
@@ -1043,7 +1046,7 @@ _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m
 _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_galaxies_satellites',
-                    csv_file = True)"""
+                    csv_file = True)
 
 #=====================
 # Create samples of massive >109.5 galaxies that are ETGs (kappa < 0.4):
@@ -1066,10 +1069,10 @@ _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m
 """_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_ETGs_groupfield',
-                    csv_file = True)"""
+                    csv_file = True)
 
 # Create samples of massive >109.5 galaxies that are ETGs (kappa < 0.4), and include disky candidates with kappa > 0.4 and u-r > 2.0:
-"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_ETGs_plus_redspiral',
                     csv_file = True)
@@ -1088,12 +1091,12 @@ _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m
 """_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_ETGs_plus_redspiral_groupfield',
-                    csv_file = True)"""
+                    csv_file = True)
                     
                     
 #=====================
 # Create samples of massive >109.5 galaxies that are LTGs (kappa > 0.4):
-"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_LTGs',
                     csv_file = True)
@@ -1118,7 +1121,7 @@ _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m
 _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_LTGs_excl_redspiral_satellites',
-                    csv_file = True) """            
+                    csv_file = True) """        
                     
                     
                     
