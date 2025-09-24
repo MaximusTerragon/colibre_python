@@ -1726,20 +1726,30 @@ for snap_i in [127]:
 
     #====================================
     # Plots stellarmass against u-r, coloured by kappa with a histogram, analogous to Correa+17 but with 50kpc aperture instead of 30kpc
-    _stelmass_u_r_correa2017(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],  
+    """_stelmass_u_r_correa2017(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],  
                      centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                     savefig = True)
     _stelmass_u_r_correa2017(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],  
                      centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
                     savefig = True)
     _stelmass_u_r_correa2017(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],  
+                     centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
+                    savefig = True)"""
+                    
+    _stelmass_u_r_correa2017(simulation_run = ['L100_m6'], simulation_type = ['HYBRID_AGN_m6'], snapshot_no     = [snap_i],  
+                     centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
+                    savefig = True)
+    _stelmass_u_r_correa2017(simulation_run = ['L100_m6'], simulation_type = ['HYBRID_AGN_m6'], snapshot_no     = [snap_i],  
+                     centrals_or_satellites = 'centrals',      # [ both / centrals / satellites ]
+                    savefig = True)
+    _stelmass_u_r_correa2017(simulation_run = ['L100_m6'], simulation_type = ['HYBRID_AGN_m6'], snapshot_no     = [snap_i],  
                      centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
                     savefig = True)
                     
     
     #====================================
     # Plots stellarmass against u-r, with point size by molecular hydrogen mass
-    _stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
+    """_stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
                     magnitudes = 'u-r',    # [ u-r / u-g ]
                      centrals_or_satellites = 'both',      # [ both / centrals / satellites ]
                     savefig = True)
@@ -1750,7 +1760,7 @@ for snap_i in [127]:
     _stelmass_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
                     magnitudes = 'u-r',    # [ u-r / u-g ]
                      centrals_or_satellites = 'satellites',      # [ both / centrals / satellites ]
-                    savefig = True)
+                    savefig = True)"""
     # Plots r-band magnitude M_r against u-r, with point size by molecular hydrogen mass
     """_Mr_u_r(simulation_run = ['L100_m6'], simulation_type = ['THERMAL_AGN_m6'], snapshot_no     = [snap_i],        
                     magnitudes = 'u-r',    # [ u-r / u-g ]

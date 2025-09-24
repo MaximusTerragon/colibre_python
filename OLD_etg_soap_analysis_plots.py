@@ -15,12 +15,8 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.colors as colors
 import matplotlib.cm as cm
-import matplotlib.patheffects as mpe
-import matplotlib as mpl
 from matplotlib.ticker import PercentFormatter
 from matplotlib.patches import Patch
-from matplotlib.colors import ListedColormap
-from highlight_text import fig_text
 from astropy.stats import binom_conf_interval
 from matplotlib.lines import Line2D
 from graphformat import set_rc_params
@@ -37,7 +33,6 @@ assert Version(swiftgalaxy.__version__) >= Version("1.2.0")
 answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens\n     3 cosma8           ->  ")
 COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir = _assign_directories(answer)
 #====================================
-outline=mpe.withStroke(linewidth=1.6, foreground='black')
 
 
 """ Unyts guide:
@@ -67,7 +62,7 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    aperture = 'exclusive_sphere_50kpc', 
                    aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                    add_detection_hist = False,
                    h2_detection_limit = 10**7,
                    #---------------
@@ -99,7 +94,7 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -143,92 +138,51 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
     kappa_stars = attrgetter('%s.%s'%(aperture, 'kappa_corot_stars'))(data)[soap_indicies_sample]
 
     
-    #==========================================================
-    # Useful masks
-    mask_h2      = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    mask_SRs     = kappa_stars < cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    mask_h2_SRs  = np.logical_and.reduce([mask_h2, mask_SRs])       # detection kappa < 0.4
-    mask_h2_FRs  = np.logical_and.reduce([mask_h2, ~mask_SRs])      # detection kappa > 0.4
-    mask_X_SRs  = np.logical_and.reduce([~mask_h2, mask_SRs])       # non-detection kappa < 0.4
-    mask_X_FRs  = np.logical_and.reduce([~mask_h2, ~mask_SRs])      # non-detection kappa > 0.4
+    #-----------------
+    # Scatter
+    vmin = 0
+    vmax = 0.8
     
-    #----------------
-    # Print H2 detection
-    print('--------------------------------')
-    print('Sample length:   %s     Excl. kappa>0.4:    %s' %(len(stellar_mass), len(stellar_mass[mask_SRs])))
-    print('Fraction of sample %s above H2 mass:' %(sample_input['name_of_preset']))
-    # Total sample
-    for h2_detection_limit_i in [10**6, 10**7, 10**8, 10**9, 10**10]:
-        # Including FRs
-        mask_h2_i = H2_mass > cosmo_quantity(h2_detection_limit_i, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-        f_detected_i = len(stellar_mass[mask_h2_i])/len(stellar_mass) 
-        f_detected_err_i = binom_conf_interval(k=len(stellar_mass[mask_h2_i]), n=len(stellar_mass), confidence_level= 0.68269, interval='jeffreys')
-        f_detected_err_lower_i = f_detected_i - f_detected_err_i[0]
-        f_detected_err_upper_i = f_detected_err_i[1] - f_detected_i
-        print('  >  H2 > %.1e:      %.3f (-%.3f + %.3f),  count: %s / %s'%(h2_detection_limit_i, f_detected_i, f_detected_err_lower_i, f_detected_err_upper_i, len(stellar_mass[mask_h2_i]), len(stellar_mass)))
-        
-        # Excluding FRs
-        mask_h2_i = H2_mass > cosmo_quantity(h2_detection_limit_i, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-        mask_SRs_i    = kappa_stars < cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-        mask_h2_noFR_i = np.logical_and.reduce([mask_h2_i, mask_SRs_i])
-        f_detected_i = len(stellar_mass[mask_h2_noFR_i])/len(stellar_mass[mask_SRs_i]) 
-        f_detected_err_i = binom_conf_interval(k=len(stellar_mass[mask_h2_noFR_i]), n=len(stellar_mass[mask_SRs_i]), confidence_level= 0.68269, interval='jeffreys')
-        f_detected_err_lower_i = f_detected_i - f_detected_err_i[0]
-        f_detected_err_upper_i = f_detected_err_i[1] - f_detected_i
-        print('     only kappa<0.4:  %.3f (-%.3f + %.3f), count: %s / %s'%(h2_detection_limit_i, f_detected_i, f_detected_err_lower_i, f_detected_err_upper_i, len(stellar_mass[mask_h2_noFR_i]), len(stellar_mass[mask_SRs_i])))
-        
-        
-    #==========================================================
-    # PLOTS
-    if scatter_kappa_coloubar:
-        # Plot 2 scatters: one for H2 detections and one for non-detections
-        
-        # Define new colormap for high kappa and low kappa
-        mymap = colors.LinearSegmentedColormap.from_list('my_colormap', colors_combined)
-        # Normalise colormap
-        norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
-        mapper = cm.ScalarMappable(norm=norm, cmap=mymap)         #cmap=cm.coolwarm)
-        
-        # Define inputs
-        with np.errstate(divide='ignore'):
-            plot_x = np.log10(stellar_mass)
-            plot_y = mag_plot
-            plot_c = kappa_stars
-            plot_s = None               # s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5
-        
-        # Plot scatters
-        sc_points = axs.scatter(plot_x[mask_h2], plot_y[mask_h2], c=plot_c[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
-        axs.scatter(plot_x[~mask_h2], plot_y[~mask_h2], c=plot_c[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
+    # sample the colormaps that you want to use. Use 128 from each so we get 256
+    # colors in total
+    colors1 = plt.cm.seismic_r(np.linspace(0, 0.45, 128))
+    colors2 = plt.cm.seismic_r(np.linspace(0.55, 1, 128))
+
+    # combine them and build a new colormap
+    colors_combined = np.vstack((colors1, colors2))
+    mymap = colors.LinearSegmentedColormap.from_list('my_colormap', colors_combined)
+    
+    # Normalise colormap
+    norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
+    mapper = cm.ScalarMappable(norm=norm, cmap=mymap)         #cmap=cm.coolwarm)
+    
+    # Masking LTGs (ETGs are mask_high_kappa):
+    mask_high_kappa    = (kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)).squeeze()
+    # Masking blue LTGs: (ETGs are ~mask_blue_LTG)
+    mask_blue_LTG = np.logical_and.reduce([kappa_stars > cosmo_quantity(0.4, u.dimensionless, comoving=False, scale_factor=data.metadata.a, scale_exponent=0), 
+                                              mag_plot < cosmo_quantity(2, u.dimensionless, comoving=False, scale_factor= data.metadata.a, scale_exponent=0)]).squeeze()
+    dict_sample_numbers = {'total': len(stellar_mass),
+                           'kappa_cut': {'LTG': len(stellar_mass[mask_high_kappa]),
+                                         'ETG': len(stellar_mass[~mask_high_kappa])},
+                           'kappa_mag_cut': {'LTG': len(stellar_mass[mask_blue_LTG]),
+                                             'ETG': len(stellar_mass[~mask_blue_LTG])}}
+    print('Total sample:  ', dict_sample_numbers['total'])
+    print('Number of LTG kappa>0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['LTG'], dict_sample_numbers['kappa_cut']['LTG']/dict_sample_numbers['total']))
+    print('Number of ETG kappa<0.4:  %s  (%.3f)' %(dict_sample_numbers['kappa_cut']['ETG'], dict_sample_numbers['kappa_cut']['ETG']/dict_sample_numbers['total']))
+    print('Number of LTG kappa>0.4 and u-r<2:             %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['LTG'], dict_sample_numbers['kappa_mag_cut']['LTG']/dict_sample_numbers['total']))
+    print('Number of ETG kappa<0.4 or kappa>0.4 + u-r>2:  %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG'], dict_sample_numbers['kappa_mag_cut']['ETG']/dict_sample_numbers['total']))
+    
+    
+    
+    # Plot 2 scatters: one for H2 detections and one for non-detections
+    mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+    if add_kappa_colourbar:
+        sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), mag_plot[mask_h2], c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(np.log10(stellar_mass[~mask_h2]), mag_plot[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
-        # Plot 4 scatters: kappa<0.4 non-detections, kappa>0.4 non-detections, kappa<0.4, kappa>0.4
-        
-        # Define inputs
-        with np.errstate(divide='ignore'):
-            plot_x = np.log10(stellar_mass)
-            plot_y = mag_plot
-            plot_c = np.log10(H2_mass)
-            plot_s = None
-        
-        # Define default colormap for H2
-        norm = colors.Normalize(vmin=6, vmax=10)
-        
-        # Create custom colormap with grey at the bottom
-        viridis = mpl.colormaps['viridis'].resampled(250)
-        newcolors = viridis(np.linspace(0, 1, 10))
-        newcolors[:50, :] = 'grey'
-        newcmp = ListedColormap(newcolors)
-        
-        # Plot detections as filled viridis circles and squares
-        sc_points = axs.scatter(plot_x[mask_h2_SRs], plot_y[mask_h2_SRs], c=plot_c[mask_h2_SRs], s=4.5, cmap=newcmp, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
-        axs.scatter(plot_x[mask_h2_FRs], plot_y[mask_h2_FRs], c=plot_c[mask_h2_FRs], s=4.5, cmap=newcmp, norm=norm, marker='S', alpha=0.75, linewidths=0, edgecolor='none')
-        
-        # Plot non-detections as empty grey circles and squares
-        axs.scatter(plot_x[mask_X_SRs], plot_y[mask_X_SRs], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none', label='$\kappa_{\mathrm{co}}^{*}<0.4$')
-        axs.scatter(plot_x[mask_X_FRs], plot_y[mask_X_FRs], s=4.5, marker='S', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none', label='$\kappa_{\mathrm{co}}^{*}>0.4$')
-        
-        
-        
-        
+        sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), mag_plot[mask_h2], c='r', s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, marker='o', alpha=0.5, linewidths=0, edgecolor='none')
+        #axs.scatter(np.log10(stellar_mass[~mask_h2]), mag_plot[~mask_h2], c='k', s=4.0, marker='P', alpha=0.75, linewidths=0, edgecolor='none')
+        axs.scatter(np.log10(stellar_mass[~mask_h2]), mag_plot[~mask_h2], s=4.5, marker='o', alpha=0.75, linewidths=0.4, edgecolor='grey', facecolor='none')
     
     #----------------
     # Add H2 detection rate within a bin above he_detection_limit
@@ -236,8 +190,8 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
         # we want the fraction within a bin, not normalised
         bin_width = 0.1
         hist_bins = np.arange(0.5, 3.2, bin_width)  # Binning edges
-        bin_n, _           = np.histogram(plot_y, bins=hist_bins)
-        bin_n_detected, _  = np.histogram(plot_y[mask_h2], bins=hist_bins)
+        bin_n, _           = np.histogram(mag_plot, bins=hist_bins)
+        bin_n_detected, _  = np.histogram(mag_plot[mask_h2], bins=hist_bins)
         mask_positive_n     = bin_n > 0
         bin_f_detected      = bin_n_detected[mask_positive_n]/bin_n[mask_positive_n]
         
@@ -264,6 +218,20 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
         #mask_positive_n_det = bin_n_detected[mask_positive_n] > 0
         ax_hist.errorbar(bin_f_detected, hist_bins_midpoint, xerr=[bin_f_detected_err_lower, bin_f_detected_err_upper], yerr=None, ecolor='k', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=0.7, alpha=0.7)
         
+        # print
+        if print_fdet:
+            print('--------------------------------')
+            print('H2 > %.1e detection rate bins in ETGs:   sample: %s' %(h2_detection_limit, sample_input['name_of_preset']))
+            print('   bins with galaxies:   %s'%hist_bins[:-1][mask_positive_n])  
+            print('   bin counts:           %s'%bin_n[mask_positive_n])
+            print('   f_det:                %s'%np.around(bin_f_detected,3))  
+            print('     f_deterr lower: %s'%np.around(bin_f_detected_err_lower,3))  
+            print('     f_deterr upper: %s'%np.around(bin_f_detected_err_upper,3)) 
+            
+            
+            #answer_fdet = input("\n-----------------\nContinue? y/n? ")
+            #if answer_fdet == 'n':
+            #    raise Exception('Manual break at fdet')
     
     #-----------------
     # Add observations
@@ -274,6 +242,20 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
         print('no obs available yet')
     
     
+    #----------------
+    # Print H2 detection
+    print('--------------------------------')
+    print('FRACTION OF TOTAL SAMPLE %s ABOVE H2 MASS:' %(sample_input['name_of_preset']))
+    # Total sample
+    for h2_detection_limit_i in [10**6, 10**7, 10**8, 10**9, 10**10]:
+        mask_h2_i = H2_mass > cosmo_quantity(h2_detection_limit_i, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+        f_detected_i = len(stellar_mass[mask_h2_i])/len(stellar_mass) 
+        f_detected_err_i = binom_conf_interval(k=len(stellar_mass[mask_h2_i]), n=len(stellar_mass), confidence_level= 0.68269, interval='jeffreys')
+        f_detected_err_lower_i = f_detected_i - f_detected_err_i[0]
+        f_detected_err_upper_i = f_detected_err_i[1] - f_detected_i
+        print('  >  H2 > %.1e:    %.3f (-%.3f + %.3f), \tcount: %s / %s'%(h2_detection_limit_i, f_detected_i, f_detected_err_lower_i, f_detected_err_upper_i, len(stellar_mass[mask_h2_i]), len(stellar_mass)))
+    
+      
     #-----------
     # Axis formatting
     axs.set_xlim(9.5, 12.5)
@@ -306,11 +288,8 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
-    else:
-        fig.colorbar(sc_points, ax=axs, label='log$_{10}$ $M_{\mathrm{H_2}}$ [M$_{\odot}$', extend='both')      #, extend='max'  
-        
       
     #-----------  
     # Annotations
@@ -335,28 +314,29 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
-
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
+    if add_observational:
+        plt.text(10**11.9, 2.65, '↑ red sequence', fontsize=7, color='r', rotation=14, rotation_mode='anchor', horizontalalignment='right', verticalalignment='top')
+        plt.text(10**11.9, 2.4, '↓ blue cloud', fontsize=7, color='b', rotation=14, rotation_mode='anchor', horizontalalignment='right', verticalalignment='top')
 
     #-----------
     # Legend
-    if scatter_kappa_coloubar:
-        for i, h2_i in enumerate([7, 8, 9, 10]):
-            s = (h2_i-(np.log10(h2_detection_limit)-1))**2.5
-            if i == 0:
-                axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
-            else:
-                axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, handlelength=1.0, alignment='right', markerfirst=False)
-
-
+    for i, h2_i in enumerate([7, 8, 9, 10]):
+        s = (h2_i-(np.log10(h2_detection_limit)-1))**2.5
+        if i == 0:
+            axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
+        else:
+            axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, handlelength=0.8, alignment='right', markerfirst=False)
+    
+    
     #-----------
     # other
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_u_r/%s_%s_%s_young14_u-r_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_u_r/%s_%s_%s_young14_u-r_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -396,7 +376,7 @@ def _aperture_fdet(csv_samples = [], title_text_in = '',
         dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                         'all_galaxies_centrals': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                         'all_galaxies_satellites': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                       'all_ETGs': 'ETGs (excl. FRs)',
+                       'all_ETGs': 'ETGs',
                         'all_ETGs_centrals': 'ETGs',
                         'all_ETGs_satellites': 'ETGs',
                        'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)',
@@ -548,7 +528,7 @@ def _aperture_fdet(csv_samples = [], title_text_in = '',
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
+                       'HYBRID_AGN_m6': ' HYBRID'}
     axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
 
@@ -603,7 +583,7 @@ def _aperture_fdet_rings(csv_samples = [], title_text_in = '',
         dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                         'all_galaxies_centrals': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                         'all_galaxies_satellites': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                       'all_ETGs': 'ETGs (excl. FRs)',
+                       'all_ETGs': 'ETGs',
                         'all_ETGs_centrals': 'ETGs',
                         'all_ETGs_satellites': 'ETGs',
                        'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)',
@@ -773,7 +753,7 @@ def _aperture_fdet_rings(csv_samples = [], title_text_in = '',
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
+                       'HYBRID_AGN_m6': ' HYBRID'}
     axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     #-----------
@@ -825,7 +805,7 @@ def _aperture_fdet_missing_gas(csv_samples = [], title_text_in = '',
         dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                         'all_galaxies_centrals': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                         'all_galaxies_satellites': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                       'all_ETGs': 'ETGs (excl. FRs)',
+                       'all_ETGs': 'ETGs',
                         'all_ETGs_centrals': 'ETGs',
                         'all_ETGs_satellites': 'ETGs',
                        'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)',
@@ -988,7 +968,7 @@ def _aperture_fdet_missing_gas(csv_samples = [], title_text_in = '',
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
+                       'HYBRID_AGN_m6': ' HYBRID'}
     axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     #-----------
@@ -1039,7 +1019,7 @@ def _gas_surface_ratios(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -1233,8 +1213,8 @@ def _gas_surface_ratios(soap_indicies_sample=[], sample_input=[], title_text_in 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     #-----------
     # Add ratio lines
@@ -1275,7 +1255,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -1308,7 +1288,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -1395,7 +1375,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
     mask_nonzero_SFR = sfr50 > cosmo_quantity(0, u.Msun/u.yr, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
     
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(sfr50[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(sfr50[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -1488,11 +1468,11 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -1556,7 +1536,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -1582,8 +1562,8 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -1594,7 +1574,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -1602,7 +1582,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_SFR/%s_%s_%s_Mstar_SFR_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_SFR/%s_%s_%s_Mstar_SFR_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -1616,7 +1596,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -1649,7 +1629,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -1736,7 +1716,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
     mask_nonzero_SFR = sfr50 > cosmo_quantity(0, u.Msun/u.yr, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(ssfr50[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(ssfr50[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -1830,11 +1810,11 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -1896,7 +1876,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -1922,8 +1902,8 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -1934,7 +1914,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -1942,7 +1922,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_sSFR/%s_%s_%s_Mstar_sSFR_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_sSFR/%s_%s_%s_Mstar_sSFR_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -1956,7 +1936,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -1989,7 +1969,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -2076,7 +2056,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
     mask_nonzero_SFR = sfr50 > cosmo_quantity(0, u.Msun/u.yr, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(sfe50[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(sfe50[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -2170,11 +2150,11 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -2236,7 +2216,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -2262,8 +2242,8 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -2274,7 +2254,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -2282,7 +2262,7 @@ def _etg_stelmass_sfe(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_SFE/%s_%s_%s_Mstar_SFE_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_SFE/%s_%s_%s_Mstar_SFE_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -2299,7 +2279,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,
@@ -2334,7 +2314,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -2416,7 +2396,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     if scatter_or_hexbin == 'scatter':
         ### Plots scatter with o for detections and x for non-detect, with marker size = log10 H2
         
-        if scatter_kappa_coloubar:
+        if add_kappa_colourbar:
             sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(H2_mass[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
             axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(H2_mass[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
         else:
@@ -2556,7 +2536,6 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
         lower_1sigma = []
         upper_1sigma = []
         bin_centers = []
-        bins_n = []
         for i in range(len(hist_bins) - 1):
             mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
             y_bin = H2_mass.value[mask]
@@ -2581,11 +2560,11 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -2634,7 +2613,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     #------------
     # colorbar
     if scatter_or_hexbin == 'scatter':
-        if scatter_kappa_coloubar:
+        if add_kappa_colourbar:
             fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'
     if scatter_or_hexbin == 'hexbin_count':
         fig.colorbar(cb, ax=axs, label='Number of galaxies', extend='max')
@@ -2665,8 +2644,8 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -2677,7 +2656,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -2685,7 +2664,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_MH2/%s_%s_%s_Mstar_MH2_%s_H2ap%s%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, ('' if scatter_or_hexbin=='scatter' else scatter_or_hexbin), savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_MH2/%s_%s_%s_Mstar_MH2_%s_H2ap%s%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, ('' if scatter_or_hexbin=='scatter' else scatter_or_hexbin), savefig_txt_save, file_format))
@@ -2699,7 +2678,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h1_detection_limit = 10**7,
                    add_median_line = True,
@@ -2733,7 +2712,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -2813,7 +2792,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h1 = H1_mass > cosmo_quantity(h1_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h1]), np.log10(H1_mass[mask_h1]), c=kappa_stars[mask_h1], s=(np.log10(H1_mass[mask_h1])-(np.log10(h1_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h1]), np.log10(H1_mass[~mask_h1]), c=kappa_stars[~mask_h1], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -2927,7 +2906,6 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
         lower_1sigma = []
         upper_1sigma = []
         bin_centers = []
-        bins_n = []
         for i in range(len(hist_bins) - 1):
             mask = (np.log10(stellar_mass) >= hist_bins[i]) & (np.log10(stellar_mass) < hist_bins[i + 1])
             y_bin = H1_mass.value[mask]
@@ -2952,11 +2930,11 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -3004,7 +2982,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -3030,8 +3008,8 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -3042,7 +3020,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{I}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -3050,7 +3028,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_MH1/%s_%s_%s_Mstar_MH1_%s_H1ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_MH1/%s_%s_%s_Mstar_MH1_%s_H1ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -3067,7 +3045,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,
@@ -3100,7 +3078,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -3184,7 +3162,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(H2_mass_fraction[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(H2_mass_fraction[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -3291,11 +3269,11 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -3344,7 +3322,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -3370,8 +3348,8 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -3382,7 +3360,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -3390,7 +3368,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_fracH2/%s_%s_%s_Mstar_fracH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_fracH2/%s_%s_%s_Mstar_fracH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -3404,7 +3382,7 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h1 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h1_detection_limit = 10**7,
                    add_median_line = True,
@@ -3437,7 +3415,7 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -3521,7 +3499,7 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h1 = H1_mass > cosmo_quantity(h1_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h1]), np.log10(H1_mass_fraction[mask_h1]), c=kappa_stars[mask_h1], s=(np.log10(H1_mass[mask_h1])-(np.log10(h1_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h1]), np.log10(H1_mass_fraction[~mask_h1]), c=kappa_stars[~mask_h1], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -3627,11 +3605,11 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -3680,7 +3658,7 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -3706,8 +3684,8 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -3718,7 +3696,7 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{I}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -3726,7 +3704,7 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_fracH1/%s_%s_%s_Mstar_fracH1_%s_H1ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h1, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_fracH1/%s_%s_%s_Mstar_fracH1_%s_H1ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h1, savefig_txt_save, file_format))
@@ -3743,7 +3721,7 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    #---------------
@@ -3775,7 +3753,7 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -3877,7 +3855,7 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(m200c[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(m200c[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -3988,7 +3966,7 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -4014,8 +3992,8 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -4026,7 +4004,7 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, handlelength=1.0, alignment='right', markerfirst=False)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, handlelength=0.8, alignment='right', markerfirst=False)
     
     
     #-----------
@@ -4034,7 +4012,7 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_m200c/%s_%s_%s_Mstar_m200c_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_m200c/%s_%s_%s_Mstar_m200c_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -4048,7 +4026,7 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -4081,7 +4059,7 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -4183,7 +4161,7 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(m200c[mask_h2]), np.log10(H2_mass[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(m200c[~mask_h2]), np.log10(H2_mass[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -4289,11 +4267,11 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -4341,7 +4319,7 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -4367,8 +4345,8 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -4379,7 +4357,7 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, handlelength=1.0, alignment='left', markerfirst=True)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, handlelength=0.8, alignment='left', markerfirst=True)
     
     
     #-----------
@@ -4387,7 +4365,7 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/m200c_MH2/%s_%s_%s_m200c_MH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/m200c_MH2/%s_%s_%s_m200c_MH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -4404,7 +4382,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -4437,7 +4415,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -4521,7 +4499,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(r50[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(r50[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -4627,11 +4605,11 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -4680,7 +4658,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -4706,8 +4684,8 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -4718,7 +4696,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, handlelength=1.0, alignment='right', markerfirst=False)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, handlelength=0.8, alignment='right', markerfirst=False)
     
     
     #-----------
@@ -4726,7 +4704,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_r50/%s_%s_%s_Mstar_r50_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_r50/%s_%s_%s_Mstar_r50_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -4740,7 +4718,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -4773,7 +4751,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -4860,7 +4838,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(r50H2[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(r50H2[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -4966,11 +4944,11 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -5018,7 +4996,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -5044,8 +5022,8 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -5056,7 +5034,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -5064,7 +5042,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_r50H2/%s_%s_%s_Mstar_r50H2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_r50H2/%s_%s_%s_Mstar_r50H2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -5078,7 +5056,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -5111,7 +5089,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -5201,7 +5179,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(r50[mask_h2]), np.log10(r50H2[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(r50[~mask_h2]), np.log10(r50H2[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -5307,11 +5285,11 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -5359,7 +5337,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -5385,8 +5363,8 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -5397,7 +5375,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -5405,7 +5383,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/r50_r50H2/%s_%s_%s_r50_r50H2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/r50_r50H2/%s_%s_%s_r50_r50H2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -5419,7 +5397,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,
@@ -5452,7 +5430,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -5536,7 +5514,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(r50[mask_h2]), np.log10(H2_mass[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(r50[~mask_h2]), np.log10(H2_mass[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -5641,11 +5619,11 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -5694,7 +5672,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -5720,8 +5698,8 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -5732,7 +5710,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -5740,7 +5718,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/r50_MH2/%s_%s_%s_r50_MH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/r50_MH2/%s_%s_%s_r50_MH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -5757,7 +5735,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -5790,7 +5768,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -5921,7 +5899,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), ellip[mask_h2], c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), ellip[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -6027,11 +6005,11 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, (medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, (medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, (medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, (lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, (upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -6080,7 +6058,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -6106,8 +6084,8 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -6118,7 +6096,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -6126,7 +6104,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_ellip/%s_%s_%s_Mstar_ellip_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_ellip/%s_%s_%s_Mstar_ellip_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -6140,7 +6118,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -6173,7 +6151,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -6304,7 +6282,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), triax[mask_h2], c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), triax[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -6410,11 +6388,11 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, (medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, (medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, (medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, (lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, (upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -6462,7 +6440,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -6488,8 +6466,8 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -6500,7 +6478,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -6508,7 +6486,7 @@ def _etg_stelmass_triax(soap_indicies_sample=[], sample_input=[], title_text_in 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_triax/%s_%s_%s_Mstar_triax_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_triax/%s_%s_%s_Mstar_triax_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -6522,7 +6500,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -6555,7 +6533,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -6637,7 +6615,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), kappa_stars[mask_h2], c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), kappa_stars[~mask_h2], c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -6743,11 +6721,11 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, (medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, (medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, (medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, (lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, (upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -6795,7 +6773,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -6821,8 +6799,8 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -6833,7 +6811,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -6841,7 +6819,7 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_kappaco/%s_%s_%s_Mstar_kappaco_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_kappaco/%s_%s_%s_Mstar_kappaco_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -6859,7 +6837,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                      aperture_sigma = 'r50',     # [ exclusive_sphere_50kpc / r50 ]
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -6892,7 +6870,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -7013,7 +6991,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(stellar_vel_disp_plot[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(stellar_vel_disp_plot[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -7119,11 +7097,11 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, np.log10(medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, np.log10(medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, np.log10(medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, np.log10(lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, np.log10(upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -7173,7 +7151,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -7199,8 +7177,8 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     
@@ -7212,7 +7190,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -7220,7 +7198,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_veldisp/%s_%s_%s_Mstar_veldisp_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_veldisp/%s_%s_%s_Mstar_veldisp_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -7234,7 +7212,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = False,          # Median of detected
@@ -7267,7 +7245,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -7353,7 +7331,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(specific_L_stars[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(specific_L_stars[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -7464,7 +7442,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -7490,8 +7468,8 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -7502,7 +7480,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=0.8)
     
     
     #-----------
@@ -7510,7 +7488,7 @@ def _etg_stelmass_lstar(soap_indicies_sample=[], sample_input=[], title_text_in 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_lstar/%s_%s_%s_Mstar_lstars_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_lstar/%s_%s_%s_Mstar_lstars_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -7525,7 +7503,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                      aperture_sigma = 'r50',                    # [ 'r50' / exclusive_sphere_50kpc ]
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,          # Median of detected
@@ -7558,7 +7536,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -7697,7 +7675,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(stellar_mass[mask_h2]), np.log10(eta_kin_plot[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(stellar_mass[~mask_h2]), np.log10(eta_kin_plot[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -7803,11 +7781,11 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, (medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, (medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, (medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, (lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, (upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -7855,7 +7833,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -7881,8 +7859,8 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -7893,7 +7871,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -7901,7 +7879,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/Mstar_etakin/%s_%s_%s_Mstar_etakin_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/Mstar_etakin/%s_%s_%s_Mstar_etakin_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -7915,7 +7893,7 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
                    aperture = 'exclusive_sphere_50kpc', 
                      aperture_h2 = 'exclusive_sphere_50kpc', 
                    add_observational = False,        # Adapts based on imput mass_type, and using references from pipeline
-                   scatter_kappa_coloubar = False,
+                   add_kappa_colourbar = False,
                      add_detection_hist = False,
                      h2_detection_limit = 10**7,
                    add_median_line = True,
@@ -7948,7 +7926,7 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
-                   'all_ETGs': 'ETGs (excl. FRs)',
+                   'all_ETGs': 'ETGs',
                    'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
                    'all_ETGs': 'C0',
@@ -8034,7 +8012,7 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #---------------------
     # Plot 2 scatters: one for H2 detections and one for non-detections
     mask_h2 = H2_mass > cosmo_quantity(h2_detection_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         sc_points = axs.scatter(np.log10(specific_L_stars[mask_h2]), np.log10(H2_mass[mask_h2]), c=kappa_stars[mask_h2], s=(np.log10(H2_mass[mask_h2])-(np.log10(h2_detection_limit)-1))**2.5, cmap=mymap, norm=norm, marker='o', alpha=0.75, linewidths=0, edgecolor='none')
         axs.scatter(np.log10(specific_L_stars[~mask_h2]), np.log10(H2_mass[~mask_h2]), c=kappa_stars[~mask_h2], s=4.0, cmap=mymap, norm=norm, marker='P', alpha=0.5, linewidths=0, edgecolor='none')
     else:
@@ -8139,11 +8117,11 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         # Convert bin centers back to linear space for plotting
         bin_centers = np.array(bin_centers)
         bins_n = np.array(bins_n)
-        medians_masked = np.ma.masked_where(bins_n < 10, medians)
-        lower_1sigma_masked = np.ma.masked_where(bins_n < 10, lower_1sigma)
-        upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
+        medians_masked = np.ma_masked_where(bins_n >= 10, medians)
+        lower_1sigma_masked = np.ma_masked_where(bins_n >= 10, lower_1sigma)
+        upper_1sigma_masked = np.ma_masked_where(bins_n >= 10, upper_1sigma)
         
-        axs.plot(bin_centers, (medians), color='k',   ls=(0, (1, 1)), linewidth=1, zorder=10)
+        axs.plot(bin_centers, (medians), color='k', ls=(0, (1, 1))), linewidth=1, zorder=10)
         axs.plot(bin_centers, (medians_masked), color='k', linewidth=1, label='$M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$ median', zorder=20)
         axs.plot(bin_centers, (lower_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
         axs.plot(bin_centers, (upper_1sigma_masked), color='k', linewidth=0.7, ls='--', zorder=20)
@@ -8191,7 +8169,7 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         
     #------------
     # colorbar
-    if scatter_kappa_coloubar:
+    if add_kappa_colourbar:
         fig.colorbar(mapper, ax=axs, label='$\kappa_{\mathrm{co}}^{*}$', extend='both')      #, extend='max'  
       
     #-----------  
@@ -8217,8 +8195,8 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
     title_run_dict = {'L100_m6': 'L100m6', 
                       'L200_m6': 'L200m6'}
     title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    axs.set_title(r'%s%s, %s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_dict[sample_input['name_of_preset']], title_text_in), size=7, loc='left', pad=3)
+                       'HYBRID_AGN_m6': ' HYBRID'}
+    axs.set_title(r'%s, %s%s%s' %(title_dict[sample_input['name_of_preset']], title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     
     #-----------
@@ -8229,7 +8207,7 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
             axs.scatter([10**9], [0], c='r', s=s, label=r'$\mathrm{log} \: M_{\mathrm{H_{2}}}/\mathrm{M}_{\odot}=%.1f$'%h2_i, linewidths=0, edgecolor='none')
         else:
             axs.scatter([10**9], [0], c='r', s=s, label='%.1f'%h2_i, linewidths=0, edgecolor='none')
-    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=1.0)
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='right', markerfirst=False, handlelength=0.8)
     
     
     #-----------
@@ -8237,7 +8215,7 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
     #plt.tight_layout()
     
     if savefig:
-        savefig_txt_save = '_' + '%s'%('kappa' if scatter_kappa_coloubar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
+        savefig_txt_save = '_' + '%s'%('kappa' if add_kappa_colourbar else '') + '%s'%('_fdet' if add_detection_hist else '') + savefig_txt
         
         plt.savefig("%s/etg_soap_analysis/lstar_MH2/%s_%s_%s_lstar_MH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_soap_analysis/lstar_MH2/%s_%s_%s_lstar_MH2_%s_H2ap%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], sample_input['name_of_preset'], aperture_h2, savefig_txt_save, file_format))
@@ -8254,13 +8232,12 @@ sim_box_size_name = 'L100_m6'
 sim_type_name     = 'THERMAL_AGN_m6'
 snapshot_name     = '127'
 
-
 ### Load ETGs w/o FRs
-#soap_indicies_sample_all_ETGs,                           _, sample_input_all_ETGs                           = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs'%(sim_box_size_name, sim_type_name, snapshot_name))   
-#soap_indicies_sample_all_ETGs_centrals,                  _, sample_input_all_ETGs_centrals                  = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_centrals'%(sim_box_size_name, sim_type_name, snapshot_name))  
+soap_indicies_sample_all_ETGs,                           _, sample_input_all_ETGs                           = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs'%(sim_box_size_name, sim_type_name, snapshot_name))   
+soap_indicies_sample_all_ETGs_centrals,                  _, sample_input_all_ETGs_centrals                  = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_centrals'%(sim_box_size_name, sim_type_name, snapshot_name))  
 #satellites
-#soap_indicies_sample_all_ETGs_cluster,                   _, sample_input_all_ETGs_cluster                   = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_cluster'%(sim_box_size_name, sim_type_name, snapshot_name))   
-#soap_indicies_sample_all_ETGs_groupfield,                _, sample_input_all_ETGs_groupfield                = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_groupfield'%(sim_box_size_name, sim_type_name, snapshot_name))  
+soap_indicies_sample_all_ETGs_cluster,                   _, sample_input_all_ETGs_cluster                   = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_cluster'%(sim_box_size_name, sim_type_name, snapshot_name))   
+soap_indicies_sample_all_ETGs_groupfield,                _, sample_input_all_ETGs_groupfield                = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_groupfield'%(sim_box_size_name, sim_type_name, snapshot_name))  
 
 ### Load ETGs incl. FRs
 soap_indicies_sample_all_ETGs_plus_redspiral,            _, sample_input_all_ETGs_plus_redspiral            = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral'%(sim_box_size_name, sim_type_name, snapshot_name))  
@@ -8289,14 +8266,14 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
 #===================================
 ### H1 plots:   H1 mass, fraction, and environment
 # Plot stelmass - H1 mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_plus_redspiral_groupfield]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_cluster, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_groupfield, sample_input_all_ETGs_plus_redspiral_groupfield]):
     _etg_stelmass_h1mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
                           print_stats = True,
                         savefig       = True)"""
 # Plot stelmass - H1 mass fraction (H1 / H1 + M*)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_plus_redspiral_groupfield]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_cluster, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_groupfield, sample_input_all_ETGs_plus_redspiral_groupfield]):
     _etg_stelmass_h1massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                           print_fdet = True,
@@ -8307,7 +8284,7 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
 #==========================================
 ###     H2 plots: H2 mass, fraction, and environment
 # Plot stelmass - H2 mass
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_plus_redspiral_groupfield]):                        
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_cluster, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_groupfield, sample_input_all_ETGs_plus_redspiral_groupfield]):                        
     """_etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
@@ -8333,7 +8310,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                         savefig       = True)
                         
 # Plot stelmass - H2 mass for range of H2 apertures
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral], [sample_input_all_ETGs_plus_redspiral]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_2], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral]):
     # Plot as just red and black pluses and circles, with hist bars for detection limit - 10 kpc aperture
     print('\n##### 3 kpc aperture test:   %s' %sample_input_i['name_of_preset'])
     _etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
@@ -8360,14 +8337,14 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                          title_text_in = ' 30 pkpc H2',
                         savefig       = True)"""
 # Plot stelmass - H2 mass fraction (H2 / H2 + M*)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_plus_redspiral_groupfield]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral, soap_indicies_sample_all_ETGs_cluster, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_ETGs_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral, sample_input_all_ETGs_cluster, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_ETGs_groupfield, sample_input_all_ETGs_plus_redspiral_groupfield]):
     _etg_stelmass_h2massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         add_median_line = True,
                         savefig       = True)"""
 #------------
 # Plot fdet with H2_aperture as an errorplot line plot. DOESNT USE LOADED SAMPLES FROM ABOVE
-"""_aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                         aperture_h2_list = ['exclusive_sphere_3kpc', 'exclusive_sphere_10kpc', 'exclusive_sphere_30kpc', 'exclusive_sphere_50kpc'],        # list of apertures to consider
                         h2_detection_limit = 10**7,
                         savefig       = True)
@@ -8385,13 +8362,13 @@ _aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxie
                         savefig       = True) """ 
 #------------
 # Plot stelmass - M200c mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_m200c(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #------------
 # Plot M200c mass - H2 mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_m200c_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
@@ -8401,13 +8378,13 @@ _aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxie
 #==========================================
 ###      H2 plots: u-r, SFR, sSFR, SFE
 # Plot per Young+11 as just red and black circles and circles, with hist bars for detection limit
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         aperture_h2 = 'exclusive_sphere_50kpc',
                         add_detection_hist = True,
                         savefig       = True)"""
 # Plot with a lower detection limit of 10**6
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral], [sample_input_all_ETGs_plus_redspiral]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_2], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral]):
     _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                             aperture_h2 = 'exclusive_sphere_50kpc',
                             h2_detection_limit = 10**6,
@@ -8416,25 +8393,46 @@ _aperture_fdet(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample4621_all_galaxie
                              savefig_txt = 'test_lower_h2detection_thresh', 
                             savefig       = True)"""
 # Plot with coloured kappa
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral], [sample_input_all_ETGs_plus_redspiral]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_2], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral]):
     _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         aperture_h2 = 'exclusive_sphere_50kpc',
-                        scatter_kappa_coloubar = True,
+                        add_kappa_colourbar = True,
                         savefig       = True)"""
-                
+                    
+# Plot similar to Young+14: M* vs u-r, size by H2 reservoir >107, but vary the H2 apertures 3 -> 10 -> 30 -> 50
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_2], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral]):
+    # Plot as just red and black pluses and circles, with hist bars for detection limit - 10 kpc aperture
+    print('\n##### 3 kpc aperture test:   %s' %sample_input_i['name_of_preset'])
+    _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        aperture_h2 = 'exclusive_sphere_3kpc',
+                        add_detection_hist = True,
+                         title_text_in = ' 3 pkpc H2',
+                        savefig       = True)
+    print('\n##### 10 kpc aperture test:   %s' %sample_input_i['name_of_preset'])
+    _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        aperture_h2 = 'exclusive_sphere_10kpc',
+                        add_detection_hist = True,
+                         title_text_in = ' 10 pkpc H2',
+                        savefig       = True)
+    print('\n##### 30 kpc aperture test:   %s' %sample_input_i['name_of_preset'])
+    _etg_stelmass_u_r(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        aperture_h2 = 'exclusive_sphere_30kpc',
+                        add_detection_hist = True,
+                         title_text_in = ' 30 pkpc H2',
+                        savefig       = True)"""
 #------------
 # Plot stelmass - SFR
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_sfr(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)
 # Plot stelmass - sSFR
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_ssfr(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)
 # Plot stelmass - SFE = SFR / M_H2
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs, sample_input_all_LTGs_excl_redspiral]):
     _etg_stelmass_sfe(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
@@ -8445,25 +8443,25 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
 #==========================================
 ###     ETG H2 plots: H2 morph and extent
 # Plot stelmass - r50 stars
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------- 
 # Plot stelmass - r50 H2
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------- 
 # Plot r50  - r50 H2
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_r50_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------- 
 # Plot r50  - H2 mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_r50_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
@@ -8471,7 +8469,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
 #----------------------
 # Plot surface desity ratio of H2 / HI / gas in several apertures
 """for hole_gas_type_i in ['h2', 'h1', 'gas']:  
-    for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+    for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
         _gas_surface_ratios(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                                 gas_type = hole_gas_type_i,
                                   surfdens_aperture_1   = '3',    # Radius 1
@@ -8498,7 +8496,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
 #----------------------       
 # Plot fraction with H2 / HI / gas holes in 3kpc and 10kpc w.r.t sample detected with H2 > h2_detection_limit. DOESNT USE LOADED SAMPLES FROM ABOVE
 """for hole_gas_type_i in ['h2', 'h1', 'gas']:  
-    _aperture_fdet_rings(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+    _aperture_fdet_rings(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                             h2_detection_limit = 10**7,
                             hole_gas_type = hole_gas_type_i,
                               hole_aperture   = 'exclusive_sphere_3kpc',    # Radius within which to look for H2 hole
@@ -8506,7 +8504,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                               hole_limit    = 10**6,
                              title_text_in = 'Hole aperture: 3 pkpc',
                             savefig       = True)
-    _aperture_fdet_rings(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+    _aperture_fdet_rings(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                             h2_detection_limit = 10**7,
                             hole_gas_type = hole_gas_type_i,
                               hole_aperture   = 'exclusive_sphere_10kpc',    # Radius within which to look for H2 hole
@@ -8515,7 +8513,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                              title_text_in = 'Hole aperture: 10 pkpc',
                             savefig       = True)
     # Plot fraction with H2 / HI / gas holes in 3kpc and 10kpc w.r.t sample detected with H2 > h2_detection_limit     
-    _aperture_fdet_rings(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+    _aperture_fdet_rings(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450_all_galaxies_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample1081_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample1531_all_ETGs_plus_redspiral_centrals'],
                             h2_detection_limit = 10**7,
                             hole_gas_type = hole_gas_type_i,
                               hole_aperture   = 'exclusive_sphere_3kpc',    # Radius within which to look for H2 hole
@@ -8524,7 +8522,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                              title_text_in = 'Hole aperture: 3 pkpc, centrals',
                              savefig_txt = '_centrals',
                             savefig       = True)
-    _aperture_fdet_rings(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+    _aperture_fdet_rings(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450_all_galaxies_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample1081_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample1531_all_ETGs_plus_redspiral_centrals'],
                             h2_detection_limit = 10**7,
                             hole_gas_type = hole_gas_type_i,
                               hole_aperture   = 'exclusive_sphere_10kpc',    # Radius within which to look for H2 hole
@@ -8536,20 +8534,20 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
 
 #----------------------       
 # Plot fraction with no gas particles in 10kpc and 50kpc w.r.t total sample fed. DOESNT USE LOADED SAMPLES FROM ABOVE
-"""_aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                               hole_aperture   = 'exclusive_sphere_10kpc',    # Radius within which to look for any gas particles
                              title_text_in = 'Gas aperture: 10 pkpc',
                             savefig       = True)
-_aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+_aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample10071_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample2224_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample4045_all_ETGs_plus_redspiral'],
                               hole_aperture   = 'exclusive_sphere_50kpc',    # Radius within which to look for any gas particles
                              title_text_in = 'Gas aperture: 50 pkpc',
                             savefig       = True)
-_aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+_aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450_all_galaxies_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample1081_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample1531_all_ETGs_plus_redspiral_centrals'],
                               hole_aperture   = 'exclusive_sphere_10kpc',    # Radius within which to look for any gas particles
                              title_text_in = 'Gas aperture: 10 pkpc, centrals',
                              savefig_txt = '_centrals',
                             savefig       = True)
-_aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+_aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample5450_all_galaxies_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample1081_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample1531_all_ETGs_plus_redspiral_centrals'],
                               hole_aperture   = 'exclusive_sphere_50kpc',    # Radius within which to look for any gas particles
                              title_text_in = 'Gas aperture: 50 pkpc, centrals',
                              savefig_txt = '_centrals',
@@ -8559,20 +8557,19 @@ _aperture_fdet_missing_gas(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all
 #===================================
 # Morphological proxies
 # Plot stelmass - ellip stars
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_ellip(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
-#add projected as option to above
 #-------------------
 # Plot stelmass - triaxiality stars
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_triax(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)
 #-------------------
 # Plot stelmass - kappa_co stars
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_kappaco(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
@@ -8581,26 +8578,26 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
 #===================================
 # Stellar kinematics 
 # Plot stelmass - stellar velocity dispersion. (note we use 50 kpc aperture, observations use r50)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_veldisp(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
 #-------------------
 # Plot stelmass - stellar specific angular momentum. (note we use 50 kpc aperture, observations use r50)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_lstar(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)
 #-------------------
 # Plot stellar specific angular momentum - H2 mass (note we use 50 kpc aperture, observations use r50)
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_lstar_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = False,
                         add_median_line = True,
                         savefig       = True)"""
 #-------------------
 # Plot stelmass - etakin = Msun^1/3 / sigma, Msun^1/3 km-1 s. (using sigma interpolated to r50 and Msun in 50kpc)
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs, soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs, sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_centrals, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_etakin(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         add_detection_hist = True,
                         savefig       = True)"""
