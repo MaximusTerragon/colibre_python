@@ -334,6 +334,33 @@ def _create_Lagos2014_H1():
         #-------------------------------
         # Creating dataset + cosmology
         
+        
+        #-----------
+        # y-values: ATLAS3D uncorrected mass function
+        grp = f.create_group("data/massfunc/uncorr/x")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'HI mass function uncorrected'
+        grp = f.create_group("data/massfunc/uncorr/y")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'Phi (H1MF)'
+        
+        # Data
+        log_x      = np.array([6.3705, 6.6187, 6.8696, 7.1201, 7.3697, 7.6227, 7.8690, 8.1228, 8.3732, 8.6220, 8.8718, 9.1232, 9.3746, 9.6232, 9.8744])
+        x          = 10**log_x
+        y            = 10**np.array([-3.8819, -3.8704, -3.1764, -3.8765, -3.8680, -3.5780, -3.1822, -3.1736, -3.0329, -3.0392, -3.1097, -3.4006, -3.0342, -3.8781, -3.8833])
+        y_upper_y    = 10**np.array([-3.4503, -3.4486, -2.9884, -3.4476, -3.4460, -3.2750, -2.9915, -2.9947, -2.8776, -2.8750, -2.9285, -3.1580, -2.8804, -3.4530, -3.4486])
+        y_lower_y    = 10**np.array([-4.3139, -4.3038, -3.3728, -4.3061, -4.3084, -3.8790, -3.3820, -3.3700, -3.2017, -3.1992, -3.2821, -3.6550, -3.2023, -4.3141, -4.3190])
+        y_scat = np.stack((y-y_lower_y, y_upper_y-y), axis=0)
+        
+        # Create dataset
+        dset = f.create_dataset("data/massfunc/uncorr/x/values", data=x)
+        dset.attrs["units"]    = 'Msun'
+        dset = f.create_dataset("data/massfunc/uncorr/y/values", data=y)
+        dset.attrs["units"]    = 'Mpc**(-3)'
+        dset = f.create_dataset("data/massfunc/uncorr/y/scatter", data=y_scat)
+        dset.attrs["units"]    = 'Mpc**(-3)'
+        
+        
         #-----------
         # y-values: ATLAS3D 1/V corrected mass function
         grp = f.create_group("data/massfunc/1Vcorr/x")
@@ -423,6 +450,34 @@ def _create_Lagos2014_H2():
         #-------------------------------
         # Creating dataset + cosmology
         
+        
+        #-----------
+        # y-values: ATLAS3D uncorrected mass function
+        grp = f.create_group("data/massfunc/uncorr/x")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'H2 mass function uncorrected, divided by 1.36 for He'
+        grp = f.create_group("data/massfunc/uncorr/y")
+        grp.attrs["comoving"]    = True
+        grp.attrs["description"] = 'Phi (H2MF)'
+        
+        # Data
+        log_x      = np.array([7.0929, 7.2954, 7.4958, 7.6934, 7.8960, 8.0955, 8.2971, 8.4990, 8.6996, 8.8991, 9.0979, 9.2980])
+        x          = 10**log_x
+        y            = 10**np.array([-3.8958, -2.8994, -3.4183, -3.2996, -3.1221, -2.9406, -2.8971, -3.0543, -2.9409, -3.8937, -3.5951, -3.8995])
+        y_upper_y    = 10**np.array([-3.4624, -2.7557, -3.1654, -3.0729, -2.9348, -2.7971, -2.7642, -2.8928, -2.8028, -3.4681, -3.2932, -3.4711])
+        y_lower_y    = 10**np.array([-4.3361, -3.0333, -3.6647, -3.5079, -3.2934, -3.0813, -3.0370, -3.2202, -3.0873, -4.3301, -3.9023, -4.3271])
+        y_scat = np.stack((y-y_lower_y, y_upper_y-y), axis=0)
+        
+        # Unit conversions -> given as M*/L -> * L/M* to get M*/M* | mass-to-light ratio of K_S band for ETGs, with mass-to-light ratio of 0.5 M*/L* for ETGs, divided by 1.36 for He
+        x      = x / 1.36
+        
+        # Create dataset
+        dset = f.create_dataset("data/massfunc/uncorr/x/values", data=x)
+        dset.attrs["units"]    = 'Msun'
+        dset = f.create_dataset("data/massfunc/uncorr/y/values", data=y)
+        dset.attrs["units"]    = 'Mpc**(-3)'
+        dset = f.create_dataset("data/massfunc/uncorr/y/scatter", data=y_scat)
+        dset.attrs["units"]    = 'Mpc**(-3)'
         
         #-----------
         # y-values: ATLAS3D 1/V corrected mass function
@@ -600,6 +655,7 @@ def _convert_Davis2019_ATLAS3D():
         x    = 10**np.array(csv_dict['logM(H2)'])
         x    = x/1.36
         x    = np.log10(x)
+        x[csv_dict['logM(H2)'] == 0] = math.nan
         dset = f.create_dataset("data/log_H2/values", data=x)
         dset.attrs["units"]    = 'Msun'
         print(len(x))
@@ -847,6 +903,118 @@ def _create_Krajnovic2011_ATLAS3D_ellip():
         
         
         print("Successfully created: %s/Krajnovic2011_ellip.hdf5"%obs_dir)
+# ATLAS3D ellipticities in projection and uncertainties as measured by Krajnovic+11
+def _create_Cappellari2011_ATLAS3D_masses():
+    # Create and write
+    with h5py.File("%s/Cappellari2011_masses.hdf5"%obs_dir, "a") as f:
+        
+        # Creating metadata
+        grp = f.create_group("metadata")
+        grp.attrs["bibcode"]      = ""
+        grp.attrs["citation"]     = "Capellari et al. (2011)"
+        grp.attrs["comment"]      = "Original data from ATLAS3D. No cosmology correction needed. Contains K-band luminosities and converted stellar masses"
+        grp.attrs["name"]         = "ATLAS3D points from Cappellari+11, all adjusted for direct use"
+                
+        #-------------------------------
+        # Creating dataset + cosmology
+        
+        grp = f.create_group("data/Galaxy")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Galaxy name'
+        x = [ "IC 0560", "IC 0598", "IC 0676", "IC 0719", "IC 0782", "IC 1024", "IC 3631", "NGC 0448", "NGC 0474", "NGC 0502", "NGC 0509", "NGC 0516", "NGC 0524", "NGC 0525", "NGC 0661", "NGC 0680", "NGC 0770", "NGC 0821", "NGC 0936", "NGC 1023", "NGC 1121", "NGC 1222", "NGC 1248", "NGC 1266", "NGC 1289", "NGC 1665", "NGC 2481", "NGC 2549", "NGC 2577", "NGC 2592", "NGC 2594", "NGC 2679", "NGC 2685", "NGC 2695", "NGC 2698", "NGC 2699", "NGC 2764", "NGC 2768", "NGC 2778", "NGC 2824", "NGC 2852", "NGC 2859", "NGC 2880", "NGC 2950", "NGC 2962", "NGC 2974", "NGC 3032", "NGC 3073", "NGC 3098", "NGC 3156", "NGC 3182", "NGC 3193", "NGC 3226", "NGC 3230", "NGC 3245", "NGC 3248", "NGC 3301", "NGC 3377", "NGC 3379", "NGC 3384", "NGC 3400", "NGC 3412", "NGC 3414", "NGC 3457", "NGC 3458", "NGC 3489", "NGC 3499", "NGC 3522", "NGC 3530", "NGC 3595", "NGC 3599", "NGC 3605", "NGC 3607", "NGC 3608", "NGC 3610", "NGC 3613", "NGC 3619", "NGC 3626", "NGC 3630", "NGC 3640", "NGC 3641", "NGC 3648", "NGC 3658", "NGC 3665", "NGC 3674", "NGC 3694", "NGC 3757", "NGC 3796", "NGC 3838", "NGC 3941", "NGC 3945", "NGC 3998", "NGC 4026", "NGC 4036", "NGC 4078", "NGC 4111", "NGC 4119", "NGC 4143", "NGC 4150", "NGC 4168", "NGC 4179", "NGC 4191", "NGC 4203", "NGC 4215", "NGC 4233", "NGC 4249", "NGC 4251", "NGC 4255", "NGC 4259", "NGC 4261", "NGC 4262", "NGC 4264", "NGC 4267", "NGC 4268", "NGC 4270", "NGC 4278", "NGC 4281", "NGC 4283", "NGC 4324", "NGC 4339", "NGC 4340", "NGC 4342", "NGC 4346", "NGC 4350", "NGC 4365", "NGC 4371", "NGC 4374", "NGC 4377", "NGC 4379", "NGC 4382", "NGC 4387", "NGC 4406", "NGC 4417", "NGC 4425", "NGC 4429", "NGC 4434", "NGC 4435", "NGC 4442", "NGC 4452", "NGC 4458", "NGC 4459", "NGC 4461", "NGC 4472", "NGC 4473", "NGC 4474", "NGC 4476", "NGC 4477", "NGC 4478", "NGC 4483", "NGC 4486", "NGC 4486A", "NGC 4489", "NGC 4494", "NGC 4503", "NGC 4521", "NGC 4526", "NGC 4528", "NGC 4546", "NGC 4550", "NGC 4551", "NGC 4552", "NGC 4564", "NGC 4570", "NGC 4578", "NGC 4596", "NGC 4608", "NGC 4612", "NGC 4621", "NGC 4623", "NGC 4624", "NGC 4636", "NGC 4638", "NGC 4643", "NGC 4649", "NGC 4660", "NGC 4684", "NGC 4690", "NGC 4694", "NGC 4697", "NGC 4710", "NGC 4733", "NGC 4753", "NGC 4754", "NGC 4762", "NGC 4803", "NGC 5103", "NGC 5173", "NGC 5198", "NGC 5273", "NGC 5308", "NGC 5322", "NGC 5342", "NGC 5353", "NGC 5355", "NGC 5358", "NGC 5379", "NGC 5422", "NGC 5473", "NGC 5475", "NGC 5481", "NGC 5485", "NGC 5493", "NGC 5500", "NGC 5507", "NGC 5557", "NGC 5574", "NGC 5576", "NGC 5582", "NGC 5611", "NGC 5631", "NGC 5638", "NGC 5687", "NGC 5770", "NGC 5813", "NGC 5831", "NGC 5838", "NGC 5839", "NGC 5845", "NGC 5846", "NGC 5854", "NGC 5864", "NGC 5866", "NGC 5869", "NGC 6010", "NGC 6014", "NGC 6017", "NGC 6149", "NGC 6278", "NGC 6547", "NGC 6548", "NGC 6703", "NGC 6798", "NGC 7280", "NGC 7332", "NGC 7454", "NGC 7457", "NGC 7465", "NGC 7693", "NGC 7710", "PGC 016060", "PGC 028887", "PGC 029321", "PGC 035754", "PGC 042549", "PGC 044433", "PGC 050395", "PGC 051753", "PGC 054452", "PGC 056772", "PGC 058114", "PGC 061468", "PGC 071531", "PGC 170172", "UGC 03960", "UGC 04551", "UGC 05408", "UGC 06062", "UGC 06176", "UGC 08876", "UGC 09519"]
+        dset = f.create_dataset("data/Galaxy/values", data=x, shape=len(x), dtype=h5py.string_dtype())
+        dset.attrs["units"]    = ''
+        print(len(x))
+        
+        
+        grp = f.create_group("data/M_K")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Total galaxy absolute magnitude in K-S band'
+        x_mag    = np.array([ -22.10, -22.60, -22.27, -22.70, -22.02, -21.85, -22.01, -23.02, -23.91, -23.05, -21.89, -22.21, -24.71, -21.86, -23.19, -24.17, -22.57, -23.99, -24.85, -24.01, -22.70, -22.71, -22.90, -22.93, -23.46, -23.63, -23.38, -22.43, -23.41, -22.88, -22.36, -22.81, -22.78, -23.64, -23.32, -22.72, -23.19, -24.71, -22.23, -22.93, -22.18, -24.13, -22.98, -22.93, -24.01, -23.62, -22.01, -21.78, -22.72, -22.15, -23.19, -24.63, -23.24, -24.18, -23.69, -22.43, -23.28, -22.76, -23.80, -23.52, -21.82, -22.55, -23.98, -21.89, -23.12, -22.99, -21.88, -21.67, -22.00, -23.28, -22.22, -21.83, -24.74, -23.65, -23.69, -24.26, -23.57, -23.30, -23.16, -24.60, -21.85, -23.06, -23.45, -24.92, -23.23, -22.35, -22.15, -21.84, -22.52, -23.06, -24.31, -23.33, -23.03, -24.40, -22.99, -23.27, -22.60, -23.10, -21.65, -24.03, -23.18, -23.10, -23.44, -23.43, -23.88, -21.98, -23.68, -22.99, -22.19, -25.18, -22.60, -23.00, -23.18, -23.05, -23.69, -23.80, -24.01, -21.80, -22.61, -22.49, -23.01, -22.07, -22.55, -23.13, -25.21, -23.45, -25.12, -22.43, -22.24, -25.13, -22.13, -25.04, -22.86, -22.09, -24.32,-22.55, -23.83, -23.63, -21.88, -21.76, -23.89, -23.08, -25.78, -23.77, -22.28, -21.78, -23.75, -22.80, -21.84, -25.38, -21.82, -21.59, -24.11, -23.22, -23.92, -24.62, -22.05, -23.30, -22.27, -22.18, -24.29, -23.08, -23.48, -22.66, -23.63, -22.94, -22.55, -24.14, -21.74, -23.67, -24.36, -23.01, -23.69, -25.46, -22.69, -22.21, -22.96, -22.15, -23.93, -23.53, -21.80, -25.09, -23.64, -24.48, -22.28, -22.36, -22.88, -24.10, -22.37, -24.13, -25.26, -22.61, -25.11, -22.40, -22.01, -22.08, -23.69, -24.25, -22.88, -22.68, -23.61, -24.49, -21.93, -23.19, -24.87, -22.30, -24.15, -23.28, -22.20, -23.70, -23.80, -23.22, -22.15, -25.09, -23.69, -24.13, -22.53, -22.92, -25.01, -23.30, -23.62, -24.00, -23.27, -23.53, -22.99, -22.52, -22.60, -24.19, -23.60, -23.19, -23.85, -23.52, -22.83, -23.75, -23.00, -22.38, -22.82, -21.58, -21.99, -22.64, -22.26, -21.66, -21.90, -22.71, -22.25, -21.92, -21.92, -21.59, -22.06, -21.57, -21.68, -21.74, -21.89, -21.89,-22.92, -22.03, -22.82, -22.66, -22.37, -21.98])
+        dset = f.create_dataset("data/M_K/values", data=x_mag)
+        dset.attrs["units"]    = 'dimensionless'
+        print(len(x_mag))
+        
+        
+        grp = f.create_group("data/L_K")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Log10 Total galaxy luminosity in K-T band, and a Sun K-band magnitude of 3.28 (Binney & Merrifield+98)'
+        L_K    = 10**(0.4*(3.28 - x_mag))
+        L_K    = np.log10(L_K)
+        dset = f.create_dataset("data/L_K/values", data=L_K)
+        dset.attrs["units"]    = 'Lsun'
+        print(len(L_K))
+        
+        grp = f.create_group("data/Mstar")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Log10 derived Mstar from mass-to-light ratio using L_K with M*/L_K=0.5, and a Sun K-band magnitude of 3.28 (Binney & Merrifield+98)'
+        x_mass     = (10**L_K) * 0.82      # assuming mass-to-light of 0.82 for K-band
+        x_mass_log = np.log10(x_mass)
+        dset = f.create_dataset("data/Mstar/values", data=x_mass_log)
+        dset.attrs["units"]    = 'Msun'
+        print(len(x_mass_log))
+        
+        
+        print("Successfully created: %s/Cappellari2011_masses.hdf5"%obs_dir)
+
+
+#-------------
+# ATLAS3D H2 extent results from Davis+13
+def _create_Serra2012_ATLAS3D_HI():
+    # Create and write
+    with h5py.File("%s/Serra2012_ATLAS3D_HI.hdf5"%obs_dir, "a") as f:
+        
+        # Creating metadata
+        grp = f.create_group("metadata")
+        grp.attrs["bibcode"]      = ""
+        grp.attrs["citation"]     = "Serra et al. (2012)"
+        grp.attrs["comment"]      = "Original data from ATLAS3D. No cosmology correction needed. Contains H1 masses and mass fractions"
+        grp.attrs["name"]         = "166 ATLAS3D points from Serra2012, all adjusted for direct use"
+                
+        #-------------------------------
+        # Creating dataset + cosmology
+        
+        grp = f.create_group("data/Galaxy")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Galaxy name'
+        x = [ "IC 0598", "IC 3631", "NGC 0661", "NGC 0680", "NGC 0770", "NGC 0821", "NGC 1023", "NGC 2481", "NGC 2549", "NGC 2577", "NGC 2592", "NGC 2594", "NGC 2679", "NGC 2685", "NGC 2764", "NGC 2768", "NGC 2778", "NGC 2824", "NGC 2852", "NGC 2859", "NGC 2880", "NGC 2950", "NGC 3032", "NGC 3073", "NGC 3098", "NGC 3182", "NGC 3193", "NGC 3226", "NGC 3230", "NGC 3245", "NGC 3248", "NGC 3301", "NGC 3377", "NGC 3379", "NGC 3384", "NGC 3400", "NGC 3412", "NGC 3414", "NGC 3457", "NGC 3458", "NGC 3489", "NGC 3499", "NGC 3522", "NGC 3530", "NGC 3595", "NGC 3599", "NGC 3605", "NGC 3607", "NGC 3608", "NGC 3610", "NGC 3613", "NGC 3619", "NGC 3626", "NGC 3648", "NGC 3658", "NGC 3665", "NGC 3674", "NGC 3694", "NGC 3757", "NGC 3796", "NGC 3838", "NGC 3941", "NGC 3945", "NGC 3998", "NGC 4026", "NGC 4036", "NGC 4078", "NGC 4111", "NGC 4119", "NGC 4143", "NGC 4150", "NGC 4168", "NGC 4203", "NGC 4251", "NGC 4262", "NGC 4267", "NGC 4278", "NGC 4283", "NGC 4340", "NGC 4346", "NGC 4350", "NGC 4371", "NGC 4374", "NGC 4377", "NGC 4379", "NGC 4382", "NGC 4387", "NGC 4406", "NGC 4425", "NGC 4429", "NGC 4435", "NGC 4452", "NGC 4458", "NGC 4459", "NGC 4461", "NGC 4473", "NGC 4474", "NGC 4477", "NGC 4489", "NGC 4494", "NGC 4503", "NGC 4521", "NGC 4528", "NGC 4550", "NGC 4551", "NGC 4552", "NGC 4564", "NGC 4596", "NGC 4608", "NGC 4621", "NGC 4638", "NGC 4649", "NGC 4660", "NGC 4694", "NGC 4710", "NGC 4733", "NGC 4754", "NGC 4762", "NGC 5103", "NGC 5173", "NGC 5198", "NGC 5273", "NGC 5308", "NGC 5322", "NGC 5342", "NGC 5353", "NGC 5355", "NGC 5358", "NGC 5379", "NGC 5422", "NGC 5473", "NGC 5475", "NGC 5481", "NGC 5485", "NGC 5500", "NGC 5557", "NGC 5582", "NGC 5611", "NGC 5631", "NGC 5687", "NGC 5866", "NGC 6149", "NGC 6278", "NGC 6547", "NGC 6548", "NGC 6703", "NGC 6798", "NGC 7280", "NGC 7332", "NGC 7454", "NGC 7457", "NGC 7465", "PGC 028887", "PGC 029321", "PGC 035754", "PGC 044433", "PGC 050395", "PGC 051753", "PGC 061468", "PGC 071531", "UGC 03960", "UGC 04551", "UGC 05408", "UGC 06176", "UGC 08876", "UGC 09519"]
+        dset = f.create_dataset("data/Galaxy/values", data=x, shape=len(x), dtype=h5py.string_dtype())
+        dset.attrs["units"]    = ''
+        print(len(x))
+        
+        
+        grp = f.create_group("data/log_H1")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'H1 mass in log units'
+        x    = np.array([ 7.45, 7.71, 7.37,  9.47, 7.56, 6.91,  9.29, 7.42, 6.51, 7.35, 7.18,  8.91, 7.35,  9.33,  9.28,  7.81, 7.06,  7.59, 7.27,  8.46, 7.03, 6.69,  8.04,  8.56, 7.12,  6.92,  8.19, 7.10, 7.71, 7.00, 7.22, 7.13, 6.52, 6.49,  7.25, 7.19, 6.55,  8.28,  8.07, 7.35,  6.87,  6.81,  8.47, 7.37, 7.43, 7.03, 6.83, 6.92,  7.16, 7.02, 7.28,  9.00,  8.94, 7.38, 7.42, 7.43, 7.41, 7.49, 7.10, 7.10,  8.38,  8.73,  8.85,  8.45,  8.50,  8.41, 7.64,  8.81, 7.10, 6.80,  6.26, 7.46,  9.15, 6.97,  8.69, 7.17,  8.80, 6.36, 7.03, 6.66, 6.88, 7.10, 7.26, 7.16, 7.04, 6.97, 7.03,  8.00, 6.71, 7.12, 7.23, 7.27, 6.91, 6.91, 7.33, 6.86, 7.08, 6.95, 6.74, 6.84, 7.14,  7.75, 7.18, 6.89, 7.39, 6.87, 6.91, 7.13, 7.22, 6.86, 7.12, 7.18, 6.88,  8.21,  6.84, 7.12, 7.18, 7.40,  8.57,  9.33,  8.49, 6.81, 7.63, 7.34, 7.50, 7.45, 7.50, 7.52, 7.36,  7.87, 7.40, 7.28, 7.21, 7.17, 7.36,  8.57,  9.65, 7.15,  8.89, 7.32,  6.96, 7.56, 7.67, 7.63, 7.12, 7.18,  9.38,  7.92,  6.62, 7.16, 6.61,  9.98,  7.65, 7.68, 7.58, 7.66, 7.51, 7.52, 7.54, 7.37,  7.79, 7.25,  8.52,  9.02, 7.43,  9.27])
+        dset = f.create_dataset("data/log_H1/values", data=x)
+        dset.attrs["units"]    = 'Msun'
+        print(len(x))
+        
+        
+        grp = f.create_group("data/log_H1_Lk_frac")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'H1 mass/Lk magnitude in log units'
+        x_frac    = np.array([-2.90, -2.40, -3.22, -1.51, -2.78, -4.00, -1.63, -3.25, -3.78, -3.33, -3.28, -1.35, -3.08, -1.10, -1.31, -3.38, -3.14, -2.89, -2.91, -2.50, -3.47, -3.79, -2.08, -1.46, -3.28, -3.67, -2.98, -3.51, -3.28, -3.79, -3.07, -3.49, -3.89, -4.35, -3.47, -2.85, -3.78, -2.63, -2.00, -3.21, -3.63, -3.25, -1.51, -2.74, -3.19, -3.17, -3.21, -4.29, -3.61, -3.77, -3.74, -1.74, -1.70, -3.16, -3.27, -3.85, -3.19, -2.76, -3.07, -2.95, -1.94, -1.80, -2.18, -2.19, -2.02, -2.66, -2.86, -1.81, -3.25, -3.75, -3.72, -3.46, -1.53, -3.82, -1.66, -3.42, -2.04, -3.67, -3.48, -3.67, -3.68, -3.59, -4.10, -3.13, -3.17, -4.39, -3.14, -3.33, -3.44, -3.92, -3.62, -2.80, -3.10, -3.95, -3.22, -3.96, -3.14, -3.86, -3.21, -4.12, -3.46, -3.13, -2.95, -3.33, -2.80, -4.16, -3.63, -3.64, -3.27, -4.11, -3.39, -4.32, -3.51, -1.96, -3.88, -2.92, -3.59, -3.70, -1.69, -1.13, -2.46, -3.45, -3.34, -4.08, -2.85, -3.90, -2.77, -2.60, -2.79, -2.92, -3.61, -3.19, -3.18, -3.59, -2.73, -2.69, -0.97, -3.04, -1.90, -3.28, -3.95, -2.79, -3.32, -3.12, -3.47, -3.67, -1.34, -2.52, -4.19, -3.35, -3.66, -0.46, -2.57, -2.30, -2.49, -2.55, -2.57, -2.56, -2.45, -2.64, -2.28, -3.23, -1.60, -1.36, -2.83, -0.83])
+        dset = f.create_dataset("data/log_H1_Lk_frac/values", data=x_frac)
+        dset.attrs["units"]    = 'Msun * Lsun**(-1)'
+        print(len(x_frac))
+        
+        
+        grp = f.create_group("data/H1_frac")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'H1 mass/M* mass converted assuming mass-to-light ratio of K_S band for ETGs, with mass-to-light ratio of 0.82 M*/L* for ETGs'
+        x_frac    = 10**x_frac
+        # Unit conversions -> given as M*/L -> * L/M* to get M*/M* | mass-to-light ratio of K_S band for ETGs, with mass-to-light ratio of 0.82 M*/L* for ETGs
+        x_frac    = x_frac * (1/0.82)
+        
+        dset = f.create_dataset("data/H1_frac/values", data=x_frac)
+        dset.attrs["units"]    = 'dimensionless'
+        print(len(x_frac))
+        
+        
+        
+        print("Successfully created: %s/Serra2012_ATLAS3D_HI.hdf5"%obs_dir)
 
 
 
@@ -882,11 +1050,14 @@ def _test_load(file_name = 'GalaxyH2MassFunction/Lagos2014_H2'):
 #_create_Lagos2014_H1()
 #_create_Lagos2014_H2()
         
-#_convert_Davis2019_ATLAS3D()
+_convert_Davis2019_ATLAS3D()
 #_create_Davis2019_MASSIVE()
 
 #_create_Davis2013_ATLAS3D_CO_extent()
-_create_Krajnovic2011_ATLAS3D_ellip()
+#_create_Krajnovic2011_ATLAS3D_ellip()
+
+#_create_Serra2012_ATLAS3D_HI()
+#_create_Cappellari2011_ATLAS3D_masses()
         
 #==========================================================  
 # Test load

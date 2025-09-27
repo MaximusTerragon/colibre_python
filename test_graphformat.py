@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 import math
+import h5py
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.colors as colors
@@ -12,11 +13,87 @@ from matplotlib.patches import Patch
 from matplotlib.colors import ListedColormap
 from matplotlib.lines import Line2D
 from graphformat import set_rc_params
+from read_dataset_directories_colibre import _assign_directories
 
 
 # Fixing random state for reproducibility
 np.random.seed(19680801)
 
+#====================================
+# finding directories
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens\n     3 cosma8           ->  ")
+COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir = _assign_directories(answer)
+#====================================
+
+
+
+
+
+
+
+
+
+# Graph initialising and base formatting
+fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+plt.subplots_adjust(wspace=0.4, hspace=0.3)
+
+        
+add_davis2019    = True
+if add_davis2019:      # ($z=0.0$)
+    # Load the observational data
+    with h5py.File('%s/Davis2019_ATLAS3D.hdf5'%obs_dir, 'r') as file:
+        obs_names_1 = file['data/Galaxy/values'][:]
+        obs_H2       = file['data/log_H2/values'][:]
+        obs_Mstar    = file['data/Mstar/values'][:]
+        
+        obs_H2 = 10**obs_H2
+        obs_Mstar = 10**obs_Mstar
+        
+        obs_y = obs_H2/(obs_H2+obs_Mstar)
+        obs_y = np.log10(obs_y)
+        
+
+    
+
+# Histograms   
+hist_bin_width = 0.2
+lower_mass_limit = 1e-6
+upper_mass_limit = 1
+box_volume = 1.16e5
+        
+    
+hist_masses, bin_edges =  np.histogram(obs_y, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+hist_masses = hist_masses[:]/(box_volume)      # in units of /cMpc**3
+hist_masses = hist_masses/hist_bin_width        # density
+bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+        
+# Add poisson errors to each bin (sqrt N)
+hist_n, _ = np.histogram(obs_y, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+hist_err = (np.sqrt(hist_n)/(box_volume))/hist_bin_width
+
+# Masking out nans
+with np.errstate(divide='ignore', invalid='ignore'):
+    hist_mask_finite = np.isfinite(np.log10(hist_masses))
+hist_masses = hist_masses[hist_mask_finite]
+bin_midpoints   = bin_midpoints[hist_mask_finite]
+hist_err    = hist_err[hist_mask_finite]
+hist_n      = hist_n[hist_mask_finite]
+
+#axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color='k', ls='-', zorder=-4)
+axs.errorbar(np.flip(bin_midpoints), np.flip(hist_masses), yerr=np.flip(hist_err))
+        
+
+plt.xlim(-6, -1)
+plt.ylim(10**(-6), 10**(-1))
+#plt.xscale("log")
+plt.yscale("log")
+
+plt.show()
+plt.close()
+
+
+raise Exception('current break 9y1ohuj')
+##################################################################################################################################
 
 
 
