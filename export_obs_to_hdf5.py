@@ -558,7 +558,7 @@ def _convert_Davis2019_ATLAS3D():
         grp = f.create_group("metadata")
         grp.attrs["bibcode"]      = ""
         grp.attrs["citation"]     = "Davis et al. (2019)"
-        grp.attrs["comment"]      = "Original data from ATLAS3D. No cosmology correction needed."
+        grp.attrs["comment"]      = "Original data from ATLAS3D. No cosmology correction needed, 56 detections"
         grp.attrs["name"]         = "ATLAS3D points from Davis2019, all adjusted for direct use"
                 
         #-------------------------------
@@ -578,6 +578,14 @@ def _convert_Davis2019_ATLAS3D():
         grp.attrs["description"] = 'True/false if it lies within a sphere of radius = 3.5 Mpc of centre of virgo cluster'
         x = np.array(csv_dict['Virgo'])
         dset = f.create_dataset("data/Virgo/values", data=x)
+        dset.attrs["units"]    = 'dimensionless'
+        print(len(x))
+        
+        grp = f.create_group("data/BCG")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'True/false if it is a BCG'
+        x = np.array(csv_dict['BCG'])
+        dset = f.create_dataset("data/BCG/values", data=x)
         dset.attrs["units"]    = 'dimensionless'
         print(len(x))
         
@@ -612,13 +620,13 @@ def _convert_Davis2019_ATLAS3D():
         dset.attrs["units"]    = 'Lsun'
         print(len(x))
         
-        grp = f.create_group("data/Mstar")
+        grp = f.create_group("data/log_Mstar")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'Log10 derived Mstar from mass-to-light ratio using L_K, with M*/L_K=0.82 (Bell et al. 2003), and a Sun K-band magnitude of 3.28 (Binney & Merrifield+98)'
         x    = 10**(0.4*(3.28 - np.array(csv_dict['M_K'])))
         x_mass    = x * 0.82      # assuming mass-to-light of 0.82 for K-band
         x_mass_log = np.log10(x_mass)
-        dset = f.create_dataset("data/Mstar/values", data=x_mass_log)
+        dset = f.create_dataset("data/log_Mstar/values", data=x_mass_log)
         dset.attrs["units"]    = 'Msun'
         print(len(x_mass_log))
         
@@ -660,11 +668,12 @@ def _convert_Davis2019_ATLAS3D():
         dset.attrs["units"]    = 'Msun'
         print(len(x))
         
-        grp = f.create_group("data/det")
+        grp = f.create_group("data/det_mask")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'H2 mass determinate limit < / > / ='
-        x    = np.array(csv_dict['det'])
-        dset = f.create_dataset("data/det/values", data=x)
+        x    = np.array([0,  0,  1,  1,  0,  1,  0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  1,  1,  0,  1,  0,  0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  1,  0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  1,  1,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  1,  1,  0,  1,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  1,  0,  0,  0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0,  0, 0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0, 0,  0,  0,  1,  0,  0,  1,  0,  1,  0,  1,  0,  1,  0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  1,  0, 0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  1,  0,  0,  1,  0,  0,  0, 0, 0,  0,  1,  0,  0,  0,  0,  1,  0,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  1,  1,  1,  0,  0,  0,  0,  1,  0,  1,  0,  1])
+        x.astype(np.bool)
+        dset = f.create_dataset("data/det_mask/values", data=x)
         dset.attrs["units"]    = ''
         print(len(x))
         
@@ -704,6 +713,26 @@ def _create_Davis2019_MASSIVE():
         print(len(x))
         
         
+        grp = f.create_group("data/Cluster")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'True/false if it is within a cluster'
+        x = np.array([1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+        dset = f.create_dataset("data/Cluster/values", data=x)
+        dset.attrs["units"]    = 'dimensionless'
+        print(len(x))
+        
+        
+        grp = f.create_group("data/BCG")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'True/false if it is a BCG'
+        x = np.array([0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,0,0,1,0,0,1,1,0,0,0,0,1,0,1,0,1,1,0,1,1,0,1,0,1,1,1,1,0])
+        dset = f.create_dataset("data/BCG/values", data=x)
+        dset.attrs["units"]    = 'dimensionless'
+        print(len(x))
+        
+        
+        
+        
         grp = f.create_group("data/Distance")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'Distance to object, NOT cosmology adjusted to COLIBRE'
@@ -737,12 +766,12 @@ def _create_Davis2019_MASSIVE():
         
         
         
-        grp = f.create_group("data/Mstar")
+        grp = f.create_group("data/log_Mstar")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'Log10 derived Mstar from mass-to-light ratio using L_K with M*/L_K=0.5, and a Sun K-band magnitude of 3.28 (Binney & Merrifield+98)'
         x_mass     = (10**L_K) * 0.82      # assuming mass-to-light of 0.82 for K-band
         x_mass_log = np.log10(x_mass)
-        dset = f.create_dataset("data/Mstar/values", data=x_mass_log)
+        dset = f.create_dataset("data/log_Mstar/values", data=x_mass_log)
         dset.attrs["units"]    = 'Msun'
         print(len(x_mass_log))
         
@@ -782,6 +811,15 @@ def _create_Davis2019_MASSIVE():
         x    = np.log10(x)
         dset = f.create_dataset("data/log_H2/values", data=x)
         dset.attrs["units"]    = 'Msun'
+        print(len(x))
+        
+        grp = f.create_group("data/det_mask")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'H2 mass determinate limit < / > / ='
+        x    = np.array([1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0])
+        x.astype(np.bool)
+        dset = f.create_dataset("data/det_mask/values", data=x)
+        dset.attrs["units"]    = ''
         print(len(x))
         
         
@@ -926,6 +964,21 @@ def _create_Cappellari2011_ATLAS3D_masses():
         dset.attrs["units"]    = ''
         print(len(x))
         
+        grp = f.create_group("data/Virgo")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'True/false if it lies within a sphere of radius = 3.5 Mpc of centre of virgo cluster'
+        x = np.array([ 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,1,0, 0,0,1,0,0,0,0,0,0,0, 0,0,0,1,0,1,0,0,0,0, 0,0,1,1,1,1,0,1,0,1, 1,1,1,1,1,1,1,1,1,1, 0,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,0,1,0,1, 1,0,1,1,1,1,1,1,1,1, 1,1,1,1,0,1,1,1,1,0, 0,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0 ])
+        dset = f.create_dataset("data/Virgo/values", data=x)
+        dset.attrs["units"]    = 'dimensionless'
+        print(len(x))
+        
+        grp = f.create_group("data/BCG")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'True/false if it is a BCG'
+        x = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+        dset = f.create_dataset("data/BCG/values", data=x)
+        dset.attrs["units"]    = 'dimensionless'
+        print(len(x))
         
         grp = f.create_group("data/M_K")
         grp.attrs["comoving"]    = False
@@ -945,12 +998,12 @@ def _create_Cappellari2011_ATLAS3D_masses():
         dset.attrs["units"]    = 'Lsun'
         print(len(L_K))
         
-        grp = f.create_group("data/Mstar")
+        grp = f.create_group("data/log_Mstar")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'Log10 derived Mstar from mass-to-light ratio using L_K with M*/L_K=0.5, and a Sun K-band magnitude of 3.28 (Binney & Merrifield+98)'
         x_mass     = (10**L_K) * 0.82      # assuming mass-to-light of 0.82 for K-band
         x_mass_log = np.log10(x_mass)
-        dset = f.create_dataset("data/Mstar/values", data=x_mass_log)
+        dset = f.create_dataset("data/log_Mstar/values", data=x_mass_log)
         dset.attrs["units"]    = 'Msun'
         print(len(x_mass_log))
         
@@ -989,6 +1042,15 @@ def _create_Serra2012_ATLAS3D_HI():
         x    = np.array([ 7.45, 7.71, 7.37,  9.47, 7.56, 6.91,  9.29, 7.42, 6.51, 7.35, 7.18,  8.91, 7.35,  9.33,  9.28,  7.81, 7.06,  7.59, 7.27,  8.46, 7.03, 6.69,  8.04,  8.56, 7.12,  6.92,  8.19, 7.10, 7.71, 7.00, 7.22, 7.13, 6.52, 6.49,  7.25, 7.19, 6.55,  8.28,  8.07, 7.35,  6.87,  6.81,  8.47, 7.37, 7.43, 7.03, 6.83, 6.92,  7.16, 7.02, 7.28,  9.00,  8.94, 7.38, 7.42, 7.43, 7.41, 7.49, 7.10, 7.10,  8.38,  8.73,  8.85,  8.45,  8.50,  8.41, 7.64,  8.81, 7.10, 6.80,  6.26, 7.46,  9.15, 6.97,  8.69, 7.17,  8.80, 6.36, 7.03, 6.66, 6.88, 7.10, 7.26, 7.16, 7.04, 6.97, 7.03,  8.00, 6.71, 7.12, 7.23, 7.27, 6.91, 6.91, 7.33, 6.86, 7.08, 6.95, 6.74, 6.84, 7.14,  7.75, 7.18, 6.89, 7.39, 6.87, 6.91, 7.13, 7.22, 6.86, 7.12, 7.18, 6.88,  8.21,  6.84, 7.12, 7.18, 7.40,  8.57,  9.33,  8.49, 6.81, 7.63, 7.34, 7.50, 7.45, 7.50, 7.52, 7.36,  7.87, 7.40, 7.28, 7.21, 7.17, 7.36,  8.57,  9.65, 7.15,  8.89, 7.32,  6.96, 7.56, 7.67, 7.63, 7.12, 7.18,  9.38,  7.92,  6.62, 7.16, 6.61,  9.98,  7.65, 7.68, 7.58, 7.66, 7.51, 7.52, 7.54, 7.37,  7.79, 7.25,  8.52,  9.02, 7.43,  9.27])
         dset = f.create_dataset("data/log_H1/values", data=x)
         dset.attrs["units"]    = 'Msun'
+        print(len(x))
+        
+        grp = f.create_group("data/det_mask")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'H2 mass determinate limit < / > / ='
+        x    = np.array([0,   0,  0,  1,   0,   0,   1,   0,   0,   0,   0,   1,   0,   1,   1,   1,   0,   1,   0,   1,   0,   0,   1,   1,   0,   1,   1,   0,   0,   0,   0,   0,   0,   0,   1,   0,   0,   1,   1,   0,   1,   1,   1,   0,   0,   0,   0,   0,   1,   0,   0,   1,   1,   0,   0,   0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   1,   0,   1,   0,   0,   1,   0,   1,   0,  1,  0,  1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   0,   0,   0,   0,   0,   0,  0,  0,  0,  0,   0,   0,   0,   1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,   0,   0,   0,   1,   1,   1,   0,   0,   0,   0,   0,   0,   0,   0,   1,   0,   0,   0,   0,   0,   1,   1,   0,   1,   0,   1,   0,   0,   0,   0,   0,   1,   1,   1,   0,   0,   1,   1,   0,   0,   0,   0,   0,   0,   0,   1,   0,   1,   1,   0,   1])
+        x.astype(np.bool)
+        dset = f.create_dataset("data/det_mask/values", data=x)
+        dset.attrs["units"]    = ''
         print(len(x))
         
         
@@ -1051,13 +1113,13 @@ def _test_load(file_name = 'GalaxyH2MassFunction/Lagos2014_H2'):
 #_create_Lagos2014_H2()
         
 _convert_Davis2019_ATLAS3D()
-#_create_Davis2019_MASSIVE()
+_create_Davis2019_MASSIVE()
 
 #_create_Davis2013_ATLAS3D_CO_extent()
 #_create_Krajnovic2011_ATLAS3D_ellip()
 
 #_create_Serra2012_ATLAS3D_HI()
-#_create_Cappellari2011_ATLAS3D_masses()
+_create_Cappellari2011_ATLAS3D_masses()
         
 #==========================================================  
 # Test load

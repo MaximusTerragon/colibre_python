@@ -29,36 +29,77 @@ COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir = _assi
 
 
 
+fig = plt.figure(figsize=(10/3, 2.8))
+gs  = fig.add_gridspec(1, 2,  width_ratios=(1, 1),
+                          left=0.1, right=0.9, bottom=0.1, top=0.9,
+                          wspace=0.05, hspace=0.3)
+# Create the Axes.
+ax_top = fig.add_subplot(gs[0])
+ax_bot = fig.add_subplot(gs[1])
 
 
+ax_top.set_yticklabels([])
+#ax_bot.set_xlabel('title')
 
+ax_top.set_ylabel('test')
+#ax_bot.set_ylabel('test')
+fig.supxlabel('test')
+
+
+plt.show()
+
+raise Exception('current break 98yhoika')
+
+#=================================================
 
 # Graph initialising and base formatting
 fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
 plt.subplots_adjust(wspace=0.4, hspace=0.3)
 
         
-add_davis2019    = True
-if add_davis2019:      # ($z=0.0$)
+add_serra2012    = True
+        
+if add_serra2012:      # ($z=0.0$)
     # Load the observational data
-    with h5py.File('%s/Davis2019_ATLAS3D.hdf5'%obs_dir, 'r') as file:
+    with h5py.File('%s/Serra2012_ATLAS3D_HI.hdf5'%obs_dir, 'r') as file:
         obs_names_1 = file['data/Galaxy/values'][:]
-        obs_H2       = file['data/log_H2/values'][:]
-        obs_Mstar    = file['data/Mstar/values'][:]
-        
-        obs_H2 = 10**obs_H2
-        obs_Mstar = 10**obs_Mstar
-        
-        obs_y = obs_H2/(obs_H2+obs_Mstar)
-        obs_y = np.log10(obs_y)
+        obs_HI       = file['data/log_H1/values'][:] 
+        obs_mask_1  = file['data/det_mask/values'][:]
+
+    with h5py.File('%s/Cappellari2011_masses.hdf5'%obs_dir, 'r') as file:
+        obs_names_2 = file['data/Galaxy/values'][:]
+        obs_mstar  = file['data/log_Mstar/values'][:] 
+            
+    obs_names_1 = np.array(obs_names_1)
+    obs_mask_1  = np.array(obs_mask_1, dtype=bool)
+    obs_names_1 = obs_names_1[obs_mask_1]
+    obs_HI      = obs_HI[obs_mask_1]
+            
+    obs_names_2 = np.array(obs_names_2)
+            
+    # Match galaxy names to get mass (log)
+    obs_x = []
+    for name_i in obs_names_1:
+        mask_name = np.argwhere(name_i == obs_names_2).squeeze()
+        obs_x.append(obs_mstar[mask_name])
+                
+    obs_x = np.array(obs_x)
+    assert len(obs_x) == len(obs_HI), 'Some galaxy names unmatched...? x: %s y: %s'%(len(obs_x), len(obs_HI))
+    
+    
+
+    #obs_y = obs_HI - np.log10((10**obs_HI) + (10**obs_x))
+    obs_y = obs_HI
+            
+    print('Sample length Serra+12 ATLAS3D:   %s'%len(obs_y))
         
 
     
 
 # Histograms   
 hist_bin_width = 0.2
-lower_mass_limit = 1e-6
-upper_mass_limit = 1
+lower_mass_limit = 10**6
+upper_mass_limit = 10**11
 box_volume = 1.16e5
         
     
@@ -83,7 +124,7 @@ hist_n      = hist_n[hist_mask_finite]
 axs.errorbar(np.flip(bin_midpoints), np.flip(hist_masses), yerr=np.flip(hist_err))
         
 
-plt.xlim(-6, -1)
+plt.xlim(6, 11)
 plt.ylim(10**(-6), 10**(-1))
 #plt.xscale("log")
 plt.yscale("log")
