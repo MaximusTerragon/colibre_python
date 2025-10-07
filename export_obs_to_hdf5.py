@@ -631,6 +631,7 @@ def _convert_Davis2019_ATLAS3D():
         print(len(x_mass_log))
         
         
+        
         grp = f.create_group("data/Re")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'Effective radii in kpc, not log'
@@ -655,6 +656,7 @@ def _convert_Davis2019_ATLAS3D():
         dset = f.create_dataset("data/Eta_kin/values", data=x)
         dset.attrs["units"]    = 'Msun**(1/3) * s * km**(-1)'
         print(len(x))
+        
         
         
         grp = f.create_group("data/log_H2")
@@ -1012,7 +1014,7 @@ def _create_Cappellari2011_ATLAS3D_masses():
 
 
 #-------------
-# ATLAS3D H2 extent results from Davis+13
+# ATLAS3D H1 results from Serra+12
 def _create_Serra2012_ATLAS3D_HI():
     # Create and write
     with h5py.File("%s/Serra2012_ATLAS3D_HI.hdf5"%obs_dir, "a") as f:
@@ -1113,13 +1115,13 @@ def _test_load(file_name = 'GalaxyH2MassFunction/Lagos2014_H2'):
 #_create_Lagos2014_H2()
         
 _convert_Davis2019_ATLAS3D()
-_create_Davis2019_MASSIVE()
+#_create_Davis2019_MASSIVE()
 
 #_create_Davis2013_ATLAS3D_CO_extent()
 #_create_Krajnovic2011_ATLAS3D_ellip()
 
 #_create_Serra2012_ATLAS3D_HI()
-_create_Cappellari2011_ATLAS3D_masses()
+#_create_Cappellari2011_ATLAS3D_masses()
         
 #==========================================================  
 # Test load
