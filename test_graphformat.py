@@ -27,8 +27,6 @@ COLIBRE_dir, colibre_base_path, sample_dir, output_dir, fig_dir, obs_dir = _assi
 
 
 
-
-
 fig = plt.figure(figsize=(10/3, 2.8))
 gs  = fig.add_gridspec(1, 2,  width_ratios=(1, 1),
                           left=0.1, right=0.9, bottom=0.1, top=0.9,
@@ -37,13 +35,31 @@ gs  = fig.add_gridspec(1, 2,  width_ratios=(1, 1),
 ax_top = fig.add_subplot(gs[0])
 ax_bot = fig.add_subplot(gs[1])
 
+line1, = ax_top.plot([0, 1], [0, 1], label='line 1')
+line2, = ax_top.plot([0, 1], [0, 1], label='line 2')
+s = np.array([7, 8, 9, 9, 9])
+scat1 = ax_top.scatter([0.1, 0.1, 0.1, 0.1, 0.1], [0.3, 0.4, 0.5, 0.6, 0.7], label='scatter1', marker='o', s=-1+(s-4.8)**2.5, alpha=1, zorder=5, c='r', edgecolors='none')
+scat2 = ax_top.scatter([0.2], [0.6], label='scatter2', marker='o', s=10, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r')
+
 
 ax_top.set_yticklabels([])
 #ax_bot.set_xlabel('title')
-
 ax_top.set_ylabel('test')
 #ax_bot.set_ylabel('test')
 fig.supxlabel('test')
+
+
+
+
+# Add the first legend with customizations
+first_legend = ax_top.legend(handles=[line1, line2], loc='upper right', fontsize='small', frameon=True, shadow=True, borderpad=1)
+
+# Add the second legend with customizations
+second_legend = ax_top.legend(handles=[scat1, scat2], loc='lower right', fontsize='small', frameon=True, shadow=True, borderpad=1)
+
+# Manually add the first legend back to the plot
+ax_top.add_artist(first_legend)
+
 
 
 plt.show()
