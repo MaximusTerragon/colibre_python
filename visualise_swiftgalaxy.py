@@ -271,6 +271,8 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     r50stars        = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_stars.to_physical()).to(u.kpc)
     r50gas          = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_gas.to_physical()).to(u.kpc)
+    r50H2           = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_molecular_hydrogen.to_physical()).to(u.kpc)
+    r50HI           = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_atomic_hydrogen.to_physical()).to(u.kpc)
 
     disctototal       = sg.halo_catalogue.exclusive_sphere_50kpc.disc_to_total_stellar_mass_fraction
     kappastars        = sg.halo_catalogue.exclusive_sphere_50kpc.kappa_corot_stars
@@ -348,8 +350,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         stellar_vel_disp = np.sqrt((stellar_vel_disp_matrix[0][0] + stellar_vel_disp_matrix[0][1] + stellar_vel_disp_matrix[0][2])/3)
         
         stelmass      = (attrgetter('exclusive_sphere_%skpc.stellar_mass'%(aperture))(sg.halo_catalogue)).to(u.Msun)
-        eta_kin = np.cbrt(stelmass)/stellar_vel_disp
-        
+        eta_kin = (np.cbrt(stelmass)/stellar_vel_disp).to((u.Msun)**(1/3)*(u.s)/(u.km))
         
         #K_band_L = (attrgetter('exclusive_sphere_%skpc.stellar_luminosity'%(aperture))(sg.halo_catalogue)).squeeze()[0]
         #multiply K_band_L by 3631 Janskys to convert to units of 10^−23 erg s−1
@@ -400,19 +401,9 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         return radius
     
     
-    r50stars_manual = _compute_half_rad(sg.stars.masses, sg.stars.coordinates)
+    #r50stars_manual = _compute_half_rad(sg.stars.masses, sg.stars.coordinates)
     #print('r50 SOAP:     %.5f'%r50stars.squeeze())
     #print('r50 manual:   %.5f'%r50stars_manual)
-    
-    if H2mass50 > 0:
-        r50H2    = _compute_half_rad(sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * (sg.gas.species_fractions.H2 * 2), sg.gas.coordinates)
-    else:
-        r50H2 = math.nan
-    if HImass50 > 0:
-        r50HI    = _compute_half_rad(sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * sg.gas.species_fractions.HI, sg.gas.coordinates)
-    else:
-        r50HI = math.nan
-    #---------------
     
     
     #---------------
@@ -451,7 +442,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         print('    M_r (no dust):            %.3f      mag' %(r_mag50))
         
     metadata_plot = {'Title': 'stelmass50: %.1e\nm200crit: %.1e\ngasmass50: %.1e\ngassf50: %.1e\nHImass50: %.1e\nH2mass50: %.1e\nH2mass10: %.1e\nr50stars: %.2f\nr50gas: %.2f\nr50HI: %.2f\nr50H2: %.2f\nellipstars: %.2f\ntriaxstars: %.2f\nellipstars (proj): %.2f\ntriaxstars (proj): %.2f\ndisctototal: %.2f\nkappastars: %.2f\nveldisp50 (km/s): %.2f\nveldisp10 (km/s): %.2f\nlog_eta_kin50: %.2f\nlog_eta_kin10:%.2f\nkappagas: %.2f\nsfr50: %.2e\nssfr50: %.2e\nu-r (nodust): %.2f\nMr (nodust): %.2f'
-                            %(stelmass50.squeeze(), m200c.squeeze(), gasmass50.squeeze(), gassfmass50.squeeze(), HImass50.squeeze(), H2mass50.squeeze(), H2mass10.squeeze(), r50stars.squeeze(), r50gas.squeeze(), r50HI, r50H2, ellip.squeeze(), triax.squeeze(), ellip_proj.squeeze(), triax_proj.squeeze(), disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp50.squeeze(), stellar_vel_disp10.squeeze(), np.log10(eta_kin50.squeeze()), np.log10(eta_kin10.squeeze()), kappagas.squeeze(), sfr50.squeeze(), ssfr50.squeeze(), (u_mag50-r_mag50), r_mag50),
+                            %(stelmass50.squeeze(), m200c.squeeze(), gasmass50.squeeze(), gassfmass50.squeeze(), HImass50.squeeze(), H2mass50.squeeze(), H2mass10.squeeze(), r50stars.squeeze(), r50gas.squeeze(), r50HI.squeeze(), r50H2.squeeze(), ellip.squeeze(), triax.squeeze(), ellip_proj.squeeze(), triax_proj.squeeze(), disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp50.squeeze(), stellar_vel_disp10.squeeze(), np.log10(eta_kin50.squeeze()), np.log10(eta_kin10.squeeze()), kappagas.squeeze(), sfr50.squeeze(), ssfr50.squeeze(), (u_mag50-r_mag50), r_mag50),
                      'Author': 'SOAP index: %i\nredshift: %.2f\nTrackID: %i\ncen/sat: %s'%(soap_index, redshift, track_id, 'central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'),
                      'Subject': run_name,
                      'Producer': ''}    
@@ -792,7 +783,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     #--------------
     ### Title
-    sp1.set_title(f"soap_index = %i, track_id = %i, redshift = %.3f,  %s \n M200c = %.2e Msun, M*_50 = %.2e Msun, MHI_50 = %.2e Msun, MH2_10 = %.2e Msun, MH2_50 = %.2e Msun \nr50 = %.2f pkpc, r50H2 = %.2f pkpc \ndisctototal = %.2f, kappa_co = %.2f, disp10 = %.2f km/s, disp50 = %.2f km/s, log_eta_kin10 = %.2f Msun1/3 km-1 s, log_eta_kin50= %.2f Msun1/3 km-1 s\nu*-r* = %.2f, SFR = %.2e Msun/yr, sSFR = %.2e /yr" %(soap_index, (track_id.squeeze()).to_value(), redshift, ('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'), m200c.squeeze(), stelmass50.squeeze(),  HImass50.squeeze(), H2mass10.squeeze(), H2mass50.squeeze(), r50stars.squeeze(), r50H2, disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp10.squeeze(), stellar_vel_disp50.squeeze(), np.log10(eta_kin10.squeeze()), np.log10(eta_kin50.squeeze()), (u_mag50-r_mag50).squeeze(), sfr50.squeeze(), ssfr50.squeeze()), fontsize=14, loc='left')
+    sp1.set_title(f"soap_index = %i, track_id = %i, redshift = %.3f,  %s \n M200c = %.2e Msun, M*_50 = %.2e Msun, MHI_50 = %.2e Msun, MH2_10 = %.2e Msun, MH2_50 = %.2e Msun \nr50 = %.2f pkpc, r50H2 = %.2f pkpc \ndisctototal = %.2f, kappa_co = %.2f, disp10 = %.2f km/s, disp50 = %.2f km/s, log_eta_kin10 = %.2f Msun1/3 km-1 s, log_eta_kin50= %.2f Msun1/3 km-1 s\nu*-r* = %.2f, SFR = %.2e Msun/yr, sSFR = %.2e /yr" %(soap_index, (track_id.squeeze()).to_value(), redshift, ('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'), m200c.squeeze(), stelmass50.squeeze(),  HImass50.squeeze(), H2mass10.squeeze(), H2mass50.squeeze(), r50stars.squeeze(), r50H2.squeeze(), disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp10.squeeze(), stellar_vel_disp50.squeeze(), np.log10(eta_kin10.squeeze()), np.log10(eta_kin50.squeeze()), (u_mag50-r_mag50).squeeze(), sfr50.squeeze(), ssfr50.squeeze()), fontsize=14, loc='left')
     
     
     #--------------
@@ -818,23 +809,21 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
 #========================================================================
 # Manual sample or load input:
 
-soap_indicies_sample = [11117101, 10192609] 
+"""soap_indicies_sample = [11117101, 10192609] 
 sample_input = {'name_of_preset': 'gas_rich_ETGs_z0',
                 'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5'),
                 'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5')
                 }
 savefig_txt_in = ''
-save_folder_visual = sample_input['name_of_preset']
+save_folder_visual = sample_input['name_of_preset']"""
 #------------------------------------------------------------------------
 # Load a sample from a given snapshot
-#soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample25_gas_rich_ETGs_z0')
-                                                                                    # L100_m6_THERMAL_AGN_m6_127_sample20_galaxy_visual_test
-                                                                                    # L100_m6_THERMAL_AGN_m6_127_sample25_gas_rich_ETGs_z0
-                                                                                    # L0025N0752_THERMAL_AGN_m5_123_sample_5_example_sample
-                                                                                    # L100_m6_THERMAL_AGN_m6_127_sample2_test_galaxies.csv
-                                                                                            # change kpc
-#savefig_txt_in = ''
-#save_folder_visual = sample_input['name_of_preset']
+soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample_ETG1011_109_H2_inclFR')
+                                                                                    # L100_m6_THERMAL_AGN_m6_127_sample_ETG_109_H2_exclFR
+                                                                                    # L100_m6_THERMAL_AGN_m6_127_sample_ETG_109_H2_inclFR
+                                                                                    # L100_m6_THERMAL_AGN_m6_127_sample_ETG1011_109_H2_inclFR
+savefig_txt_in = ''
+save_folder_visual = sample_input['name_of_preset']
 #========================================================================
 
 

@@ -164,7 +164,7 @@ def _create_soap_sample(simulation_run = '',
             mask_sort = np.argsort(trackID[soap_indicies])
             print('soap_indicies:\n', soap_indicies[mask_sort])
             print('trackID:\n', ((trackID[soap_indicies])[mask_sort]).to_value())
-    elif name_of_preset == 'gas_rich_ETGs_z0':
+    elif name_of_preset == 'ETG_109_H2_exclFR':
         # Used parameters
         min_stelmass     = 10**(9.5)
         max_stelmass     = 1e15
@@ -195,6 +195,122 @@ def _create_soap_sample(simulation_run = '',
                                                            kappa_co < kappa_condition])).squeeze() 
         if print_sample:
             print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
+        soap_indicies = np.random.choice(soap_indicies, select_random, replace=False)
+        if print_sample:
+            print('  Selected %s random sample: %s' %(select_random, len(soap_indicies)))
+            mask_sort = np.argsort(trackID[soap_indicies])
+            print('soap_indicies:\n', soap_indicies[mask_sort])
+            print('trackID:\n', ((trackID[soap_indicies])[mask_sort]).to_value())  
+    elif name_of_preset == 'ETG_109_H2_inclFR':
+        # Used parameters
+        min_stelmass     = 10**(9.5)
+        max_stelmass     = 1e15
+        only_centrals    = False
+        kappa_co_ETG     = 0.4          # will select less than
+        min_h2mass       = 1e9
+        select_random    = 25
+        u_r_min          = 2    # will include kappa above but for which u-r is above this
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'only_centrals': only_centrals, 'kappa_co_ETG': kappa_co_ETG}
+        
+        # Create additional criteria
+        if only_centrals:
+            central_sat_condition = cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # central
+        else:
+            central_sat_condition = cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # satellite + central
+        kappa_condition = cosmo_quantity(kappa_co_ETG, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        h2mass50  = swiftdata.exclusive_sphere_50kpc.molecular_hydrogen_mass
+        h2mass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        kappa_co    = swiftdata.exclusive_sphere_50kpc.kappa_corot_stars
+        u_mag50 = -2.5*np.log10((attrgetter('exclusive_sphere_50kpc.stellar_luminosity')(sw.load(f'{soap_dir}halo_properties_0{snapshot_no}.hdf5')))[:,0])
+        r_mag50 = -2.5*np.log10((attrgetter('exclusive_sphere_50kpc.stellar_luminosity')(sw.load(f'{soap_dir}halo_properties_0{snapshot_no}.hdf5')))[:,2])
+        u_r_mag = cosmo_array(np.zeros(stelmass50.shape), u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        u_r_mag[stelmass50 > 0.0] = u_mag50[stelmass50 > 0.0] - r_mag50[stelmass50 > 0.0]
+        
+        # Select regular sample as before
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           h2mass50 > cosmo_quantity(min_h2mass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           central_sat >= central_sat_condition, 
+                                                           kappa_co < kappa_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+            
+        # Select additional: red FRs for above kappa
+        u_r_condition = cosmo_quantity(u_r_min, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        soap_indicies_extra = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 h2mass50 > cosmo_quantity(min_h2mass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 central_sat >= central_sat_condition, 
+                                                                 kappa_co > kappa_condition, 
+                                                                 u_r_mag > u_r_condition])).squeeze() 
+        soap_indicies = np.concatenate([soap_indicies, soap_indicies_extra])
+        if print_sample:
+            print('  >0.4 kappa sample:   %s' %len(soap_indicies_extra))
+        
+        # Select sub-set
+        soap_indicies = np.random.choice(soap_indicies, select_random, replace=False)
+        if print_sample:
+            print('  Selected %s random sample: %s' %(select_random, len(soap_indicies)))
+            mask_sort = np.argsort(trackID[soap_indicies])
+            print('soap_indicies:\n', soap_indicies[mask_sort])
+            print('trackID:\n', ((trackID[soap_indicies])[mask_sort]).to_value())
+    elif name_of_preset == 'ETG1011_109_H2_inclFR':
+        # Used parameters
+        min_stelmass     = 10**(11)
+        max_stelmass     = 1e15
+        only_centrals    = False
+        kappa_co_ETG     = 0.4          # will select less than
+        min_h2mass       = 1e9
+        select_random    = 20
+        u_r_min          = 2    # will include kappa above but for which u-r is above this
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'only_centrals': only_centrals, 'kappa_co_ETG': kappa_co_ETG}
+        
+        # Create additional criteria
+        if only_centrals:
+            central_sat_condition = cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # central
+        else:
+            central_sat_condition = cosmo_quantity(0, u.dimensionless, comoving=False, scale_factor=swiftdata.metadata.a, scale_exponent=0)    # satellite + central
+        kappa_condition = cosmo_quantity(kappa_co_ETG, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        h2mass50  = swiftdata.exclusive_sphere_50kpc.molecular_hydrogen_mass
+        h2mass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        kappa_co    = swiftdata.exclusive_sphere_50kpc.kappa_corot_stars
+        u_mag50 = -2.5*np.log10((attrgetter('exclusive_sphere_50kpc.stellar_luminosity')(sw.load(f'{soap_dir}halo_properties_0{snapshot_no}.hdf5')))[:,0])
+        r_mag50 = -2.5*np.log10((attrgetter('exclusive_sphere_50kpc.stellar_luminosity')(sw.load(f'{soap_dir}halo_properties_0{snapshot_no}.hdf5')))[:,2])
+        u_r_mag = cosmo_array(np.zeros(stelmass50.shape), u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        u_r_mag[stelmass50 > 0.0] = u_mag50[stelmass50 > 0.0] - r_mag50[stelmass50 > 0.0]
+        
+        # Select regular sample as before
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           h2mass50 > cosmo_quantity(min_h2mass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           central_sat >= central_sat_condition, 
+                                                           kappa_co < kappa_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+            
+        # Select additional: red FRs for above kappa
+        u_r_condition = cosmo_quantity(u_r_min, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        soap_indicies_extra = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 h2mass50 > cosmo_quantity(min_h2mass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 central_sat >= central_sat_condition, 
+                                                                 kappa_co > kappa_condition, 
+                                                                 u_r_mag > u_r_condition])).squeeze() 
+        soap_indicies = np.concatenate([soap_indicies, soap_indicies_extra])
+        if print_sample:
+            print('  >0.4 kappa sample:   %s' %len(soap_indicies_extra))
         
         # Select sub-set
         soap_indicies = np.random.choice(soap_indicies, select_random, replace=False)
@@ -1064,12 +1180,7 @@ def _create_soap_sample(simulation_run = '',
 """_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 119,
                       name_of_preset = 'gas_rich_ETGs_z0p1',
-                    csv_file = True)"""
-# Select 25 random gas-rich ETGs (h2 > 1e9), both central or satellite, within our <0.4 kappa sample
-"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
-                    snapshot_no = 127,
-                      name_of_preset = 'gas_rich_ETGs_z0',
-                    csv_file = True)"""
+                    csv_file = True)""" 
 # Select a specific few galaxies
 """_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
@@ -1086,6 +1197,23 @@ def _create_soap_sample(simulation_run = '',
                       name_of_preset = 'random_h2_ETGs_z0',
                     csv_file = True)"""
 
+#-----------------
+# Visualise random ETGs with large H2 reservoirs
+# Select 25 random gas-rich ETGs (h2 > 1e9), both central or satellite, within our <0.4 kappa sample
+"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'ETG_109_H2_exclFR',
+                    csv_file = True)
+# Select 25 random gas-rich ETGs (h2 > 1e9), both central or satellite, within our <0.4 kappa sample
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'ETG_109_H2_inclFR',
+                    csv_file = True)"""
+# Select 20 random MASSIVE gas-rich ETGs (h2 > 1e9), both central or satellite, within our <0.4 kappa sample
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'ETG1011_109_H2_inclFR',
+                    csv_file = True) 
 
 
 

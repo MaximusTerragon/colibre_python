@@ -122,6 +122,23 @@ box_volume = 1.16e5
 hist_masses, bin_edges =  np.histogram(obs_y, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
 hist_masses = hist_masses[:]/(box_volume)      # in units of /cMpc**3
 hist_masses = hist_masses/hist_bin_width        # density
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
         
 # Add poisson errors to each bin (sqrt N)
