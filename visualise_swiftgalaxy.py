@@ -804,13 +804,490 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
 
 
+#--------------------------------
+# Visualises stars, gas, SF gas, HII, HI, and H2 out to 50 kpc
+def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = None,      # SWIFTGalaxy object containing all the integrated properties + access the particles from the snapshot file
+                      print_galaxy = True,
+                      #=====================================
+                      # fig settings
+                        disc_radius= 50 * u.kpc,           # gas/stars disc radius 
+                        orientation = 'both',               # [ 'face' / 'edge' / 'none' / 'both' ] Orientates to face within 10 kpc
+                      #=====================================
+                      showfig       = False,
+                      savefig       = True,
+                        file_format = 'pdf',
+                        savefig_txt = '', 
+                      #--------------------------
+                      print_progress = False,
+                        debug = False):
+    
+    
+    #--------------------
+    # Load soap_index and 
+    soap_index  = sg.halo_catalogue.soap_index
+    track_id    = sg.halo_catalogue.input_halos_hbtplus.track_id.squeeze()
+    #descendent_id = sg.halo_catalogue.input_halos_hbtplus.descendant_track_id.squeeze()
+    redshift    = sg.metadata.redshift.squeeze()
+    run_name    = sg.metadata.run_name
+    lookbacktime = sg.metadata.time.squeeze()
+    
+    
+    #------------------------------
+    #print('REMOVE MANUAL RECENTER AND auto_recenter in function !!!!!!!')
+    #print('Using manual recenter due to velocity bug')
+    # Manual recentre because bugged velocity in L00250752 simulation
+    # REMOVE FROM L100 RUN
+    sg.recentre(sg.halo_catalogue.centre)               # Defaults to The centre of the subhalo as given by the halo finder. For HBTplus this is equal to the position of the most bound particle in the subhalo.
+    vcentre = sg.halo_catalogue.velocity_centre         # Defaults to CentreOfMassVelocity of bound subhalo
+    vcentre.cosmo_factor = cosmo_factor(a**0, sg.metadata.scale_factor)
+    sg.recentre_velocity(vcentre)
+    
+    
+    # Bulk properties within aperture of 50 pkpc
+    stelmass50      = sg.halo_catalogue.exclusive_sphere_50kpc.stellar_mass.to(u.Msun)
+    m200c           = sg.halo_catalogue.spherical_overdensity_200_crit.total_mass.to(u.Msun)
+    
+    gasmass50       = sg.halo_catalogue.exclusive_sphere_50kpc.gas_mass.to(u.Msun)
+    #gascoldmass50     = sg.halo_catalogue.exclusive_sphere_50kpc.gas_mass_in_cold_dense_gas.to(u.Msun)
+    gassfmass50       = sg.halo_catalogue.exclusive_sphere_50kpc.star_forming_gas_mass.to(u.Msun)
+    HImass50          = sg.halo_catalogue.exclusive_sphere_50kpc.atomic_hydrogen_mass.to(u.Msun)
+    H2mass50          = sg.halo_catalogue.exclusive_sphere_50kpc.molecular_hydrogen_mass.to(u.Msun)
+    H2mass10          = sg.halo_catalogue.exclusive_sphere_10kpc.molecular_hydrogen_mass.to(u.Msun)
+    #H2Hemass50        = (sg.halo_catalogue.exclusive_sphere_50kpc.molecular_hydrogen_mass * 1.36).to(u.Msun)
+    
+    r50stars        = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_stars.to_physical()).to(u.kpc)
+    r50gas          = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_gas.to_physical()).to(u.kpc)
+    r50H2           = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_molecular_hydrogen.to_physical()).to(u.kpc)
+    r50HI           = (sg.halo_catalogue.exclusive_sphere_50kpc.half_mass_radius_atomic_hydrogen.to_physical()).to(u.kpc)
+
+    disctototal       = sg.halo_catalogue.exclusive_sphere_50kpc.disc_to_total_stellar_mass_fraction
+    kappastars        = sg.halo_catalogue.exclusive_sphere_50kpc.kappa_corot_stars
+    kappagas          = sg.halo_catalogue.exclusive_sphere_50kpc.kappa_corot_gas
+    
+    sfr50           = sg.halo_catalogue.exclusive_sphere_50kpc.star_formation_rate.to(u.Msun/u.yr)
+    ssfr50          = sfr50/(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_mass.to(u.Msun))
+    
+    u_mag50           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_luminosity.squeeze()[0])
+    g_mag50           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_luminosity.squeeze()[1])
+    r_mag50           = -2.5*np.log10(sg.halo_catalogue.exclusive_sphere_50kpc.stellar_luminosity.squeeze()[2])
+    
+    is_central      = sg.halo_catalogue.input_halos.is_central
+        
+    
+    #---------------
+    # Triaxiality and ellipticity
+    """ ϵ = 0 -> Perfectly spherical galaxy 
+    ϵ > 0 -> Elliptical galaxy
+    ϵ = 1 -> Highly flattened/disc galaxy or elongated galaxy
+    
+    T ≈ 0, (a ≈ b > c) -> Oblate (disk-like) galaxy 
+    0 < T < 1, (a > b > c) -> Triaxial (ellipsoidal)
+    T ≈ 1, (a > b ≈ c) -> Prolate (cigar-shaped)
+    """   
+    # Calculate projected triax and ellipticity:
+    def _compute_projected_ellipticity_triaxiality():
+        # Construct the projected inertia tensor
+        I_xx, I_yy, I_xy = sg.halo_catalogue.projected_aperture_50kpc_projz.projected_stellar_inertia_tensor_noniterative.squeeze()
+        I_proj = np.array([[I_xx, I_xy],
+                           [I_xy, I_yy]])
+    
+        # Compute eigenvalues
+        eigvals = np.linalg.eigvalsh(I_proj)  # More efficient for symmetric matrices
+        lambda_1, lambda_2 = np.sort(eigvals)[::-1]  # Ensure lambda_1 >= lambda_2
+
+        # Compute projected ellipticity
+        ellipticity = 1 - (lambda_2 / lambda_1)
+    
+        # Compute projected triaxiality
+        triaxiality = (1 - (lambda_2 / lambda_1)) / (1 + (lambda_2 / lambda_1))
+
+        return cosmo_quantity(ellipticity, u.dimensionless, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0), cosmo_quantity(triaxiality, u.dimensionless, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)     
+    # Calculate intrinsic triax and ellipticity:
+    def _compute_intrinsic_ellipticity_triaxiality():
+        # construct inertia tensor
+        i11, i22, i33, i12, i13, i23 = sg.halo_catalogue.bound_subhalo.stellar_inertia_tensor_noniterative.squeeze()
+        inertiatensor = np.array([[i11, i12, i13], [i12, i22, i23], [i13, i23, i33]])
+    
+        # Compute eigenvalues (sorted in descending order)
+        eigenvalues = np.linalg.eigvalsh(inertiatensor)[::-1]  # Sorted: I1 >= I2 >= I3
+        length_a2, length_b2, length_c2 = eigenvalues  # Assign to principal moments, length_a2 == a**2, so length = sqrt length_a2. a = longest axis, b = intermediate, c = shortest
+
+        # Compute Triaxiality Parameter
+        triaxiality = (length_a2 - length_b2) / (length_a2 - length_c2) if (length_a2 - length_c2) != 0 else np.nan  # Avoid division by zero
+        ellipticity = 1 - (np.sqrt(length_c2)/np.sqrt(length_a2))
+        
+        return cosmo_quantity(ellipticity, u.dimensionless, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0), cosmo_quantity(triaxiality, u.dimensionless, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)     
+    
+    # remove 'noniterative' from above when L25 box  
+    ellip, triax            = _compute_intrinsic_ellipticity_triaxiality()
+    ellip_proj, triax_proj  = _compute_projected_ellipticity_triaxiality()
+    #---------------
+    
+    #---------------
+    # Stellar velocity dispersion and dispersion parameter from Davis+19
+    def _compute_velocity_dispersion(aperture='50'):        # km/s
+        stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_%skpc.stellar_velocity_dispersion_matrix'%(aperture))(sg.halo_catalogue)).to(u.km**2 / u.s**2)
+        stellar_vel_disp = np.sqrt((stellar_vel_disp_matrix[0][0] + stellar_vel_disp_matrix[0][1] + stellar_vel_disp_matrix[0][2])/3)
+        
+        return stellar_vel_disp
+    
+    def _compute_eta_kin(aperture='50'):        # Msun^1/3 / sigma, Msun^1/3 km-1 s
+        stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_%skpc.stellar_velocity_dispersion_matrix'%(aperture))(sg.halo_catalogue)).to(u.km**2 / u.s**2)
+        stellar_vel_disp = np.sqrt((stellar_vel_disp_matrix[0][0] + stellar_vel_disp_matrix[0][1] + stellar_vel_disp_matrix[0][2])/3)
+        
+        stelmass      = (attrgetter('exclusive_sphere_%skpc.stellar_mass'%(aperture))(sg.halo_catalogue)).to(u.Msun)
+        eta_kin = (np.cbrt(stelmass)/stellar_vel_disp).to((u.Msun)**(1/3)*(u.s)/(u.km))
+        
+        #K_band_L = (attrgetter('exclusive_sphere_%skpc.stellar_luminosity'%(aperture))(sg.halo_catalogue)).squeeze()[0]
+        #multiply K_band_L by 3631 Janskys to convert to units of 10^−23 erg s−1
+        #eta_kin = np.cbrt(K_band_L)/stellar_vel_disp
+        
+        
+        return eta_kin
+    
+    stellar_vel_disp50 = _compute_velocity_dispersion(aperture='50')
+    stellar_vel_disp10 = _compute_velocity_dispersion(aperture='10')
+    eta_kin50 = _compute_eta_kin(aperture='50')
+    eta_kin10 = _compute_eta_kin(aperture='10')
+    
+    #---------------
+    
+    
+    #-----------------------
+    # find halfmass radius of H2, and stars (for check)
+    def _compute_half_rad(particle_masses, particle_coord, trim_rad= 50):
+        
+        trim_rad = cosmo_quantity(trim_rad, u.kpc, comoving=False, scale_factor=sg.metadata.a, scale_exponent=1)
+        
+        # H2 masses and coords
+        particle_masses = particle_masses.to(u.Msun)
+        particle_masses.convert_to_physical()
+        particle_coord  = particle_coord.to(u.kpc)
+        particle_coord.convert_to_physical()
+        
+        # Mask all within trim_rad
+        mask = np.where(np.linalg.norm(particle_coord, axis=1) <= trim_rad)
+        particle_masses = particle_masses[mask]
+        particle_coord  = particle_coord[mask]
+        
+        
+        # Mask by distance from center
+        r = np.linalg.norm(particle_coord, axis=1)
+        mask_sort = np.argsort(r)
+        r = r[mask_sort]
+        
+        # Compute cumulative mass
+        cmass = np.cumsum(particle_masses[mask_sort])
+        total_mass_in_rad = np.sum(particle_masses[mask_sort])
+        
+        # Find index where cumulative mass is first greater than total_mass_in_rad
+        index = np.where(cmass >= (total_mass_in_rad*0.5).to(u.Msun))[0][0]
+        radius = r[index]
+        
+        return radius
+    
+    
+    #r50stars_manual = _compute_half_rad(sg.stars.masses, sg.stars.coordinates)
+    #print('r50 SOAP:     %.5f'%r50stars.squeeze())
+    #print('r50 manual:   %.5f'%r50stars_manual)
+    
+    
+    #---------------
+    if print_galaxy:
+        print('\nSOAP index:                 %i   at    z = %.3f   in   %s' %(soap_index, redshift, run_name))
+        print('   trackID:                     %i' %track_id)
+        #print('   descendantID:         %i' %descendent_id)
+        print('   central or satellite:  ->  %s' %('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'))
+        print('   stelmass50:            ->  %.3e      Msun' %stelmass50.squeeze())
+        print('   m200 crit              ->  %.3e      Msun' %m200c.squeeze())
+        print('   gasmass50:                 %.3e      Msun' %gasmass50.squeeze())
+        print('      SF:                       %.3e    Msun' %gassfmass50.squeeze())
+        #print('      cold/dense:               %.3e    Msun' %gascoldmass50.squeeze())
+        print('      HI:                 ->    %.3e    Msun' %HImass50.squeeze())
+        print('      H2 (50kpc):         ->    %.3e    Msun' %H2mass50.squeeze())
+        print('      H2 (10kpc)          ->    %.3e    Msun' %H2mass10.squeeze())
+        #print('      H2+He (H2 x 1.36):  ->    %.3e    Msun' %H2Hemass50.squeeze())
+        print('   r50 stars:             ->  %.2f      pkpc' %r50stars.squeeze())
+        print('    r50 gas:                    %.2f    pkpc' %r50gas.squeeze())
+        print('    r50 HI:                     %.2f    pkpc' %r50HI.squeeze())
+        print('    r50 H2:               ->    %.2f    pkpc' %r50H2.squeeze())
+        print('   ellip:                 ->  %.3f'         %ellip.squeeze())
+        print('    triax:                ->  %.3f'         %triax.squeeze())
+        print('    ellip proj (50pkpc):        %.3f'         %ellip_proj.squeeze())
+        print('    triax proj: (50pkpc):       %.3f'         %triax_proj.squeeze())
+        print('    disctototal:              %.3f'         %disctototal.squeeze())
+        print('    kappa stars 50:       ->  %.3f'           %kappastars.squeeze())
+        print('    veldisp 50:   km/s        %.3f'           %stellar_vel_disp50.squeeze())
+        print('    veldisp 10:   km/s    ->  %.3f'           %stellar_vel_disp10.squeeze())
+        print('    log eta_kin 50:  Msun1/3 km-1 s      %.3f'           %np.log10(eta_kin50.squeeze()))
+        print('    log eta_kin 10:  Msun1/3 km-1 s  ->  %.3f'           %np.log10(eta_kin10.squeeze()))
+        print('   kappa gas 50:               %.3f'         %kappagas.squeeze())
+        print('   SFR 50:                    %.3e      Msun/yr' %sfr50.squeeze())
+        print('    sSFR 50:              ->   %.3e     /yr' %ssfr50.squeeze())
+        print('   u - r (no dust):           %.3f      mag' %(u_mag50-r_mag50))
+        print('    M_r (no dust):            %.3f      mag' %(r_mag50))
+        
+    metadata_plot = {'Title': 'stelmass50: %.1e\nm200crit: %.1e\ngasmass50: %.1e\ngassf50: %.1e\nHImass50: %.1e\nH2mass50: %.1e\nH2mass10: %.1e\nr50stars: %.2f\nr50gas: %.2f\nr50HI: %.2f\nr50H2: %.2f\nellipstars: %.2f\ntriaxstars: %.2f\nellipstars (proj): %.2f\ntriaxstars (proj): %.2f\ndisctototal: %.2f\nkappastars: %.2f\nveldisp50 (km/s): %.2f\nveldisp10 (km/s): %.2f\nlog_eta_kin50: %.2f\nlog_eta_kin10:%.2f\nkappagas: %.2f\nsfr50: %.2e\nssfr50: %.2e\nu-r (nodust): %.2f\nMr (nodust): %.2f'
+                            %(stelmass50.squeeze(), m200c.squeeze(), gasmass50.squeeze(), gassfmass50.squeeze(), HImass50.squeeze(), H2mass50.squeeze(), H2mass10.squeeze(), r50stars.squeeze(), r50gas.squeeze(), r50HI.squeeze(), r50H2.squeeze(), ellip.squeeze(), triax.squeeze(), ellip_proj.squeeze(), triax_proj.squeeze(), disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp50.squeeze(), stellar_vel_disp10.squeeze(), np.log10(eta_kin50.squeeze()), np.log10(eta_kin10.squeeze()), kappagas.squeeze(), sfr50.squeeze(), ssfr50.squeeze(), (u_mag50-r_mag50), r_mag50),
+                     'Author': 'SOAP index: %i\nredshift: %.2f\nTrackID: %i\ncen/sat: %s'%(soap_index, redshift, track_id, 'central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'),
+                     'Subject': run_name,
+                     'Producer': ''}    
+    
+    
+    
+    #-----------------------
+    # Rotation matrix to align vec1 to vec2 (axis)
+    def rotation_matrix_from_vectors(vec1, vec2):
+        """ Find the rotation matrix that aligns vec1 to vec2
+        :param vec1: A 3d "source" vector
+        :param vec2: A 3d "destination" vector
+        :return mat: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
+        """
+        a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
+        v = np.cross(a, b)
+        c = np.dot(a, b)
+        s = np.linalg.norm(v)
+        kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+        rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
+        return rotation_matrix
+        
+    
+    if orientation == 'both':
+        
+        # Rotation matrix
+        """Lstars = sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze()
+        zhat = (Lstars / np.sqrt(np.sum(Lstars**2))).to_value(u.dimensionless)
+        rotmat_face = rotation_matrix_from_vector(zhat, axis='z')
+        rotmat_edge = rotation_matrix_from_vector(zhat, axis='x')
+        rotcent = u.unyt_array([0, 0, 0]) * u.Mpc
+        """
+        
+        # The angular momentum vector will point perpendicular to the galaxy disk.
+        # If your simulation contains stars, use lx_star
+        lx = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[0]
+        ly = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[1]
+        lz = (sg.halo_catalogue.exclusive_sphere_10kpc.angular_momentum_stars.squeeze())[2]
+        angular_momentum_vector = cosmo_array([lx, ly, lz])
+        angular_momentum_vector /= np.linalg.norm(angular_momentum_vector)
+        
+        rotmat_face = rotation_matrix_from_vector(angular_momentum_vector)
+        rotmat_edge = rotation_matrix_from_vector(angular_momentum_vector, axis="x")
+        rotcent = cosmo_array([0, 0, 0], u.kpc, comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
+        
+        
+    
+        #---------------------------------------
+        # Creating masks for galaxy properties
+        mask_gas_sf         = sg.gas.star_formation_rates > cosmo_quantity(0, u.Msun/u.yr, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)
+        
+        # Creating new objects for datasets of HII, HI, and H2
+        #sg.gas.mass_gas_hii = sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * sg.gas.species_fractions.HII
+        sg.gas.mass_gas_hi  = sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * sg.gas.species_fractions.HI
+        sg.gas.mass_gas_h2  = sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * (sg.gas.species_fractions.H2 * 2)
+    
+        # Creating new objects for mass-weighted temperature, metallicity, and sfr
+        #sg.gas.mass_weighted_temps  = sg.gas.masses * sg.gas.temperatures
+        #sg.gas.mass_weighted_Z      = sg.gas.masses * sg.gas.metal_mass_fractions
+        #sg.gas.mass_weighted_sfr    = sg.gas.masses * sg.gas.star_formation_rates.to_physical()
+        
+        velocities_xyz = -1 * sg.gas.velocities.to(u.km/u.s)
+        velocities_xyz.convert_to_physical() 
+        velocities_edge = (Rotation.from_matrix(rotmat_edge)).apply(velocities_xyz)
+        sg.gas.mass_weighted_vel    = sg.gas.masses * (velocities_edge[:,2])    # bugged with scalefactor in L25, see Kyle messages
+        #sg.gas.mass_weighted_vel.convert_to_physical() 
+        velocities_xyz = 0
+        velocities_edge = 0
+        
+        
+        #--------------------
+        # Define the region
+        disc_region      = cosmo_array([-disc_radius, disc_radius, -disc_radius, disc_radius], comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
+        disc_region_edge = cosmo_array([-disc_radius, disc_radius, 0.5*-disc_radius, 0.5*disc_radius], comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
+        
+        # Use project_gas_pixel_grid to generate projected images
+        common_arguments = dict(
+            resolution=612,
+            parallel=True,
+            region=disc_region,
+            periodic=False,  # disable periodic boundaries when using rotations
+            rotation_center=rotcent,
+        )
+        common_arguments_edge = dict(
+            resolution=612,
+            parallel=True,
+            region=disc_region_edge,
+            periodic=False,  # disable periodic boundaries when using rotations
+            rotation_center=rotcent,
+        )
+    
+        # This creates a grid that has units msun / Mpc^2 (in the case of e.g. stellar mass, or H2), and can be transformed like any other unyt quantity
+        # Once on a grid, multiply units by Mpc^2... e.g. msun / Mpc^2 -> msun
+        star_map_face               = project_pixel_grid(**common_arguments, data=sg.stars, project="masses", rotation_matrix=rotmat_face, )
+        star_map_edge               = project_pixel_grid(**common_arguments, data=sg.stars, project="masses", rotation_matrix=rotmat_edge, )
+        gas_map_face                = project_gas(**common_arguments, data=sg, project="masses", rotation_matrix=rotmat_face, )
+        gas_map_edge                = project_gas(**common_arguments, data=sg, project="masses", rotation_matrix=rotmat_edge, )
+        #gassf_map_face              = project_gas(**common_arguments, data=sg, project="masses", mask=mask_gas_sf, rotation_matrix=rotmat_face, )
+        #gassf_map_edge              = project_gas(**common_arguments, data=sg, project="masses", mask=mask_gas_sf, rotation_matrix=rotmat_edge, )
+        mass_weighted_vel_map_face  = project_gas(**common_arguments, data=sg, project="mass_weighted_vel", rotation_matrix=rotmat_face, )
+        mass_weighted_vel_map_edge  = project_gas(**common_arguments, data=sg, project="mass_weighted_vel", rotation_matrix=rotmat_edge, )
+        #mass_weighted_temp_map_face = project_gas(**common_arguments, data=sg, project="mass_weighted_temps", rotation_matrix=rotmat_face, )
+        #mass_weighted_temp_map_edge = project_gas(**common_arguments, data=sg, project="mass_weighted_temps", rotation_matrix=rotmat_edge, )
+        #mass_weighted_Z_map_face    = project_gas(**common_arguments, data=sg, project="mass_weighted_Z", rotation_matrix=rotmat_face, )
+        #mass_weighted_Z_map_edge    = project_gas(**common_arguments, data=sg, project="mass_weighted_Z", rotation_matrix=rotmat_edge, )
+        #gasHII_map_face             = project_gas(**common_arguments, data=sg, project="mass_gas_hii", rotation_matrix=rotmat_face, )
+        #gasHII_map_edge             = project_gas(**common_arguments, data=sg, project="mass_gas_hii", rotation_matrix=rotmat_edge, )
+        gasHI_map_face              = project_gas(**common_arguments, data=sg, project="mass_gas_hi", rotation_matrix=rotmat_face, )
+        gasHI_map_edge              = project_gas(**common_arguments, data=sg, project="mass_gas_hi", rotation_matrix=rotmat_edge, )
+        gasH2_map_face              = project_gas(**common_arguments, data=sg, project="mass_gas_h2", rotation_matrix=rotmat_face, )
+        gasH2_map_edge              = project_gas(**common_arguments, data=sg, project="mass_gas_h2", rotation_matrix=rotmat_edge, )
+        
+        # Units msun K / Mpc^2 --> on grid K
+        #temp_map_face = (mass_weighted_temp_map_face / gas_map_face)
+        #temp_map_edge = (mass_weighted_temp_map_edge / gas_map_edge)
+        # Units msun km/s / Mpc^2 --> on grid km/s
+        vel_map_face  = (mass_weighted_vel_map_face / gas_map_face).to_physical()
+        vel_map_edge  = (mass_weighted_vel_map_edge / gas_map_edge).to_physical()
+        # Units msun Z / Mpc^2 --> on grid Z
+        #Z_map_face    = (mass_weighted_Z_map_face / gas_map_face)
+        #Z_map_edge    = (mass_weighted_Z_map_edge / gas_map_edge)
+        
+        
+        #--------------
+        ### Figure initialising
+        fig = plt.figure(figsize=(7.5, 3))
+        gs  = fig.add_gridspec(2, 5,  width_ratios=(1, 1, 1, 1, 1), height_ratios=(1, 1),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0, hspace=0)
+        # Create the Axes.
+        sp1 = fig.add_subplot(gs[0,0])
+        sp2 = fig.add_subplot(gs[0,1])
+        sp3 = fig.add_subplot(gs[0,2])
+        sp4 = fig.add_subplot(gs[0,3])
+        sp5 = fig.add_subplot(gs[0,4])
+        sp11 = fig.add_subplot(gs[1,0])
+        sp12 = fig.add_subplot(gs[1,1])
+        sp13 = fig.add_subplot(gs[1,2])
+        sp14 = fig.add_subplot(gs[1,3])
+        sp15 = fig.add_subplot(gs[1,4])
+        
+        
+        
+        #--------------
+        ### Plot imshow
+        
+        sp1.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_face.value), cmap="magma", extent=disc_region, origin="lower", )
+        sp2.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_face.value), cmap="viridis", extent=disc_region, origin="lower", )
+        sp3.imshow(vel_map_face.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
+        sp4.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_face.value), cmap="Greens", extent=disc_region, origin="lower", )
+        sp5.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_face.value), cmap="Blues", extent=disc_region, origin="lower", )
+        
+        sp11.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_edge.value), cmap="magma", extent=disc_region, origin="lower", )
+        sp12.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_edge.value), cmap="viridis", extent=disc_region, origin="lower", )
+        sp13.imshow(vel_map_edge.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
+        sp14.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_edge.value), cmap="Greens", extent=disc_region, origin="lower", )
+        sp15.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_edge.value), cmap="Blues", extent=disc_region, origin="lower", )
+    
+    
+        #--------------
+        ### general formatting
+        sp1.set_ylabel(f"y' [{disc_radius.units}]")
+        sp1.set_xticks([-40, -20, 0, 20, 40])
+        sp1.set_xticklabels([])
+        #sp1.set_yticklabels([])
+
+        sp2.set_xticklabels([])
+        sp2.set_xticks([-40, -20, 0, 20, 40])
+        sp2.set_yticklabels([])
+        
+        sp3.set_xticklabels([])
+        sp3.set_xticks([-40, -20, 0, 20, 40])
+        sp3.set_yticklabels([])
+        
+        sp4.set_xticklabels([])
+        sp4.set_xticks([-40, -20, 0, 20, 40])
+        sp4.set_yticklabels([])
+
+        sp5.set_xticklabels([])
+        sp5.set_xticks([-40, -20, 0, 20, 40])
+        sp5.set_yticklabels([])
+        
+        sp11.set_ylabel(f"y' [{disc_radius.units}]")
+        sp11.set_xlabel(f"x' [{disc_radius.units}]")
+        sp11.set_xticks([-40, -20, 0, 20, 40])
+        #sp11.set_xticklabels([])
+        #sp11.set_yticklabels([])
+        
+        #sp12.set_ylabel(f"y' [{disc_radius.units}]")
+        sp12.set_xlabel(f"x' [{disc_radius.units}]")
+        sp12.set_xticks([-40, -20, 0, 20, 40])
+        #sp12.set_xticklabels([])
+        sp12.set_yticklabels([])
+        
+        #sp13.set_ylabel(f"y' [{disc_radius.units}]")
+        sp13.set_xlabel(f"x' [{disc_radius.units}]")
+        sp13.set_xticks([-40, -20, 0, 20, 40])
+        #sp13.set_xticklabels([])
+        sp13.set_yticklabels([])
+        
+        #sp14.set_ylabel(f"y' [{disc_radius.units}]")
+        sp14.set_xlabel(f"x' [{disc_radius.units}]")
+        sp14.set_xticks([-40, -20, 0, 20, 40])
+        #sp14.set_xticklabels([])
+        sp14.set_yticklabels([])
+        
+        #sp12.set_ylabel(f"y' [{disc_radius.units}]")
+        sp15.set_xlabel(f"x' [{disc_radius.units}]")
+        sp15.set_xticks([-40, -20, 0, 20, 40])
+        #sp12.set_xticklabels([])
+        sp15.set_yticklabels([])
+    
+    
+    
+        #--------------
+        ### Annotation
+        sp1.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp1.transAxes, fontsize=7)
+        sp2.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp2.transAxes, fontsize=7)
+        sp3.text(0.9, 0.9, "Velocity", color="k", ha="right", va="top", transform=sp3.transAxes, fontsize=7)
+        sp4.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp4.transAxes, fontsize=7)
+        sp5.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp5.transAxes, fontsize=7)
+        
+        #sp11.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp11.transAxes, fontsize=7)
+        #sp12.text(0.9, 0.9, "Velocity", color="white", ha="right", va="top", transform=sp12.transAxes, fontsize=7)
+        #sp13.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp13.transAxes, fontsize=7)
+        #sp14.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp14.transAxes, fontsize=7)
+    
+    
+    #--------------
+    ### Title
+    sp1.set_title(f"SOAP index = %i, redshift = %.1f" %(soap_index, redshift), loc='left', fontsize=7)
+    
+    
+    #--------------
+    ### other
+    fig.subplots_adjust(wspace=0, hspace=0)
+    
+    
+    #--------------
+    ### Savefig
+    if savefig:
+        savefig_txt_save = ('' if savefig_txt_in == None else savefig_txt_in) + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        plt.savefig("%s/galaxy_visuals/%s/%s_PLOTvis_%#s_%i_%s.%s" %(fig_dir, save_folder_visual, run_name, orientation, track_id, savefig_txt_save, file_format), format=file_format, metadata=metadata_plot, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/galaxy_visuals/%s/%s_PLOTvis_%s_%i_%s.%s" %(fig_dir, save_folder_visual, run_name, orientation, track_id, savefig_txt_save, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+    
+
+
+
 
 
 #========================================================================
 # Manual sample or load input:
 
-"""soap_indicies_sample = [11117101, 10192609] 
-sample_input = {'name_of_preset': 'gas_rich_ETGs_z0',
+"""soap_indicies_sample = [9120823, 10173515, 1702242] 
+sample_input = {'name_of_preset': 'ETG1011_109_H2_inclFR',
                 'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5'),
                 'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5')
                 }
@@ -837,12 +1314,16 @@ output_figures = sgs.map(_visualize_galaxy_example)"""     # Use map to apply `m
 
 #---------------------
 # Visualise example galaxy L25_m5, L100_m6 (stars + gas + gas_sf + gas_HII + gas_H1 + gas_H2)
-sgs = SWIFTGalaxies(sample_input['virtual_snapshot_file'], SOAP(sample_input['soap_catalogue_file'], soap_index=soap_indicies_sample, ), auto_recentre=False,
+"""sgs = SWIFTGalaxies(sample_input['virtual_snapshot_file'], SOAP(sample_input['soap_catalogue_file'], soap_index=soap_indicies_sample, ), auto_recentre=False,
                     preload={"gas.coordinates", "gas.masses", "gas.velocities", "gas.star_formation_rates", "gas.temperatures", "gas.metal_mass_fractions", "gas.element_mass_fractions.hydrogen", "gas.species_fractions.HII", "gas.species_fractions.HI", "gas.species_fractions.H2", "gas.smoothing_lengths", "stars.coordinates", "stars.masses", "stars.smoothing_lengths", },)       
-output_figures = sgs.map(_visualize_galaxy_gas)
+output_figures = sgs.map(_visualize_galaxy_gas)"""
 
 
-
+#---------------------
+# Visualise galaxy plot format
+sgs = SWIFTGalaxies(sample_input['virtual_snapshot_file'], SOAP(sample_input['soap_catalogue_file'], soap_index=soap_indicies_sample, ), auto_recentre=False,
+                    preload={"gas.coordinates", "gas.masses", "gas.velocities", "gas.element_mass_fractions.hydrogen", "gas.species_fractions.HI", "gas.species_fractions.H2", "gas.smoothing_lengths", "stars.coordinates", "stars.masses", "stars.smoothing_lengths", },)       
+output_figures = sgs.map(_visualize_galaxy_paper_format)
 
 
 

@@ -9230,7 +9230,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
                         if name_i == b'NGC 4550':
                             mask_name_1 = np.where(name_i == obs_names_duplicate)[0]
                             mask_name_2 = np.where(name_i == obs_names_2)[0]
-                            h2_i = np.log10((10**7)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**7)/1.32)], units=u.Msun)
 
                             obs_x.append(obs_Mstar_duplicate[mask_name_1])
                             obs_y.append(obs_Re_CO[mask_name_2])
@@ -9244,7 +9244,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
                         
                             L_k_i = (1/obs_Lk_ratio_i) * obs_Re_CO_i
                             logMsun_i = np.log10(0.82 * L_k_i)
-                            h2_i = np.log10((10**7.74)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**7.74)/1.32)], units=u.Msun)
                         
                             obs_x.append(logMsun_i)
                             obs_y.append(obs_Re_CO_i)
@@ -9258,7 +9258,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
                         
                             L_k_i = (1/obs_Lk_ratio_i) * obs_Re_CO_i
                             logMsun_i = np.log10(0.82 * L_k_i)
-                            h2_i = np.log10((10**8.61)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**8.61)/1.32)], units=u.Msun)
                         
                             obs_x.append(logMsun_i)
                             obs_y.append(obs_Re_CO_i)
@@ -9872,7 +9872,7 @@ def _etg_stelmass_r50r50H2(soap_indicies_sample=[], sample_input=[], title_text_
                         if name_i == b'NGC 4550':
                             mask_name_1 = np.where(name_i == obs_names_duplicate)[0]
                             mask_name_2 = np.where(name_i == obs_names_2)[0]
-                            h2_i = np.log10((10**7)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**7)/1.32)], units=u.Msun)
                             
                             obs_x.append(obs_Mstar_duplicate[mask_name_1])
                             obs_y.append(R_CO_Re_ratio[mask_name_2])
@@ -9886,7 +9886,7 @@ def _etg_stelmass_r50r50H2(soap_indicies_sample=[], sample_input=[], title_text_
                         
                             L_k_i = (1/obs_Lk_ratio_i) * obs_Re_CO_i
                             logMsun_i = np.log10(0.82 * L_k_i)
-                            h2_i = np.log10((10**7.74)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**7.74)/1.32)], units=u.Msun)
                             
                             obs_x.append(logMsun_i)
                             obs_y.append(R_CO_Re_ratio[mask_name_2])
@@ -9900,7 +9900,7 @@ def _etg_stelmass_r50r50H2(soap_indicies_sample=[], sample_input=[], title_text_
                         
                             L_k_i = (1/obs_Lk_ratio_i) * obs_Re_CO_i
                             logMsun_i = np.log10(0.82 * L_k_i)
-                            h2_i = np.log10((10**8.61)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**8.61)/1.32)], units=u.Msun)
                         
                             obs_x.append(logMsun_i)
                             obs_y.append(R_CO_Re_ratio[mask_name_2])
@@ -10998,7 +10998,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                         if name_i == b'NGC 4550':
                             mask_name_1 = np.where(name_i == obs_names_duplicate)[0]
                             mask_name_2 = np.where(name_i == obs_names_2)[0]
-                            h2_i = np.log10((10**7)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**7)/1.32)], units=u.Msun)
                             
                             obs_x.append(obs_Re_duplicate[mask_name_1])
                             obs_y.append(obs_Re_CO[mask_name_2])
@@ -11011,7 +11011,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                             obs_Re_CO_i = obs_Re_CO[mask_name_2]
                     
                             Re_i = (1/obs_ratio_i) * obs_Re_CO_i
-                            h2_i = np.log10((10**7.74)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**7.74)/1.32)], units=u.Msun)
                         
                             obs_x.append(Re_i)
                             obs_y.append(obs_Re_CO_i)
@@ -11024,7 +11024,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                             obs_Re_CO_i = obs_Re_CO[mask_name_2]
                     
                             Re_i = (1/obs_ratio_i) * obs_Re_CO_i
-                            h2_i = np.log10((10**8.61)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**8.61)/1.32)], units=u.Msun)
                         
                             obs_x.append(Re_i)
                             obs_y.append(obs_Re_CO_i)
@@ -12566,7 +12566,7 @@ def _etg_h2mass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = 
                             mask_name_1 = np.where(name_i == obs_names_duplicate)[0]
                             mask_name_2 = np.where(name_i == obs_names_2)[0]
                             
-                            h2_i = np.log10((10**7.74)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**7.74)/1.32)], units=u.Msun)
                             
                             obs_x.append(obs_Re_CO[mask_name_2])
                             obs_y.append(h2_i)
@@ -12575,7 +12575,7 @@ def _etg_h2mass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = 
                             mask_name_1 = np.where(name_i == obs_names_duplicate)[0]
                             mask_name_2 = np.where(name_i == obs_names_2)[0]
                             
-                            h2_i = np.log10((10**8.61)/1.32)
+                            h2_i = u.array.unyt_array([np.log10((10**8.61)/1.32)], units=u.Msun)
                             
                             obs_x.append(obs_Re_CO[mask_name_2])
                             obs_y.append(h2_i)
@@ -20855,8 +20855,8 @@ def _etg_stelmass_net_h1_massflow(soap_indicies_sample=[], sample_input=[], titl
 
 #===================================================================================
 ### Load a sample from a given snapshot and a given run
-sim_box_size_name = 'L100_m6'
-sim_type_name     = 'HYBRID_AGN_m6'    # THERMAL_AGN_m6    HYBRID_AGN_m6
+sim_box_size_name = 'L200_m6'
+sim_type_name     = 'THERMAL_AGN_m6'    # THERMAL_AGN_m6    HYBRID_AGN_m6
 snapshot_name     = '127'
 
 
