@@ -267,17 +267,41 @@ def _sample_stellar_mass_function(csv_samples = [],  title_text_in = '',
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_centrals': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_satellites': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                    'all_ETGs': 'ETGs (excl. FRs)',
-                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
+                   'all_ETGs_centrals': 'ETGs (excl. FRs)',
+                   'all_ETGs_satellites': 'ETGs (excl. FRs)',
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_centrals': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_satellites': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
+                   'all_galaxies_centrals': 'k',
+                   'all_galaxies_satellites': 'k',
                    'all_ETGs': 'C0',
-                   'all_ETGs_plus_redspiral': 'C1'}
+                   'all_ETGs_centrals': 'C0',
+                   'all_ETGs_satellites': 'C0',
+                   'all_ETGs_plus_redspiral': 'C1',
+                   'all_ETGs_plus_redspiral_centrals': 'C1',
+                   'all_ETGs_plus_redspiral_satellites': 'C1'}
     dict_ls     = {'all_galaxies': '-',
+                   'all_galaxies_centrals': '-',
+                   'all_galaxies_satellites': '-',
                    'all_ETGs': '-',
-                   'all_ETGs_plus_redspiral': '-'}
+                   'all_ETGs_centrals': '-',
+                   'all_ETGs_satellites': '-',
+                   'all_ETGs_plus_redspiral': '-',
+                   'all_ETGs_plus_redspiral_centrals': '-',
+                   'all_ETGs_plus_redspiral_satellites': '-'}
     dict_ms     = {'all_galaxies': 'o',
+                   'all_galaxies_centrals': 'o',
+                   'all_galaxies_satellites': 'o',
                    'all_ETGs': 's',
-                   'all_ETGs_plus_redspiral': 'D'}
+                   'all_ETGs_centrals': 's',
+                   'all_ETGs_satellites': 's',
+                   'all_ETGs_plus_redspiral': 'D',
+                   'all_ETGs_plus_redspiral_centrals': 'D',
+                   'all_ETGs_plus_redspiral_satellites': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -1439,17 +1463,41 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_centrals': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_satellites': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                    'all_ETGs': 'ETGs (excl. FRs)',
-                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
+                   'all_ETGs_centrals': 'ETGs (excl. FRs)',
+                   'all_ETGs_satellites': 'ETGs (excl. FRs)',
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_centrals': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_satellites': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
+                   'all_galaxies_centrals': 'k',
+                   'all_galaxies_satellites': 'k',
                    'all_ETGs': 'C0',
-                   'all_ETGs_plus_redspiral': 'C1'}
+                   'all_ETGs_centrals': 'C0',
+                   'all_ETGs_satellites': 'C0',
+                   'all_ETGs_plus_redspiral': 'C1',
+                   'all_ETGs_plus_redspiral_centrals': 'C1',
+                   'all_ETGs_plus_redspiral_satellites': 'C1'}
     dict_ls     = {'all_galaxies': '-',
+                   'all_galaxies_centrals': '-',
+                   'all_galaxies_satellites': '-',
                    'all_ETGs': '-',
-                   'all_ETGs_plus_redspiral': '-'}
+                   'all_ETGs_centrals': '-',
+                   'all_ETGs_satellites': '-',
+                   'all_ETGs_plus_redspiral': '-',
+                   'all_ETGs_plus_redspiral_centrals': '-',
+                   'all_ETGs_plus_redspiral_satellites': '-'}
     dict_ms     = {'all_galaxies': 'o',
+                   'all_galaxies_centrals': 'o',
+                   'all_galaxies_satellites': 'o',
                    'all_ETGs': 's',
-                   'all_ETGs_plus_redspiral': 'D'}
+                   'all_ETGs_centrals': 's',
+                   'all_ETGs_satellites': 's',
+                   'all_ETGs_plus_redspiral': 'D',
+                   'all_ETGs_plus_redspiral_centrals': 'D',
+                   'all_ETGs_plus_redspiral_satellites': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -1664,7 +1712,10 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
     axs.minorticks_on()
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
-                     'exclusive_sphere_50kpc': '50 pkpc'}
+                     'exclusive_sphere_50kpc': '50 pkpc',
+                     'inclusive_sphere_10kpc': '10 pkpc',
+                     'inclusive_sphere_30kpc': '30 pkpc', 
+                     'inclusive_sphere_50kpc': '50 pkpc'}
     plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{2}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h2]))
     plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{2}}}$) [cMpc$^{-3}$]')
       
@@ -1733,17 +1784,41 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_centrals': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_satellites': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                    'all_ETGs': 'ETGs (excl. FRs)',
-                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
+                   'all_ETGs_centrals': 'ETGs (excl. FRs)',
+                   'all_ETGs_satellites': 'ETGs (excl. FRs)',
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_centrals': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_satellites': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
+                   'all_galaxies_centrals': 'k',
+                   'all_galaxies_satellites': 'k',
                    'all_ETGs': 'C0',
-                   'all_ETGs_plus_redspiral': 'C1'}
+                   'all_ETGs_centrals': 'C0',
+                   'all_ETGs_satellites': 'C0',
+                   'all_ETGs_plus_redspiral': 'C1',
+                   'all_ETGs_plus_redspiral_centrals': 'C1',
+                   'all_ETGs_plus_redspiral_satellites': 'C1'}
     dict_ls     = {'all_galaxies': '-',
+                   'all_galaxies_centrals': '-',
+                   'all_galaxies_satellites': '-',
                    'all_ETGs': '-',
-                   'all_ETGs_plus_redspiral': '-'}
+                   'all_ETGs_centrals': '-',
+                   'all_ETGs_satellites': '-',
+                   'all_ETGs_plus_redspiral': '-',
+                   'all_ETGs_plus_redspiral_centrals': '-',
+                   'all_ETGs_plus_redspiral_satellites': '-'}
     dict_ms     = {'all_galaxies': 'o',
+                   'all_galaxies_centrals': 'o',
+                   'all_galaxies_satellites': 'o',
                    'all_ETGs': 's',
-                   'all_ETGs_plus_redspiral': 'D'}
+                   'all_ETGs_centrals': 's',
+                   'all_ETGs_satellites': 's',
+                   'all_ETGs_plus_redspiral': 'D',
+                   'all_ETGs_plus_redspiral_centrals': 'D',
+                   'all_ETGs_plus_redspiral_satellites': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -1775,13 +1850,14 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
     
         #======================
         # Calculated values
-        H2_mass_fraction = np.divide(H2_mass, H2_mass + stellar_mass)
+        #H2_mass_fraction = np.divide(H2_mass, H2_mass + stellar_mass)
+        H2_mass_fraction = np.divide(H2_mass, stellar_mass)
     
         #---------------
         # Histograms   
         hist_bin_width = 0.2
         lower_mass_limit = 1e-6
-        upper_mass_limit = 1
+        upper_mass_limit = 10
         
     
         hist_masses, bin_edges =  np.histogram(np.log10(H2_mass_fraction), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
@@ -1849,7 +1925,7 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
             obs_y_err = obs_y_err.to('Mpc**(-3)')
             
             # Scale to correct fgas
-            obs_x = obs_x * (1/(1+obs_x))
+            #obs_x = obs_x * (1/(1+obs_x))
             
             # Convert to log
             #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
@@ -1870,9 +1946,14 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
 
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
-                     'exclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'log$_{10}$ $f_{\mathrm{H_{2}}}$ (%s)'%(dict_aperture[aperture_h2]))
-    plt.ylabel(r'dn/dlog$_{10}$($f_{\mathrm{H_{2}}}$) [cMpc$^{-3}$]')
+                     'exclusive_sphere_50kpc': '50 pkpc',
+                     'inclusive_sphere_10kpc': '10 pkpc',
+                     'inclusive_sphere_30kpc': '30 pkpc', 
+                     'inclusive_sphere_50kpc': '50 pkpc'}
+    #plt.xlabel(r'log$_{10}$ $f_{\mathrm{H_{2}}}$ (%s)'%(dict_aperture[aperture_h2]))
+    #plt.ylabel(r'dn/dlog$_{10}$($f_{\mathrm{H_{2}}}$) [cMpc$^{-3}$]')
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{2}}}/M_*$ (%s)'%(dict_aperture[aperture_h2]))
+    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{2}}}/M_*$) [cMpc$^{-3}$]')
       
     #-----------  
     # Annotations
@@ -1941,17 +2022,41 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_centrals': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_satellites': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                    'all_ETGs': 'ETGs (excl. FRs)',
-                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
+                   'all_ETGs_centrals': 'ETGs (excl. FRs)',
+                   'all_ETGs_satellites': 'ETGs (excl. FRs)',
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_centrals': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_satellites': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
+                   'all_galaxies_centrals': 'k',
+                   'all_galaxies_satellites': 'k',
                    'all_ETGs': 'C0',
-                   'all_ETGs_plus_redspiral': 'C1'}
+                   'all_ETGs_centrals': 'C0',
+                   'all_ETGs_satellites': 'C0',
+                   'all_ETGs_plus_redspiral': 'C1',
+                   'all_ETGs_plus_redspiral_centrals': 'C1',
+                   'all_ETGs_plus_redspiral_satellites': 'C1'}
     dict_ls     = {'all_galaxies': '-',
+                   'all_galaxies_centrals': '-',
+                   'all_galaxies_satellites': '-',
                    'all_ETGs': '-',
-                   'all_ETGs_plus_redspiral': '-'}
+                   'all_ETGs_centrals': '-',
+                   'all_ETGs_satellites': '-',
+                   'all_ETGs_plus_redspiral': '-',
+                   'all_ETGs_plus_redspiral_centrals': '-',
+                   'all_ETGs_plus_redspiral_satellites': '-'}
     dict_ms     = {'all_galaxies': 'o',
+                   'all_galaxies_centrals': 'o',
+                   'all_galaxies_satellites': 'o',
                    'all_ETGs': 's',
-                   'all_ETGs_plus_redspiral': 'D'}
+                   'all_ETGs_centrals': 's',
+                   'all_ETGs_satellites': 's',
+                   'all_ETGs_plus_redspiral': 'D',
+                   'all_ETGs_plus_redspiral_centrals': 'D',
+                   'all_ETGs_plus_redspiral_satellites': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -2146,7 +2251,10 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
     axs.minorticks_on()
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
-                     'exclusive_sphere_50kpc': '50 pkpc'}
+                     'exclusive_sphere_50kpc': '50 pkpc',
+                     'inclusive_sphere_10kpc': '10 pkpc',
+                     'inclusive_sphere_30kpc': '30 pkpc', 
+                     'inclusive_sphere_50kpc': '50 pkpc'}
     plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{I}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h1]))
     plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{I}}}$) [cMpc$^{-3}$]')
       
@@ -2215,17 +2323,41 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
     #---------------------------
     # Extract data from samples:
     dict_labels = {'all_galaxies': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_centrals': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
+                   'all_galaxies_satellites': r'Total $M_{*}>10^{9.5}$ M$_\odot$',
                    'all_ETGs': 'ETGs (excl. FRs)',
-                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)'}
+                   'all_ETGs_centrals': 'ETGs (excl. FRs)',
+                   'all_ETGs_satellites': 'ETGs (excl. FRs)',
+                   'all_ETGs_plus_redspiral': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_centrals': 'ETGs (incl. FRs)',
+                   'all_ETGs_plus_redspiral_satellites': 'ETGs (incl. FRs)'}
     dict_colors = {'all_galaxies': 'k',
+                   'all_galaxies_centrals': 'k',
+                   'all_galaxies_satellites': 'k',
                    'all_ETGs': 'C0',
-                   'all_ETGs_plus_redspiral': 'C1'}
+                   'all_ETGs_centrals': 'C0',
+                   'all_ETGs_satellites': 'C0',
+                   'all_ETGs_plus_redspiral': 'C1',
+                   'all_ETGs_plus_redspiral_centrals': 'C1',
+                   'all_ETGs_plus_redspiral_satellites': 'C1'}
     dict_ls     = {'all_galaxies': '-',
+                   'all_galaxies_centrals': '-',
+                   'all_galaxies_satellites': '-',
                    'all_ETGs': '-',
-                   'all_ETGs_plus_redspiral': '-'}
+                   'all_ETGs_centrals': '-',
+                   'all_ETGs_satellites': '-',
+                   'all_ETGs_plus_redspiral': '-',
+                   'all_ETGs_plus_redspiral_centrals': '-',
+                   'all_ETGs_plus_redspiral_satellites': '-'}
     dict_ms     = {'all_galaxies': 'o',
+                   'all_galaxies_centrals': 'o',
+                   'all_galaxies_satellites': 'o',
                    'all_ETGs': 's',
-                   'all_ETGs_plus_redspiral': 'D'}
+                   'all_ETGs_centrals': 's',
+                   'all_ETGs_satellites': 's',
+                   'all_ETGs_plus_redspiral': 'D',
+                   'all_ETGs_plus_redspiral_centrals': 'D',
+                   'all_ETGs_plus_redspiral_satellites': 'D'}
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -2257,13 +2389,14 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
     
         #======================
         # Calculated values
-        H1_mass_fraction = np.divide(H1_mass, H1_mass + stellar_mass)
+        #H1_mass_fraction = np.divide(H1_mass, H1_mass + stellar_mass)
+        H1_mass_fraction = np.divide(H1_mass, stellar_mass)
     
         #---------------
         # Histograms   
         hist_bin_width = 0.2
         lower_mass_limit = 1e-6
-        upper_mass_limit = 1
+        upper_mass_limit = 10
         
     
         hist_masses, bin_edges =  np.histogram(np.log10(H1_mass_fraction), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
@@ -2331,7 +2464,7 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
             obs_y_err = obs_y_err.to('Mpc**(-3)')
             
             # Scale to correct fgas
-            obs_x = obs_x * (1/(1+obs_x))
+            #obs_x = obs_x * (1/(1+obs_x))
             
             # Convert to log
             #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
@@ -2351,9 +2484,12 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
     axs.minorticks_on()
     dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
                      'exclusive_sphere_30kpc': '30 pkpc', 
-                     'exclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'log$_{10}$ $f_{\mathrm{H_{I}}}$ (%s)'%(dict_aperture[aperture_h1]))
-    plt.ylabel(r'dn/dlog$_{10}$($f_{\mathrm{H_{I}}}$) [cMpc$^{-3}$]')
+                     'exclusive_sphere_50kpc': '50 pkpc',
+                     'inclusive_sphere_10kpc': '10 pkpc',
+                     'inclusive_sphere_30kpc': '30 pkpc', 
+                     'inclusive_sphere_50kpc': '50 pkpc'}
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{I}}}/M_*$ (%s)'%(dict_aperture[aperture_h1]))
+    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{I}}}/M_*$) [cMpc$^{-3}$]')
       
     #-----------  
     # Annotations
@@ -2414,7 +2550,7 @@ _sample_stelmass_u_r(csv_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_galaxie
 
 #-------------------
 # Stellar mass function of samples
-_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
                      savefig       = True)
 _sample_stellar_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
@@ -2427,22 +2563,36 @@ _sample_stellar_mass_function_3x1(csv_samples1 = ['L100_m6_THERMAL_AGN_m6_127_sa
                                   csv_samples2 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                                   csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
-                     savefig       = True)
+                     savefig       = True)"""
+
 
 
 #-------------------
 # H1 mass function of samples
-"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)
-_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)
 _sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
+                     savefig       = True)"""
+# Central and satellite
+"""_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
                      savefig       = True)"""
 # H1 mass fraction = H1 / H1 + M* function of samples
 """_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
@@ -2457,14 +2607,27 @@ _sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)"""
+# Central and satellite
+"""_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True)"""
 
 #-------------------
 # H2 mass function of samples
 """_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
-                         savefig       = True)
-_sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         savefig       = True)"""
+"""_sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
                          savefig       = True)
@@ -2472,7 +2635,19 @@ _sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_g
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
                          savefig       = True)"""
-                         
+# Central and satellite
+"""_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                         savefig       = True)
+_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                         savefig       = True) """             
                          
 # H2 mass fraction = H2 / H2 + M* function of samples
 """_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
@@ -2487,7 +2662,19 @@ _sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
                          savefig       = True)"""
-
+# Central and satellite
+"""_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                         savefig       = True)
+_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                         savefig       = True)"""
 
 
 

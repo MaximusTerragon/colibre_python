@@ -564,7 +564,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
     if showfig:
         plt.show()
     plt.close()
-# Returns stelmass - H1 mass fraction ( H1 / H1 + M* )
+# Returns stelmass - H1 mass fraction ( H1 / M* )
 def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                    #=====================================
                    # Graph settings
@@ -645,7 +645,8 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
     
     #================================
     # Calculated values
-    H1_mass_fraction = np.divide(H1_mass, H1_mass + stellar_mass)
+    #H1_mass_fraction = np.divide(H1_mass, H1_mass + stellar_mass)
+    H1_mass_fraction = np.divide(H1_mass, stellar_mass)
     
     
     #==========================================================
@@ -914,7 +915,8 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
             assert len(obs_x) == len(obs_HI), 'Some galaxy names unmatched...? x: %s y: %s'%(len(obs_x), len(obs_HI))
             
             # Find fraction fgas = Mgas / Mgas + M*
-            obs_y = obs_HI.value - np.log10((10**obs_HI.value) + (10**obs_x))
+            #obs_y = obs_HI.value - np.log10((10**obs_HI.value) + (10**obs_x))
+            obs_y = obs_HI.value - obs_x
             obs_s = obs_HI.value
             
             label_extra = ''
@@ -954,7 +956,8 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
                         'exclusive_sphere_30kpc': '30 pkpc', 
                         'exclusive_sphere_50kpc': '50 pkpc'}
     axs.set_xlabel(r'log$_{10}$ $M_{*}$ (%s) [M$_{\odot}$]'%dict_aperture[aperture])
-    axs.set_ylabel(r'log$_{10}$ $f_{\mathrm{H_{I}}}$')
+    #axs.set_ylabel(r'log$_{10}$ $f_{\mathrm{H_{I}}}$')
+    axs.set_ylabel(r'log$_{10}$ $M_{\mathrm{H_{I}}}/M_*$')
 
 
 	#-----------
@@ -1452,7 +1455,8 @@ def _etg_stelmass_h1mass_double(soap_indicies_sample=[], sample_input=[], title_
     
         #================================
         # Calculated values
-        H1_mass_fraction = np.divide(H1_mass, H1_mass + stellar_mass)
+        #H1_mass_fraction = np.divide(H1_mass, H1_mass + stellar_mass)
+        H1_mass_fraction = np.divide(H1_mass, stellar_mass)
     
     
         #==========================================================
@@ -1685,7 +1689,8 @@ def _etg_stelmass_h1mass_double(soap_indicies_sample=[], sample_input=[], title_
                 assert len(obs_x) == len(obs_HI), 'Some galaxy names unmatched...? x: %s y: %s'%(len(obs_x), len(obs_HI))
             
                 # Find fraction fgas = Mgas / Mgas + M*
-                obs_y = obs_HI.value - np.log10((10**obs_HI.value) + (10**obs_x))
+                #obs_y = obs_HI.value - np.log10((10**obs_HI.value) + (10**obs_x))
+                obs_y = obs_HI.value - obs_x
                 obs_s = obs_HI.value
             
                 label_extra = ''
@@ -1731,7 +1736,7 @@ def _etg_stelmass_h1mass_double(soap_indicies_sample=[], sample_input=[], title_
                         'exclusive_sphere_30kpc': '30 pkpc', 
                         'exclusive_sphere_50kpc': '50 pkpc'}
     ax_bot.set_xlabel(r'log$_{10}$ $M_{*}$ (%s) [M$_{\odot}$]'%dict_aperture[aperture])
-    ax_bot.set_ylabel(r'log$_{10}$ $f_{\mathrm{H_{I}}}$')
+    ax_bot.set_ylabel(r'log$_{10}$ $M_{\mathrm{H_{I}}}/M_*$')
 
 
 	#-----------
@@ -1908,6 +1913,31 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     
     #================================
     # Calculated values
+    """enclose_r = (data.bound_subhalo.enclose_radius)[soap_indicies_sample]
+    enclose_r.convert_to_units('kpc')
+    enclose_r.convert_to_physical()
+    
+    
+    H2_mass_test50 = attrgetter('%s.%s'%('inclusive_sphere_50kpc', 'stellar_mass'))(data)[soap_indicies_sample]
+    H2_mass_test50.convert_to_units('Msun')
+    H2_mass_test10 = attrgetter('%s.%s'%('inclusive_sphere_10kpc', 'stellar_mass'))(data)[soap_indicies_sample]
+    H2_mass_test10.convert_to_units('Msun')
+    H2_mass_test100 = attrgetter('%s.%s'%('inclusive_sphere_100kpc', 'stellar_mass'))(data)[soap_indicies_sample]
+    H2_mass_test100.convert_to_units('Msun')
+    H2_mass_test30 = attrgetter('%s.%s'%('inclusive_sphere_30kpc', 'stellar_mass'))(data)[soap_indicies_sample]
+    H2_mass_test30.convert_to_units('Msun')
+    
+    for r_i, m50_i, m10_i, m100_i, m30_i in zip(enclose_r, H2_mass_test50, H2_mass_test10, H2_mass_test100, H2_mass_test30):
+        if r_i.value < 30:
+            print('Found enclose_r smaller:  ', print(r_i))
+            print('gas in m10 inclusive: ', m10_i)
+            print('gas in m30 inclusive: ', m30_i)
+            print('gas in m50 inclusive: ', m50_i)
+            print('gas in m100 inclusive: ', m100_i)
+            
+            
+            raise Exception('ahgiuhj')"""
+    
     
     
     #==========================================================
@@ -1918,6 +1948,23 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     mask_h2_FRs  = np.logical_and.reduce([mask_h2, ~mask_SRs])      # detection kappa > 0.4
     mask_X_SRs  = np.logical_and.reduce([~mask_h2, mask_SRs])       # non-detection kappa < 0.4
     mask_X_FRs  = np.logical_and.reduce([~mask_h2, ~mask_SRs])      # non-detection kappa > 0.4
+    
+    
+    
+    """mask_Mstar = stellar_mass > cosmo_quantity(10**10, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+    mask_h2_Mstar = np.logical_and.reduce([mask_h2, mask_Mstar])
+    
+    
+    print('Mstar > 1010:  ', len(stellar_mass[mask_Mstar]))
+    print('Mstar > 1010 and h2 > 107:  ', len(stellar_mass[mask_h2_Mstar]))
+    print('fraction:  %.4f' %(len(stellar_mass[mask_h2_Mstar])/len(stellar_mass[mask_Mstar])))"""
+    
+    
+    
+    
+    
+    
+    
     
     
     #==========================================================
@@ -2253,9 +2300,9 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
             obs_x = np.append(np.array(obs_Mstar_1), np.array(obs_Mstar_2))
             obs_y = np.append(np.array(obs_H2_1), np.array(obs_H2_2))
             axs.scatter(obs_x, obs_y, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+19')
-            axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
+            axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
             
             #axs.scatter(obs_Mstar_1, obs_H2_1, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (ATLAS$^{\mathrm{3D}}$)')
             #axs.scatter(obs_Mstar_2, obs_H2_2, marker='s', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (MASSIVE)')
@@ -2449,7 +2496,8 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
     
     #================================
     # Calculated values
-    H2_mass_fraction = np.divide(H2_mass, H2_mass + stellar_mass)
+    #H2_mass_fraction = np.divide(H2_mass, H2_mass + stellar_mass)
+    H2_mass_fraction = np.divide(H2_mass, stellar_mass)
     
     
     #==========================================================
@@ -2766,12 +2814,13 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
             obs_s = obs_y
             
             # Find fraction fgas = Mgas / Mgas + M*
-            obs_y = obs_y - np.log10((10**obs_y) + (10**obs_x))
+            #obs_y = obs_y - np.log10((10**obs_y) + (10**obs_x))
+            obs_y = obs_y - obs_x   # (in 10** space same as obs_y/obs_x = HI/M*)
             
             axs.scatter(obs_x, obs_y, marker='o', s=-0.7+(obs_s-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+19')
-            axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
+            axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
             
             #axs.scatter(obs_Mstar_1, obs_H2_1, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (ATLAS$^{\mathrm{3D}}$)')
             #axs.scatter(obs_Mstar_2, obs_H2_2, marker='s', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (MASSIVE)')
@@ -2797,7 +2846,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
                         'exclusive_sphere_30kpc': '30 pkpc', 
                         'exclusive_sphere_50kpc': '50 pkpc'}
     axs.set_xlabel(r'log$_{10}$ $M_{*}$ (%s) [M$_{\odot}$]'%dict_aperture[aperture])
-    axs.set_ylabel(r'log$_{10}$ $f_{\mathrm{H_{2}}}$')
+    axs.set_ylabel(r'log$_{10}$ $M_{\mathrm{H_{2}}}/M_*$')
 
 
 	#-----------
@@ -3266,9 +3315,9 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
                 obs_x = np.append(np.array(obs_Mstar_1), np.array(obs_Mstar_2))
                 obs_y = np.append(np.array(obs_H2_1), np.array(obs_H2_2))
                 ax_top.scatter(obs_x, obs_y, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+19')
-                ax_top.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
-                #ax_top.text(np.log10(0.82*(10**11.41)), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
-                #ax_top.text(np.log10(0.82*(10**11.41)), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
+                ax_top.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
+                #ax_top.text(-0.9832+1.1*np.log10(10**11.41), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
+                #ax_top.text(-0.9832+1.1*np.log10(10**11.41), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
             
                 #ax_top.scatter(obs_Mstar_1, obs_H2_1, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (ATLAS$^{\mathrm{3D}}$)')
                 #ax_top.scatter(obs_Mstar_2, obs_H2_2, marker='s', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (MASSIVE)')
@@ -3332,7 +3381,8 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
     
         #================================
         # Calculated values
-        H2_mass_fraction = np.divide(H2_mass, H2_mass + stellar_mass)
+        #H2_mass_fraction = np.divide(H2_mass, H2_mass + stellar_mass)
+        H2_mass_fraction = np.divide(H2_mass, stellar_mass)
     
     
         #==========================================================
@@ -3613,12 +3663,13 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
                 obs_s = obs_y
             
                 # Find fraction fgas = Mgas / Mgas + M*
-                obs_y = obs_y - np.log10((10**obs_y) + (10**obs_x))
+                #obs_y = obs_y - np.log10((10**obs_y) + (10**obs_x))
+                obs_y = obs_y - obs_x
             
                 ax_bot.scatter(obs_x, obs_y, marker='o', s=-0.7+(obs_s-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+19')
-                ax_bot.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
-                #ax_bot.text(np.log10(0.82*(10**11.41)), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
-                #ax_bot.text(np.log10(0.82*(10**11.41)), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
+                ax_bot.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
+                #ax_bot.text(-0.9832+1.1*np.log10(10**11.41), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
+                #ax_bot.text(-0.9832+1.1*np.log10(10**11.41), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
             
                 #ax_bot.scatter(obs_Mstar_1, obs_H2_1, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (ATLAS$^{\mathrm{3D}}$)')
                 #ax_bot.scatter(obs_Mstar_2, obs_H2_2, marker='s', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (MASSIVE)')
@@ -3652,7 +3703,7 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
                         'exclusive_sphere_30kpc': '30 pkpc', 
                         'exclusive_sphere_50kpc': '50 pkpc'}
     ax_bot.set_xlabel(r'log$_{10}$ $M_{*}$ (%s) [M$_{\odot}$]'%dict_aperture[aperture])
-    ax_bot.set_ylabel(r'log$_{10}$ $f_{\mathrm{H_{2}}}$')
+    ax_bot.set_ylabel(r'log$_{10}$ $M_{\mathrm{H_{2}}}/M_*$')
 
 
 	#-----------
@@ -5025,7 +5076,91 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         """
         Pick observations we want to add
         """
-        print('no obs available')
+        add_Davis2019 = True
+        
+        if add_Davis2019:      # ($z=0.0$)
+            # Load the observational data
+            with h5py.File('%s/Davis2019_MASSIVE.hdf5'%obs_dir, 'r') as file:
+                obs_names_2 = file['data/Galaxy/values'][:]
+                obs_H2_2       = file['data/log_H2/values'][:] * u.Unit(file['data/log_H2/values'].attrs['units'])
+                obs_Mstar_2    = file['data/log_Mstar/values'][:] * u.Unit(file['data/log_Mstar/values'].attrs['units'])
+                obs_mask_2     = file['data/det_mask/values'][:]
+                obs_iscluster_2  = file['data/Cluster/values'][:]
+                obs_iscentral_2  = file['data/BCG/values'][:]
+            
+            
+            obs_names_2 = np.array(obs_names_2)
+            obs_mask_2  = np.array(obs_mask_2, dtype=bool)
+            obs_iscluster_2  = np.array(obs_iscluster_2, dtype=bool)
+            obs_iscentral_2  = np.array(obs_iscentral_2, dtype=bool)
+            obs_H2_2.to('Msun')
+            obs_Mstar_2.to('Msun')
+            
+            # Select only detected
+            obs_names_2 = obs_names_2[obs_mask_2]
+            obs_H2_2    = obs_H2_2[obs_mask_2]
+            obs_Mstar_2 = obs_Mstar_2[obs_mask_2]
+            obs_iscluster_2 = obs_iscluster_2[obs_mask_2]
+            obs_iscentral_2 = obs_iscentral_2[obs_mask_2]
+            obs_mask_2 = obs_mask_2[obs_mask_2]
+            
+            
+            # Load the observational data
+            with h5py.File('%s/Veale2017_MASSIVE.hdf5'%obs_dir, 'r') as file:
+                obs_names_1 = file['data/Galaxy/values'][:]
+                obs_m200c   = file['data/log_Mhalo/values'][:] * u.Unit(file['data/log_Mhalo/values'].attrs['units'])
+            
+            obs_names_1 = np.array(obs_names_1)
+            obs_m200c   = np.array(obs_m200c)
+            
+            
+            #--------------------------------------------
+            
+            if 'central' in sample_input['name_of_preset']:
+                obs_names_2 = obs_names_2[obs_iscentral_2]
+                obs_H2_2    = obs_H2_2[obs_iscentral_2]
+                obs_mask_2  = obs_mask_2[obs_iscentral_2]
+            if 'satellite' in sample_input['name_of_preset']:
+                obs_names_2 = obs_names_2[~obs_iscentral_2]
+                obs_H2_2    = obs_H2_2[~obs_iscentral_2]
+                obs_mask_2  = obs_mask_2[~obs_iscentral_2]
+            if 'cluster' in sample_input['name_of_preset']:
+                obs_names_2 = obs_names_2[obs_isvirgo_2]
+                obs_H2_2    = obs_H2_2[obs_isvirgo_2]
+                obs_mask_2  = obs_mask_2[obs_isvirgo_2]
+            if 'group' in sample_input['name_of_preset']:
+                obs_names_2 = obs_names_2[~obs_isvirgo_2]
+                obs_H2_2    = obs_H2_2[~obs_isvirgo_2]
+                obs_mask_2  = obs_mask_2[~obs_isvirgo_2]
+                
+                
+            # Match galaxy names to assign m200c
+            obs_x = []
+            obs_y = []
+            obs_s = []
+            for name_i in obs_names_2:
+                if name_i in obs_names_1:
+                    mask_name_1 = np.where(name_i == obs_names_1)[0]
+                    mask_name_2 = np.where(name_i == obs_names_2)[0]
+                    obs_x.append(obs_m200c[mask_name_1])
+                    obs_y.append(obs_H2_2[mask_name_2])
+                    obs_s.append(obs_H2_2[mask_name_2])
+                else:
+                    print('cannot find %s in 67 MASSIVE Davis+19 sample'%name_i)
+            
+            obs_x = np.array(obs_x)
+            obs_y = np.array(obs_y)
+            obs_s = np.array(obs_s)
+            assert len(obs_x) == len(obs_y), 'Some galaxy names unmatched...? x: %s y: %s'%(len(obs_x), len(obs_y))
+            
+
+            print('Sample length Davis+19 plus Veale+17:   %s'%(len(obs_x)))
+            
+            scat1 = axs.scatter(obs_x, obs_y, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='Veale+17')
+            #scat2 = axs.scatter(np.log10(obs_x2), np.log10(obs_y2), marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Davis+13\n(non-det.)')
+            
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
+        
             
         
         
@@ -5117,8 +5252,8 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         labels = [labels[5], labels[4], labels[0], labels[1], labels[6]]
         axs.legend(handles, labels, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.3, markerscale=1, handler_map={tuple: HandlerTuple(ndivide=None)})
     else:
-        handles = [handles[1], handles[0]]
-        labels = [labels[1], labels[0]]
+        handles = [handles[1], handles[0], handles[-1]]
+        labels = [labels[1], labels[0], labels[-1]]
         axs.legend(handles, labels, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.3, markerscale=1)
         
     
@@ -5479,14 +5614,100 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
         """
         Pick observations we want to add
         """
-        print('no obs available')
+        add_Davis2019 = True
+        
+        if add_Davis2019:      # ($z=0.0$)
+            # Load the observational data
+            with h5py.File('%s/Davis2019_MASSIVE.hdf5'%obs_dir, 'r') as file:
+                obs_names_2 = file['data/Galaxy/values'][:]
+                obs_H2_2       = file['data/log_H2/values'][:] * u.Unit(file['data/log_H2/values'].attrs['units'])
+                obs_Mstar_2    = file['data/log_Mstar/values'][:] * u.Unit(file['data/log_Mstar/values'].attrs['units'])
+                obs_mask_2     = file['data/det_mask/values'][:]
+                obs_iscluster_2  = file['data/Cluster/values'][:]
+                obs_iscentral_2  = file['data/BCG/values'][:]
+            
+            
+            obs_names_2 = np.array(obs_names_2)
+            obs_mask_2  = np.array(obs_mask_2, dtype=bool)
+            obs_iscluster_2  = np.array(obs_iscluster_2, dtype=bool)
+            obs_iscentral_2  = np.array(obs_iscentral_2, dtype=bool)
+            obs_H2_2.to('Msun')
+            obs_Mstar_2.to('Msun')
+            
+            
+            # Load the observational data
+            with h5py.File('%s/Veale2017_MASSIVE.hdf5'%obs_dir, 'r') as file:
+                obs_names_1 = file['data/Galaxy/values'][:]
+                obs_m200c   = file['data/log_Mhalo/values'][:] * u.Unit(file['data/log_Mhalo/values'].attrs['units'])
+            
+            obs_names_1 = np.array(obs_names_1)
+            obs_m200c   = np.array(obs_m200c)
+            
+            
+            #--------------------------------------------
+            
+            if 'central' in sample_input['name_of_preset']:
+                obs_names_2 = obs_names_2[obs_iscentral_2]
+                obs_H2_2    = obs_H2_2[obs_iscentral_2]
+                obs_Mstar_2      = obs_Mstar_2[obs_iscentral_2]
+                obs_mask_2  = obs_mask_2[obs_iscentral_2]
+            if 'satellite' in sample_input['name_of_preset']:
+                obs_names_2 = obs_names_2[~obs_iscentral_2]
+                obs_H2_2    = obs_H2_2[~obs_iscentral_2]
+                obs_Mstar_2      = obs_Mstar_2[~obs_iscentral_2]
+                obs_mask_2  = obs_mask_2[~obs_iscentral_2]
+            if 'cluster' in sample_input['name_of_preset']:
+                obs_names_2 = obs_names_2[obs_isvirgo_2]
+                obs_H2_2    = obs_H2_2[obs_isvirgo_2]
+                obs_Mstar_2      = obs_Mstar_2[obs_isvirgo_2]
+                obs_mask_2  = obs_mask_2[obs_isvirgo_2]
+            if 'group' in sample_input['name_of_preset']:
+                obs_names_2 = obs_names_2[~obs_isvirgo_2]
+                obs_H2_2    = obs_H2_2[~obs_isvirgo_2]
+                obs_Mstar_2      = obs_Mstar_2[~obs_isvirgo_2]
+                obs_mask_2  = obs_mask_2[~obs_isvirgo_2]
+                
+                
+            # Match galaxy names to assign m200c
+            obs_x = []
+            obs_y = []
+            obs_s = []
+            obs_det = []
+            for name_i in obs_names_2:
+                if name_i in obs_names_1:
+                    mask_name_1 = np.where(name_i == obs_names_1)[0]
+                    mask_name_2 = np.where(name_i == obs_names_2)[0]
+                    obs_x.append(obs_Mstar_2[mask_name_2])
+                    obs_y.append(obs_m200c[mask_name_1])
+                    obs_s.append(obs_H2_2[mask_name_2])
+                    obs_det.append(obs_mask_2[mask_name_2])
+                else:
+                    print('cannot find %s in 67 MASSIVE Davis+19 sample'%name_i)
+            
+            obs_x = np.array(obs_x)
+            obs_y = np.array(obs_y)
+            obs_s = np.array(obs_s)
+            obs_det = np.array(obs_det)
+            assert len(obs_x) == len(obs_y), 'Some galaxy names unmatched...? x: %s y: %s'%(len(obs_x), len(obs_y))
+            
+
+            print('Sample length Davis+19 plus Veale+17 (non-det):   %s'%(len(obs_x[~obs_det])))
+            print('Sample length Davis+19 plus Veale+17 (det):       %s'%(len(obs_x[obs_det])))
+            
+            axs.scatter(obs_x[obs_det], obs_y[obs_det], marker='o', s=-0.7+(obs_s[obs_det]-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Veale+17 (det.)')
+            axs.scatter(obs_x[~obs_det], obs_y[~obs_det], marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Veale+17 (non-det.)')
+            
+            
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
+        
+    
             
     #-----------------
     # Add detection hist for excl. FR and incl. FR
     if add_detection_hist:
         # we want the fraction within a bin, not normalised
-        bin_width = 0.25
-        hist_bins = np.arange(10, 16, bin_width)  # Binning edges
+        bin_width = 0.5
+        hist_bins = np.arange(10, 16.1, bin_width)  # Binning edges
         
         #------------------------------------------
         ### ETG (excl. FR) sample
@@ -5539,13 +5760,44 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
         ax_hist.errorbar(bin_f_detected, hist_bins_midpoint, xerr=[bin_f_detected_err_lower, bin_f_detected_err_upper], yerr=None, ecolor='C1', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=0.7, alpha=0.7)
         
         
-    
+        #==========================================
+        # Obs sample
+        if add_observational:
+            # obs_x     = log10 M*
+            # obs_y     = log10 m200c
+            # obs_det = mask for detected systems
+            
+            bin_n, _           = np.histogram(obs_y, bins=hist_bins)
+            bin_n_detected, _  = np.histogram(obs_y[obs_det], bins=hist_bins)
+            mask_positive_n     = bin_n > 0
+            bin_f_detected      = bin_n_detected[mask_positive_n]/bin_n[mask_positive_n]
+
+            # returns a % upper and a % lower
+            bin_f_detected_err = binom_conf_interval(k=bin_n_detected[mask_positive_n], n=bin_n[mask_positive_n], confidence_level= 0.68269, interval='jeffreys')
+            bin_f_detected_err_lower = bin_f_detected - bin_f_detected_err[0]
+            bin_f_detected_err_upper = bin_f_detected_err[1] - bin_f_detected
+        
+            # step
+            mask_positive_n_extra = list(mask_positive_n)
+            if True in mask_positive_n_extra:
+                last_true_index = len(mask_positive_n_extra) - 1 - mask_positive_n_extra[::-1].index(True)
+        
+            mask_positive_n_extra.insert(last_true_index + 1, True)
+            mask_positive_n_extra = np.array(mask_positive_n_extra)
+            #ax_hist.stairs(bin_f_detected, hist_bins[mask_positive_n_extra], orientation='horizontal', fill=False, baseline=0, edgecolor='C1', linewidth=1, path_effects=[outline])
+            ax_hist.barh((hist_bins[:-1])[mask_positive_n], bin_f_detected, height=bin_width, align='edge', orientation='horizontal', color='r', edgecolor='none', linewidth=0, alpha=0.4, label='Davis+19\n(det.)') 
+            
+        
+            # errorbar
+            hist_bins_midpoint = (hist_bins[:-1][mask_positive_n]) + ((hist_bins[1] - hist_bins[0])/2)
+            ax_hist.errorbar(bin_f_detected, hist_bins_midpoint, xerr=[bin_f_detected_err_lower, bin_f_detected_err_upper], yerr=None, ecolor='r', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=0.7, alpha=0.7)
+        
         
         
     #=========================================================
     # Axis formatting
     axs.set_xlim(9.5, 12.5)
-    axs.set_ylim(10.5, 15.5)
+    axs.set_ylim(10.5, 16.0)
     axs.minorticks_on()
     axs.tick_params(axis='x', which='minor')
     axs.tick_params(axis='y', which='minor')
@@ -5565,7 +5817,7 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
         
         ax_hist.minorticks_on()
         ax_hist.set_xlim(-0.01, 1.01)
-        ax_hist.set_ylim(10.5, 15.5)
+        ax_hist.set_ylim(10.5, 16.0)
         ax_hist.set_xticks([0, 0.25, 0.50, 0.75, 1.00])
         ax_hist.set_xticklabels([0, '', 0.5, '', 1])
         ax_hist.set_xlabel(r'$f_{\mathrm{H_{2}}>10^{7}}$')
@@ -5634,35 +5886,21 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
     
     #-----------
     # Legend
+    axs.plot([0,1], [-20,-21], color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+    axs.plot([0,1], [-20,-21], color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
     handles, labels = axs.get_legend_handles_labels()
-    if add_median_line or add_observational:
-        if scatter_or_hexbin == 'scatter_new':
-            handles = [handles[5], handles[4], (handles[0], handles[2]), (handles[1], handles[3])]
-            labels = [labels[5], labels[4], labels[0], labels[1]]
-            if add_observational:
-                handles.append(handles[-1])
-                labels.append(labels[-1])
-            axs.legend(handles, labels, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.3, markerscale=1, handler_map={tuple: HandlerTuple(ndivide=None)})
-        else:
-            handles = [handles[1], handles[0]]
-            labels = [labels[1], labels[0]]
-            if add_observational:
-                handles.append(handles[-1])
-                labels.append(labels[-1])
-            axs.legend(handles, labels, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.3, markerscale=1)
-        if add_detection_hist:
-            if add_observational:
-                ax_hist.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, handlelength=0.8, markerfirst=True)
-    if not add_median_line:
-        axs.plot([0,1], [-20,-21], color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
-        axs.plot([0,1], [-20,-21], color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
-        handles, labels = axs.get_legend_handles_labels()
-        handles = [handles[1], handles[0]]
-        labels = [labels[1], labels[0]]
-        axs.legend(handles, labels, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, handlelength=0.8, markerfirst=True)
+
+    handles_in = [handles[-2], handles[-1]]
+    labels_in = [labels[-2], labels[-1]]
+    first_legend = axs.legend(handles_in, labels_in, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.3, markerscale=1, handler_map={tuple: HandlerTuple(ndivide=None)})
+
+    #handles_in = [handles[1], handles[0]]
+    #labels_in = [labels[1], labels[0]]
+    #second_legend = axs.legend(handles_in, labels_in, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower right', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.3, markerscale=1, handler_map={tuple: HandlerTuple(ndivide=None)})
+    #axs.add_artist(first_legend)
     
+    #ax_hist.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, handlelength=0.8, markerfirst=True)
     
-            
     
     #-----------
     # other
@@ -8117,7 +8355,7 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
             obs_s = np.array(obs_H2_1)
             axs.scatter(obs_x[obs_mask_1], np.log10(obs_y[obs_mask_1]), marker='o', s=-0.7+(obs_s[obs_mask_1]-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Cappellari+11 (det.)')
             axs.scatter(obs_x[~obs_mask_1], np.log10(obs_y[~obs_mask_1]), marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Cappellari+11 (non-det.)')
-            #axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
         
             
     #-----------------
@@ -9277,7 +9515,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
             axs.scatter(obs_x, np.log10(obs_y), marker='o', s=-0.7+(obs_s-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+13')
             #axs.scatter(obs_x2, np.log10(obs_y2), marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Davis+13\n(non-det.)')
             
-            #axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
             
     #-----------------
     # Add detection hist for excl. FR and incl. FR
@@ -9919,7 +10157,7 @@ def _etg_stelmass_r50r50H2(soap_indicies_sample=[], sample_input=[], title_text_
             scat1 = axs.scatter(obs_x, np.log10(obs_y), marker='o', s=-0.7+(obs_s-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+13')
             #scat2 = axs.scatter(obs_x2, np.log10(obs_y2), marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Davis+13\n(non-det.)')
             
-            #axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
             
     #-----------------
     # Add detection hist for excl. FR and incl. FR
@@ -11043,7 +11281,7 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
             scat1 = axs.scatter(np.log10(obs_x), np.log10(obs_y), marker='o', s=-0.7+(obs_s-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+13')
             #scat2 = axs.scatter(np.log10(obs_x2), np.log10(obs_y2), marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Davis+13\n(non-det.)')
             
-            #axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
     
             
     #-----------------
@@ -12071,7 +12309,7 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
             
             axs.scatter(obs_x[obs_mask_1], obs_y[obs_mask_1], marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='Young+11')
             #¢axs.scatter(obs_x[~obs_mask_1], np.log10(obs_y[~obs_mask_1]), marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Cappellari+11 (non-det.)')
-            #axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
     
         
         
@@ -12593,7 +12831,7 @@ def _etg_h2mass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = 
             scat1 = axs.scatter(obs_y, np.log10(obs_x), marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+13')
             #scat2 = axs.scatter(obs_y2, np.log10(obs_x2), marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Davis+13\n(non-det.)')
             
-            #axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
       
     #-----------
     # Axis formatting
@@ -13350,7 +13588,7 @@ def _aperture_fdet_missing_gas(csv_samples = [], title_text_in = '',
         
         #=============================
         # Of all galaxies within sample, how many have missing gas (gas mass below hole_limit):
-        mask_det_missing_gas = mass_hole < ((hole_limit)*u.Msun)
+        mask_det_missing_gas = mass_hole < cosmo_quantity(hole_limit, u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
         
         # Fraction of those with H2 with rings
         f_missing_gas = len(stellar_mass[mask_det_missing_gas])/len(stellar_mass) 
@@ -13958,7 +14196,7 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], sample_input=[], title_text_in 
             
             scat1 = axs.scatter(obs_x[obs_det], obs_y[obs_det], marker='o', s=-0.7+(obs_s[obs_det]-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Krajnovi'+u'ć'+'+11\n(det.)')
             scat2 = axs.scatter(obs_x[~obs_det], obs_y[~obs_det], marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Krajnovi'+u'ć'+'+11\n(non-det.)')
-            #axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            #axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
             
     #-----------------
     # Add detection hist for excl. FR and incl. FR
@@ -15738,12 +15976,12 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], sample_input=[], title_text_i
             axs.scatter(obs_x[obs_det], obs_y[obs_det], marker='o', s=-0.7+(obs_s[obs_det]-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+19 (det.)')
             axs.scatter(obs_x[~obs_det], obs_y[~obs_det], marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Davis+19 (non-det.)')
             
-            axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
             
             
             
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
             
             #axs.scatter(obs_Mstar_1, obs_H2_1, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (ATLAS$^{\mathrm{3D}}$)')
             #axs.scatter(obs_Mstar_2, obs_H2_2, marker='s', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (MASSIVE)')
@@ -16437,12 +16675,12 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], sample_input=[], title_text_in
             axs.scatter(obs_x[obs_det], obs_y[obs_det], marker='o', s=-0.7+(obs_s[obs_det]-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+19\n(det.)')
             axs.scatter(obs_x[~obs_det], obs_y[~obs_det], marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Davis+19\n(non-det.)')
             
-            axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
             
             
             
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
             
             #axs.scatter(obs_Mstar_1, obs_H2_1, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (ATLAS$^{\mathrm{3D}}$)')
             #axs.scatter(obs_Mstar_2, obs_H2_2, marker='s', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (MASSIVE)')
@@ -17138,12 +17376,12 @@ def _etg_stelmass_etakinModified(soap_indicies_sample=[], sample_input=[], title
             axs.scatter(obs_x[obs_det], obs_y[obs_det]+0.7, marker='o', s=-0.7+(obs_s[obs_det]-5)**1.8, alpha=1, zorder=5, c='r', edgecolors='none', label='Davis+19\n(det.)')
             axs.scatter(obs_x[~obs_det], obs_y[~obs_det]+0.7, marker='o', s=6, alpha=1, zorder=5, facecolors='none', linewidths=0.3,  edgecolors='r', label='Davis+19\n(non-det.)')
             
-            axs.axvline(np.log10(0.82*(10**11.41)), ls='--', linewidth=1, c='grey')
+            axs.axvline(-0.9832+1.1*np.log10(10**11.41), ls='--', linewidth=1, c='grey')
             
             
             
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
-            #axs.text(np.log10(0.82*(10**11.41)), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'ATLAS$^{\mathrm{3D}}$', fontsize=5, c='grey', rotation=90, ha='left', va='top')
+            #axs.text(-0.9832+1.1*np.log10(10**11.41), 11, 'MASSIVE', fontsize=5, c='grey', rotation=270, ha='right', va='top')
             
             #axs.scatter(obs_Mstar_1, obs_H2_1, marker='o', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (ATLAS$^{\mathrm{3D}}$)')
             #axs.scatter(obs_Mstar_2, obs_H2_2, marker='s', s=8, alpha=1, zorder=5, c='r', edgecolors='none', label='D+19 (MASSIVE)')
@@ -20890,7 +21128,6 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
 
 
 
-
 #===================================
 ### H1 plots:   H1 mass, fraction, and environment
 # Plot stelmass - H1 mass
@@ -20900,17 +21137,17 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
                           add_median_line      = True,
                           print_fdet = True,
                           print_typical_galaxy = True,
-                        savefig       = True)"""
+                        savefig       = True)  """  
 #------------
-# Plot stelmass - H1 mass fraction (H1 / H1 + M*)
+# Plot stelmass - H1 mass fraction (H1 / M*)
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_satellites, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_ETGs_plus_redspiral_satellites, sample_input_all_ETGs_plus_redspiral_groupfield, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_LTGs_excl_redspiral]):
     _etg_stelmass_h1massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H1',         # [ scatter_old / scatter_new / hexbin_count / hexbin_H1 ]
                           add_median_line      = True,
                           print_fdet = True,
-                        savefig       = True)"""
+                        savefig       = True)
 # Plots stelmass - H1 mass and H1 fraction as double plot of above
-"""_etg_stelmass_h1mass_double(soap_indicies_sample=soap_indicies_sample_all_ETGs_plus_redspiral, sample_input=sample_input_all_ETGs_plus_redspiral,
+_etg_stelmass_h1mass_double(soap_indicies_sample=soap_indicies_sample_all_ETGs_plus_redspiral, sample_input=sample_input_all_ETGs_plus_redspiral,
                           add_median_line      = True,
                         savefig       = True)"""
                         
@@ -20927,15 +21164,15 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
                           print_typical_galaxy = True,
                         savefig       = True)"""
 #------------
-# Plot stelmass - H2 mass fraction (H2 / H2 + M*)
+# Plot stelmass - H2 mass fraction (H2 / M*)
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_satellites, soap_indicies_sample_all_ETGs_plus_redspiral_groupfield, soap_indicies_sample_all_ETGs_plus_redspiral_cluster, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_ETGs_plus_redspiral_satellites, sample_input_all_ETGs_plus_redspiral_groupfield, sample_input_all_ETGs_plus_redspiral_cluster, sample_input_all_LTGs_excl_redspiral]):
     _etg_stelmass_h2massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_new / hexbin_count / hexbin_H2 ]
                           add_median_line      = True,
                           print_fdet = True,
-                        savefig       = True)"""
+                        savefig       = True)
 # Plots stelmass - H2 mass and H2 fraction as double plot of above
-"""_etg_stelmass_h2mass_double(soap_indicies_sample=soap_indicies_sample_all_ETGs_plus_redspiral, sample_input=sample_input_all_ETGs_plus_redspiral,
+_etg_stelmass_h2mass_double(soap_indicies_sample=soap_indicies_sample_all_ETGs_plus_redspiral, sample_input=sample_input_all_ETGs_plus_redspiral,
                           add_median_line      = True,
                         savefig       = True)"""
 
@@ -20960,11 +21197,10 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
                         savefig       = True)"""
 #------------
 # Plot stelmass - M200c mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_m200c(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
-                        savefig       = True)"""
-    
+                        savefig       = True)
 
 
 #==========================================
@@ -21015,16 +21251,16 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
                         scatter_or_hexbin       = 'hexbin_H1',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H1 ]
                         savefig       = True)"""
 # Plot stelmass - r50 H2, detected only
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
-                        savefig       = True)
+                        savefig       = True)"""
 #------------
 # Plot stelmass - r50 H2 / r50
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
     _etg_stelmass_r50r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
-                        savefig       = True)
+                        savefig       = True)"""
 #------------
 # Plot r50 - r50 HI, detected only
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
@@ -21032,10 +21268,10 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                         scatter_or_hexbin       = 'hexbin_H1',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         savefig       = True)"""
 # Plot r50 - r50 H2, detected only
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
     _etg_r50_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
-                        savefig       = True)
+                        savefig       = True)"""
 # Plot r50 HI - r50 H2, detected only
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_r50H1_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
@@ -21049,10 +21285,10 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                         savefig       = True)"""
 #------------
 # Plot H2 mass - r50 H2, detected only
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
     _etg_h2mass_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_count',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
-                        savefig       = True)
+                        savefig       = True)"""
 #------------
 # Plot stelmass - sigma ratio = density within X / ring of density Y
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
@@ -21081,6 +21317,11 @@ _aperture_fdet_missing_gas(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all
                               title_text_in = 'exclusive sphere 50 kpc',
                               savefig_txt = 'centrals', 
                             savefig       = True)"""
+"""_aperture_fdet_missing_gas(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                              hole_aperture   = 'exclusive_sphere_50kpc',    # Radius within which to look for any gas particles
+                              title_text_in = 'exclusive sphere 50 kpc',
+                              savefig_txt = 'satellites', 
+                            savefig       = True)"""
 
 """_aperture_fdet_missing_gas(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                               hole_aperture   = 'exclusive_sphere_50kpc',    # Radius within which to look for any gas particles
@@ -21092,25 +21333,25 @@ _aperture_fdet_missing_gas(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_
                               savefig_txt = 'centrals', 
                             savefig       = True)"""
 #------------
-# inclusive vs exclusive holes
+# inclusive vs exclusive holes - does not use sample loaded above
 """_aperture_fdet_missing_gas(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
-                              hole_aperture   = 'exclusive_sphere_10kpc',    # Radius within which to look for any gas particles
-                              title_text_in = 'exclusive sphere 10 kpc',
+                              hole_aperture   = 'exclusive_sphere_50kpc',    # Radius within which to look for any gas particles
+                              title_text_in = 'exclusive sphere 50 kpc',
                             savefig       = True)
 _aperture_fdet_missing_gas(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
-                              hole_aperture   = 'exclusive_sphere_10kpc',    # Radius within which to look for any gas particles
-                              title_text_in = 'exclusive sphere 10 kpc',
+                              hole_aperture   = 'exclusive_sphere_50kpc',    # Radius within which to look for any gas particles
+                              title_text_in = 'exclusive sphere 50 kpc',
                               savefig_txt = 'centrals', 
                             savefig       = True)
 _aperture_fdet_missing_gas(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
-                              hole_aperture   = 'inclusive_sphere_10kpc',    # Radius within which to look for any gas particles
-                              title_text_in = 'inclusive sphere 10 kpc',
+                              hole_aperture   = 'inclusive_sphere_50kpc',    # Radius within which to look for any gas particles
+                              title_text_in = 'inclusive sphere 50 kpc',
                             savefig       = True)
 _aperture_fdet_missing_gas(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
-                              hole_aperture   = 'inclusive_sphere_10kpc',    # Radius within which to look for any gas particles
-                              title_text_in = 'inclusive sphere 10 kpc',
+                              hole_aperture   = 'inclusive_sphere_50kpc',    # Radius within which to look for any gas particles
+                              title_text_in = 'inclusive sphere 50 kpc',
                               savefig_txt = 'centrals', 
-                            savefig       = True)  """         
+                            savefig       = True)   """       
                             
                             
 #==========================================
@@ -21188,7 +21429,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                             savefig       = True)      """
 #----------------
 # Returns stelmass - NET cold gas (T < 1000 K) inflow at 0.1r200c, 0.3r200c, and r200c for CENTRALS
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral_centrals]):
     for radius_i in ['0.1', '0.3', '1.0']:
         _etg_stelmass_net_coldgas_massflow(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
@@ -21207,7 +21448,7 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
         _etg_stelmass_net_h2_massflow(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                             scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                               inflow_radius = radius_i,        # [ 0.1 / 0.3 / 1.0 ]
-                            savefig       = True) 
+                            savefig       = True) """
                         
                         
                         

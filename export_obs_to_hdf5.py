@@ -606,8 +606,8 @@ def _convert_Davis2019_ATLAS3D():
         grp = f.create_group("data/M_K")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'Total galaxy absolute magnitude in K-T band'
-        x    = np.array(csv_dict['M_K'])
-        dset = f.create_dataset("data/M_K/values", data=x)
+        x_mag    = np.array(csv_dict['M_K'])
+        dset = f.create_dataset("data/M_K/values", data=x_mag)
         dset.attrs["units"]    = 'dimensionless'
         print(len(x))
         
@@ -629,6 +629,15 @@ def _convert_Davis2019_ATLAS3D():
         dset = f.create_dataset("data/log_Mstar/values", data=x_mass_log)
         dset.attrs["units"]    = 'Msun'
         print(len(x_mass_log))
+        
+        grp = f.create_group("data/log_MJAM")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'MJAM is approx Mstar, fit using Cappellari+13a fit: log M* = 10.58 - 0.44(M_K + 23)'
+        x_mass_log = 10.58 - 0.44*(x_mag + 23)
+        dset = f.create_dataset("data/log_MJAM/values", data=x_mass_log)
+        dset.attrs["units"]    = 'Msun'
+        print(len(x_mass_log))
+        print(x_mass_log)
         
         
         
@@ -752,8 +761,8 @@ def _create_Davis2019_MASSIVE():
         grp = f.create_group("data/M_K")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'Total galaxy absolute magnitude in K-S band'
-        x    = np.array([ -25.35, -25.75, -25.32, -26.30, -25.81, -25.90, -25.40, -25.50, -25.93, -26.05, -25.83, -25.51, -25.65, -26.06, -25.50, -25.33, -25.40, -26.00, -26.14, -25.70, -25.64, -25.67, -25.31, -25.55, -25.99, -25.34, -25.60, -25.87, -25.66, -25.69, -25.93, -25.42, -25.52, -25.60, -25.76, -25.72, -26.42, -25.70, -26.28, -25.69, -25.40, -25.91, -25.50, -25.40, -26.33, -25.72, -25.31, -25.36, -25.85, -26.18, -26.64, -25.72, -25.61, -25.32, -25.51, -25.45, -25.57, -25.46, -25.60, -25.67, -25.93, -25.39, -25.43, -25.83, -25.44, -25.65, -25.65])
-        dset = f.create_dataset("data/M_K/values", data=x)
+        x_mag    = np.array([ -25.35, -25.75, -25.32, -26.30, -25.81, -25.90, -25.40, -25.50, -25.93, -26.05, -25.83, -25.51, -25.65, -26.06, -25.50, -25.33, -25.40, -26.00, -26.14, -25.70, -25.64, -25.67, -25.31, -25.55, -25.99, -25.34, -25.60, -25.87, -25.66, -25.69, -25.93, -25.42, -25.52, -25.60, -25.76, -25.72, -26.42, -25.70, -26.28, -25.69, -25.40, -25.91, -25.50, -25.40, -26.33, -25.72, -25.31, -25.36, -25.85, -26.18, -26.64, -25.72, -25.61, -25.32, -25.51, -25.45, -25.57, -25.46, -25.60, -25.67, -25.93, -25.39, -25.43, -25.83, -25.44, -25.65, -25.65])
+        dset = f.create_dataset("data/M_K/values", data=x_mag)
         dset.attrs["units"]    = 'dimensionless'
         print(len(x))
         
@@ -765,9 +774,6 @@ def _create_Davis2019_MASSIVE():
         dset.attrs["units"]    = 'Lsun'
         print(len(L_K))
         
-        
-        
-        
         grp = f.create_group("data/log_Mstar")
         grp.attrs["comoving"]    = False
         grp.attrs["description"] = 'Log10 derived Mstar from mass-to-light ratio using L_K with M*/L_K=0.5, and a Sun K-band magnitude of 3.28 (Binney & Merrifield+98)'
@@ -776,6 +782,17 @@ def _create_Davis2019_MASSIVE():
         dset = f.create_dataset("data/log_Mstar/values", data=x_mass_log)
         dset.attrs["units"]    = 'Msun'
         print(len(x_mass_log))
+        
+        grp = f.create_group("data/log_MJAM")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'MJAM is approx Mstar, fit using Cappellari+13a fit: log M* = 10.58 - 0.44(M_K + 23)'
+        x_mass_log = 10.58 - 0.44*(x_mag + 23)
+        dset = f.create_dataset("data/log_MJAM/values", data=x_mass_log)
+        dset.attrs["units"]    = 'Msun'
+        print(len(x_mass_log))
+        print(x_mass_log)
+        
+        
         
         grp = f.create_group("data/Sig_e")
         grp.attrs["comoving"]    = False
@@ -1010,6 +1027,16 @@ def _create_Cappellari2011_ATLAS3D_masses():
         print(len(x_mass_log))
         
         
+        grp = f.create_group("data/log_MJAM")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'MJAM is approx Mstar, fit using Cappellari+13a fit: log M* = 10.58 - 0.44(M_K + 23)'
+        x_mass_log = 10.58 - 0.44*(x_mag + 23)
+        dset = f.create_dataset("data/log_MJAM/values", data=x_mass_log)
+        dset.attrs["units"]    = 'Msun'
+        print(len(x_mass_log))
+        print(x_mass_log)
+        
+        
         print("Successfully created: %s/Cappellari2011_masses.hdf5"%obs_dir)
 
 
@@ -1081,6 +1108,81 @@ def _create_Serra2012_ATLAS3D_HI():
         print("Successfully created: %s/Serra2012_ATLAS3D_HI.hdf5"%obs_dir)
 
 
+# MASSIVE results, export as hdf5
+def _create_Veale2017_MASSIVE():
+    
+    # Create and write
+    with h5py.File("%s/Veale2017_MASSIVE.hdf5"%obs_dir, "a") as f:
+        
+        # Creating metadata
+        grp = f.create_group("metadata")
+        grp.attrs["bibcode"]      = ""
+        grp.attrs["citation"]     = "Davis et al. (2019)"
+        grp.attrs["comment"]      = "Original data from MASSIVE. No cosmology correction needed."
+        grp.attrs["name"]         = "MASSIVE points from Davis2019, all adjusted for direct use"
+                
+        #-------------------------------
+        # Creating dataset + cosmology
+        
+        grp = f.create_group("data/Galaxy")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Galaxy name'
+        x = ["NGC 0057","NGC 0080","NGC 0128","NGC 0227","NGC 0315","NGC 0383","NGC 0393","NGC 0410","NGC 0467","PGC 004829","NGC 0499","NGC 0507","NGC 0533","NGC 0545","NGC 0547","NGC 0665","UGC 01332","NGC 0708","UGC 01389","NGC 0741","NGC 0777","NGC 0890","NGC 0910","NGC 0997","NGC 1016","NGC 1060",           "NGC 1066","NGC 1132","NGC 1129","NGC 1167","NGC 1226","IC 0310","NGC 1272","UGC 02783","NGC 1453","NGC 1497","NGC 1600","NGC 1573","NGC 1684","NGC 1700","NGC 2208","NGC 2256","NGC 2274","NGC 2258","NGC 2320","UGC 03683","NGC 2332","NGC 2340","UGC 03894","NGC 2418","NGC 2456","NGC 2492","NGC 2513","NGC 2672","NGC 2693","NGC 2783","NGC 2832","NGC 2892","NGC 2918","NGC 3158","NGC 3209","NGC 3332","NGC 3343","NGC 3462","NGC 3562","NGC 3615","NGC 3805","NGC 3816","NGC 3842","NGC 3862","NGC 3937","NGC 4055","NGC 4065","NGC 4066",           "NGC 4059","NGC 4073","NGC 4213","NGC 4472",           "NGC 4486","NGC 4555","NGC 4649","NGC 4816",           "NGC 4839","NGC 4874","NGC 4889","NGC 4914","NGC 5129","NGC 5208","PGC 047776","NGC 5252","NGC 5322","NGC 5353","NGC 5490","NGC 5557","IC 1143","UGC 10097","NGC 6223","NGC 6364","NGC 6375","UGC 10918","NGC 6442","NGC 6482","NGC 6575","NGC 7052","NGC 7242","NGC 7265", "NGC 7274","NGC 7386","NGC 7426","NGC 7436","NGC 7550","NGC 7556","NGC 7618","NGC 7619","NGC 7626"]
+        dset = f.create_dataset("data/Galaxy/values", data=x, shape=len(x), dtype=h5py.string_dtype())
+        dset.attrs["units"]    = ''
+        print(len(x))
+        
+        
+
+        grp = f.create_group("data/M_K")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Total galaxy absolute magnitude in K-S band'
+        x_mag    = np.array([-25.75,-25.66,-25.35,-25.32,-26.30,-25.81,-25.44,-25.90,-25.40,-25.30,-25.50,-25.93,-26.05,-25.83,-25.83,-25.51,-25.57,-25.65,-25.41,-26.06,-25.94,-25.50,-25.33,-25.40,-26.33,-26.00,-25.31,-25.70,-26.14,-25.64,-25.51,-25.35,-25.80,-25.44,-25.67,-25.31,-25.99,-25.55,-25.34,-25.60,-25.63,-25.87,-25.69,-25.66,-25.93,-25.52,-25.39,-25.90,-25.58,-25.42,-25.33,-25.36,-25.52,-25.60,-25.76,-25.72,-26.42,-25.70,-25.49,-26.28,-25.55,-25.38,-25.33,-25.62,-25.65,-25.58,-25.69,-25.40,-25.91,-25.50,-25.62,-25.40,-25.47,-25.35,-25.41,-26.33,-25.44,-25.72,-25.31,-25.92,-25.36,-25.33,-25.85,-26.18,-26.64,-25.72,-25.92,-25.61,-25.36,-25.32,-25.51,-25.45,-25.57,-25.46,-25.45,-25.43,-25.59,-25.38,-25.53,-25.75,-25.40,-25.60,-25.58,-25.67,-26.34,-25.93,-25.39,-25.58,-25.74,-26.16,-25.43,-25.83,-25.44,-25.65,-25.65])
+        dset = f.create_dataset("data/M_K/values", data=x_mag)
+        dset.attrs["units"]    = 'dimensionless'
+        print(len(x_mag))
+        
+        
+        grp = f.create_group("data/L_K")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Log10 Total galaxy luminosity in K-T band, and a Sun K-band magnitude of 3.28 (Binney & Merrifield+98)'
+        L_K    = 10**(0.4*(3.28 - x_mag))
+        L_K    = np.log10(L_K)
+        dset = f.create_dataset("data/L_K/values", data=L_K)
+        dset.attrs["units"]    = 'Lsun'
+        print(len(L_K))
+        
+        grp = f.create_group("data/log_Mstar")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'Log10 derived Mstar from mass-to-light ratio using L_K with M*/L_K=0.5, and a Sun K-band magnitude of 3.28 (Binney & Merrifield+98)'
+        x_mass     = (10**L_K) * 0.82      # assuming mass-to-light of 0.82 for K-band
+        x_mass_log = np.log10(x_mass)
+        dset = f.create_dataset("data/log_Mstar/values", data=x_mass_log)
+        dset.attrs["units"]    = 'Msun'
+        print(len(x_mass_log))
+        
+        
+        grp = f.create_group("data/log_MJAM")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'MJAM is approx Mstar, fit using Cappellari+13a fit: log M* = 10.58 - 0.44(M_K + 23)'
+        x_mass_log = np.array([11.79, 11.75, 11.61, 11.60, 12.03, 11.82, 11.65, 11.86, 11.64, 11.59, 11.68, 11.87, 11.92, 11.83, 11.83, 11.68, 11.71, 11.75, 11.64, 11.93, 11.87, 11.68, 11.61, 11.64, 12.05, 11.90, 11.60, 11.77, 11.96, 11.74, 11.68, 11.61, 11.81, 11.65, 11.75, 11.60, 11.90, 11.70, 11.61, 11.72, 11.74, 11.84, 11.76, 11.75, 11.87, 11.69, 11.63, 11.86, 11.72, 11.64, 11.61, 11.62, 11.69, 11.72, 11.79, 11.78, 12.08, 11.77, 11.68, 12.02, 11.70, 11.63, 11.61, 11.73, 11.75, 11.72, 11.76, 11.64, 11.86, 11.68, 11.73, 11.64, 11.67, 11.61, 11.64, 12.05, 11.65, 11.78, 11.60, 11.86, 11.62, 11.61, 11.83, 11.98, 12.18, 11.78, 11.86, 11.73, 11.62, 11.60, 11.68, 11.66, 11.71, 11.66, 11.66, 11.65, 11.72, 11.63, 11.69, 11.79, 11.64, 11.72, 11.72, 11.75, 12.05, 11.87, 11.63, 11.72, 11.79, 11.97, 11.65, 11.83, 11.65, 11.75, 11.75])
+        dset = f.create_dataset("data/log_MJAM/values", data=x_mass_log)
+        dset.attrs["units"]    = 'Msun'
+        print(len(x_mass_log))
+        
+        
+        grp = f.create_group("data/log_Mhalo")
+        grp.attrs["comoving"]    = False
+        grp.attrs["description"] = 'True/false if it is within a cluster'
+        x = np.array([ math.nan, 14.1, math.nan, 13.5, 13.5, 14.4, math.nan, 14.4, math.nan, math.nan, 14.4, 14.4, 13.5, 14.5, 14.5, 13.7, 13.8, 14.5, 13.8, 13.8, 13.5, math.nan, 14.8, 13.0, 13.9, 14.0, 14.0, 13.6, 14.8, 13.1, 13.2, 14.8, 14.8, 12.6, 13.9, math.nan, 14.2, 14.1, 13.7, 12.7, math.nan, 13.7, 13.3, 12.2, 14.2, 13.6, 14.2, 14.2, 13.7, math.nan, math.nan, 13.0, 13.6, 13.0, math.nan, 12.8, 13.7, math.nan, math.nan, 13.3, 11.8, math.nan, math.nan, math.nan, 13.5, 13.6, 14.8, 14.8, 14.8, 14.8, 14.2, 14.3, 14.3, 14.3, 14.3, 13.9, 13.4, 14.7, 14.7, math.nan, 14.7, 15.3, 15.3, 15.3, 15.3, math.nan, math.nan, 13.0, 14.1, 14.1, 13.7, 13.6, math.nan, 13.3, 13.0, 12.7, 13.5, math.nan, math.nan, math.nan, math.nan, 13.1, math.nan, math.nan,  14.0, 14.7, 14.7, 13.9, 13.8, 14.4, 11.9, 14.0, 13.7, 14.0, 14.0])
+        dset = f.create_dataset("data/log_Mhalo/values", data=x)
+        dset.attrs["units"]    = 'Msun'
+        print(len(x))
+        
+        
+        print("Successfully created: %s/Veale2017_MASSIVE.hdf5"%obs_dir)
+
+
 
 def _test_load(file_name = 'GalaxyH2MassFunction/Lagos2014_H2'):
     # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
@@ -1114,14 +1216,16 @@ def _test_load(file_name = 'GalaxyH2MassFunction/Lagos2014_H2'):
 #_create_Lagos2014_H1()
 #_create_Lagos2014_H2()
         
-#_convert_Davis2019_ATLAS3D()
-#_create_Davis2019_MASSIVE()
+_convert_Davis2019_ATLAS3D()
+_create_Davis2019_MASSIVE()
 
 #_create_Davis2013_ATLAS3D_CO_extent()
-_create_Krajnovic2011_ATLAS3D_ellip()
+#_create_Krajnovic2011_ATLAS3D_ellip()
 
 #_create_Serra2012_ATLAS3D_HI()
-#_create_Cappellari2011_ATLAS3D_masses()
+_create_Cappellari2011_ATLAS3D_masses()
+
+_create_Veale2017_MASSIVE()
         
 #==========================================================  
 # Test load

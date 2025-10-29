@@ -8,6 +8,8 @@ import csv
 import time
 import json
 import math
+import cmasher
+from highlight_text import fig_text
 from tqdm import tqdm
 from operator import attrgetter
 from packaging.version import Version
@@ -24,8 +26,9 @@ import matplotlib.colors as colors
 from graphformat import set_rc_params
 from load_soap_sample import _load_soap_sample
 from read_dataset_directories_colibre import _assign_directories
-assert Version(sw.__version__) >= Version("9.0.2")
-assert Version(swiftgalaxy.__version__) >= Version("1.2.0")
+
+assert Version(sw.__version__) >= Version("10.0.0")
+assert Version(swiftgalaxy.__version__) >= Version("2.0.0")
 
 np.random.seed(0)
 
@@ -408,8 +411,8 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     #---------------
     if print_galaxy:
-        print('\nSOAP index:                 %i   at    z = %.3f   in   %s' %(soap_index, redshift, run_name))
-        print('   trackID:                     %i' %track_id)
+        #print('\nSOAP index:                 %i   at    z = %.3f   in   %s' %(soap_index, redshift, run_name))
+        print('\ntrackID:                 %i   at    z = %.3f   in   %s' %(track_id, redshift, run_name))
         #print('   descendantID:         %i' %descendent_id)
         print('   central or satellite:  ->  %s' %('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'))
         print('   stelmass50:            ->  %.3e      Msun' %stelmass50.squeeze())
@@ -443,7 +446,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         
     metadata_plot = {'Title': 'stelmass50: %.1e\nm200crit: %.1e\ngasmass50: %.1e\ngassf50: %.1e\nHImass50: %.1e\nH2mass50: %.1e\nH2mass10: %.1e\nr50stars: %.2f\nr50gas: %.2f\nr50HI: %.2f\nr50H2: %.2f\nellipstars: %.2f\ntriaxstars: %.2f\nellipstars (proj): %.2f\ntriaxstars (proj): %.2f\ndisctototal: %.2f\nkappastars: %.2f\nveldisp50 (km/s): %.2f\nveldisp10 (km/s): %.2f\nlog_eta_kin50: %.2f\nlog_eta_kin10:%.2f\nkappagas: %.2f\nsfr50: %.2e\nssfr50: %.2e\nu-r (nodust): %.2f\nMr (nodust): %.2f'
                             %(stelmass50.squeeze(), m200c.squeeze(), gasmass50.squeeze(), gassfmass50.squeeze(), HImass50.squeeze(), H2mass50.squeeze(), H2mass10.squeeze(), r50stars.squeeze(), r50gas.squeeze(), r50HI.squeeze(), r50H2.squeeze(), ellip.squeeze(), triax.squeeze(), ellip_proj.squeeze(), triax_proj.squeeze(), disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp50.squeeze(), stellar_vel_disp10.squeeze(), np.log10(eta_kin50.squeeze()), np.log10(eta_kin10.squeeze()), kappagas.squeeze(), sfr50.squeeze(), ssfr50.squeeze(), (u_mag50-r_mag50), r_mag50),
-                     'Author': 'SOAP index: %i\nredshift: %.2f\nTrackID: %i\ncen/sat: %s'%(soap_index, redshift, track_id, 'central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'),
+                     'Author': 'redshift: %.2f\nTrackID: %i\ncen/sat: %s'%(redshift, track_id, 'central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'),
                      'Subject': run_name,
                      'Producer': ''}    
     
@@ -783,7 +786,7 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
     
     #--------------
     ### Title
-    sp1.set_title(f"soap_index = %i, track_id = %i, redshift = %.3f,  %s \n M200c = %.2e Msun, M*_50 = %.2e Msun, MHI_50 = %.2e Msun, MH2_10 = %.2e Msun, MH2_50 = %.2e Msun \nr50 = %.2f pkpc, r50H2 = %.2f pkpc \ndisctototal = %.2f, kappa_co = %.2f, disp10 = %.2f km/s, disp50 = %.2f km/s, log_eta_kin10 = %.2f Msun1/3 km-1 s, log_eta_kin50= %.2f Msun1/3 km-1 s\nu*-r* = %.2f, SFR = %.2e Msun/yr, sSFR = %.2e /yr" %(soap_index, (track_id.squeeze()).to_value(), redshift, ('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'), m200c.squeeze(), stelmass50.squeeze(),  HImass50.squeeze(), H2mass10.squeeze(), H2mass50.squeeze(), r50stars.squeeze(), r50H2.squeeze(), disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp10.squeeze(), stellar_vel_disp50.squeeze(), np.log10(eta_kin10.squeeze()), np.log10(eta_kin50.squeeze()), (u_mag50-r_mag50).squeeze(), sfr50.squeeze(), ssfr50.squeeze()), fontsize=14, loc='left')
+    sp1.set_title(f"track_id = %i, redshift = %.3f,  %s \n M200c = %.2e Msun, M*_50 = %.2e Msun, MHI_50 = %.2e Msun, MH2_10 = %.2e Msun, MH2_50 = %.2e Msun \nr50 = %.2f pkpc, r50H2 = %.2f pkpc \ndisctototal = %.2f, kappa_co = %.2f, disp10 = %.2f km/s, disp50 = %.2f km/s, log_eta_kin10 = %.2f Msun1/3 km-1 s, log_eta_kin50= %.2f Msun1/3 km-1 s\nu*-r* = %.2f, SFR = %.2e Msun/yr, sSFR = %.2e /yr" %((track_id.squeeze()).to_value(), redshift, ('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'), m200c.squeeze(), stelmass50.squeeze(),  HImass50.squeeze(), H2mass10.squeeze(), H2mass50.squeeze(), r50stars.squeeze(), r50H2.squeeze(), disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp10.squeeze(), stellar_vel_disp50.squeeze(), np.log10(eta_kin10.squeeze()), np.log10(eta_kin50.squeeze()), (u_mag50-r_mag50).squeeze(), sfr50.squeeze(), ssfr50.squeeze()), fontsize=14, loc='left')
     
     
     #--------------
@@ -802,7 +805,6 @@ def _visualize_galaxy_gas(sg, plot_annotate = None, savefig_txt_in = None,      
         plt.show()
     plt.close()
     
-
 
 #--------------------------------
 # Visualises stars, gas, SF gas, HII, HI, and H2 out to 50 kpc
@@ -994,8 +996,8 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
     
     #---------------
     if print_galaxy:
-        print('\nSOAP index:                 %i   at    z = %.3f   in   %s' %(soap_index, redshift, run_name))
-        print('   trackID:                     %i' %track_id)
+        #print('\nSOAP index:                 %i   at    z = %.3f   in   %s' %(soap_index, redshift, run_name))
+        print('\ntrackID:                 %i   at    z = %.3f   in   %s' %(track_id, redshift, run_name))
         #print('   descendantID:         %i' %descendent_id)
         print('   central or satellite:  ->  %s' %('central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'))
         print('   stelmass50:            ->  %.3e      Msun' %stelmass50.squeeze())
@@ -1029,7 +1031,7 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         
     metadata_plot = {'Title': 'stelmass50: %.1e\nm200crit: %.1e\ngasmass50: %.1e\ngassf50: %.1e\nHImass50: %.1e\nH2mass50: %.1e\nH2mass10: %.1e\nr50stars: %.2f\nr50gas: %.2f\nr50HI: %.2f\nr50H2: %.2f\nellipstars: %.2f\ntriaxstars: %.2f\nellipstars (proj): %.2f\ntriaxstars (proj): %.2f\ndisctototal: %.2f\nkappastars: %.2f\nveldisp50 (km/s): %.2f\nveldisp10 (km/s): %.2f\nlog_eta_kin50: %.2f\nlog_eta_kin10:%.2f\nkappagas: %.2f\nsfr50: %.2e\nssfr50: %.2e\nu-r (nodust): %.2f\nMr (nodust): %.2f'
                             %(stelmass50.squeeze(), m200c.squeeze(), gasmass50.squeeze(), gassfmass50.squeeze(), HImass50.squeeze(), H2mass50.squeeze(), H2mass10.squeeze(), r50stars.squeeze(), r50gas.squeeze(), r50HI.squeeze(), r50H2.squeeze(), ellip.squeeze(), triax.squeeze(), ellip_proj.squeeze(), triax_proj.squeeze(), disctototal.squeeze(), kappastars.squeeze(), stellar_vel_disp50.squeeze(), stellar_vel_disp10.squeeze(), np.log10(eta_kin50.squeeze()), np.log10(eta_kin10.squeeze()), kappagas.squeeze(), sfr50.squeeze(), ssfr50.squeeze(), (u_mag50-r_mag50), r_mag50),
-                     'Author': 'SOAP index: %i\nredshift: %.2f\nTrackID: %i\ncen/sat: %s'%(soap_index, redshift, track_id, 'central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'),
+                     'Author': 'redshift: %.2f\nTrackID: %i\ncen/sat: %s'%(redshift, track_id, 'central' if is_central==cosmo_quantity(1, u.dimensionless, comoving=False, scale_factor=sg.metadata.a, scale_exponent=0) else 'satellite'),
                      'Subject': run_name,
                      'Producer': ''}    
     
@@ -1078,7 +1080,7 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
     
         #---------------------------------------
         # Creating masks for galaxy properties
-        mask_gas_sf         = sg.gas.star_formation_rates > cosmo_quantity(0, u.Msun/u.yr, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)
+        #mask_gas_sf         = sg.gas.star_formation_rates > cosmo_quantity(0, u.Msun/u.yr, comoving=True, scale_factor=sg.metadata.a, scale_exponent=0)
         
         # Creating new objects for datasets of HII, HI, and H2
         #sg.gas.mass_gas_hii = sg.gas.masses * sg.gas.element_mass_fractions.hydrogen * sg.gas.species_fractions.HII
@@ -1102,7 +1104,6 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         #--------------------
         # Define the region
         disc_region      = cosmo_array([-disc_radius, disc_radius, -disc_radius, disc_radius], comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
-        disc_region_edge = cosmo_array([-disc_radius, disc_radius, 0.5*-disc_radius, 0.5*disc_radius], comoving=True, scale_factor=sg.metadata.a, scale_exponent=1)
         
         # Use project_gas_pixel_grid to generate projected images
         common_arguments = dict(
@@ -1112,13 +1113,7 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
             periodic=False,  # disable periodic boundaries when using rotations
             rotation_center=rotcent,
         )
-        common_arguments_edge = dict(
-            resolution=612,
-            parallel=True,
-            region=disc_region_edge,
-            periodic=False,  # disable periodic boundaries when using rotations
-            rotation_center=rotcent,
-        )
+
     
         # This creates a grid that has units msun / Mpc^2 (in the case of e.g. stellar mass, or H2), and can be transformed like any other unyt quantity
         # Once on a grid, multiply units by Mpc^2... e.g. msun / Mpc^2 -> msun
@@ -1128,8 +1123,8 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         gas_map_edge                = project_gas(**common_arguments, data=sg, project="masses", rotation_matrix=rotmat_edge, )
         #gassf_map_face              = project_gas(**common_arguments, data=sg, project="masses", mask=mask_gas_sf, rotation_matrix=rotmat_face, )
         #gassf_map_edge              = project_gas(**common_arguments, data=sg, project="masses", mask=mask_gas_sf, rotation_matrix=rotmat_edge, )
-        mass_weighted_vel_map_face  = project_gas(**common_arguments, data=sg, project="mass_weighted_vel", rotation_matrix=rotmat_face, )
-        mass_weighted_vel_map_edge  = project_gas(**common_arguments, data=sg, project="mass_weighted_vel", rotation_matrix=rotmat_edge, )
+        #mass_weighted_vel_map_face  = project_gas(**common_arguments, data=sg, project="mass_weighted_vel", rotation_matrix=rotmat_face, )
+        #mass_weighted_vel_map_edge  = project_gas(**common_arguments, data=sg, project="mass_weighted_vel", rotation_matrix=rotmat_edge, )
         #mass_weighted_temp_map_face = project_gas(**common_arguments, data=sg, project="mass_weighted_temps", rotation_matrix=rotmat_face, )
         #mass_weighted_temp_map_edge = project_gas(**common_arguments, data=sg, project="mass_weighted_temps", rotation_matrix=rotmat_edge, )
         #mass_weighted_Z_map_face    = project_gas(**common_arguments, data=sg, project="mass_weighted_Z", rotation_matrix=rotmat_face, )
@@ -1145,8 +1140,8 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         #temp_map_face = (mass_weighted_temp_map_face / gas_map_face)
         #temp_map_edge = (mass_weighted_temp_map_edge / gas_map_edge)
         # Units msun km/s / Mpc^2 --> on grid km/s
-        vel_map_face  = (mass_weighted_vel_map_face / gas_map_face).to_physical()
-        vel_map_edge  = (mass_weighted_vel_map_edge / gas_map_edge).to_physical()
+        #vel_map_face  = (mass_weighted_vel_map_face / gas_map_face).to_physical()
+        #vel_map_edge  = (mass_weighted_vel_map_edge / gas_map_edge).to_physical()
         # Units msun Z / Mpc^2 --> on grid Z
         #Z_map_face    = (mass_weighted_Z_map_face / gas_map_face)
         #Z_map_edge    = (mass_weighted_Z_map_edge / gas_map_edge)
@@ -1154,22 +1149,25 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         
         #--------------
         ### Figure initialising
-        fig = plt.figure(figsize=(7.5, 3))
-        gs  = fig.add_gridspec(2, 5,  width_ratios=(1, 1, 1, 1, 1), height_ratios=(1, 1),
+        fig = plt.figure(figsize=(7.5, 2.0))
+        gs  = fig.add_gridspec(1, 4,  width_ratios=(1, 1, 1, 1),
                               left=0.1, right=0.9, bottom=0.1, top=0.9,
                               wspace=0, hspace=0)
-        # Create the Axes.
-        sp1 = fig.add_subplot(gs[0,0])
-        sp2 = fig.add_subplot(gs[0,1])
-        sp3 = fig.add_subplot(gs[0,2])
-        sp4 = fig.add_subplot(gs[0,3])
-        sp5 = fig.add_subplot(gs[0,4])
-        sp11 = fig.add_subplot(gs[1,0])
-        sp12 = fig.add_subplot(gs[1,1])
-        sp13 = fig.add_subplot(gs[1,2])
-        sp14 = fig.add_subplot(gs[1,3])
-        sp15 = fig.add_subplot(gs[1,4])
         
+        # Create the Axes.
+        sp1 = fig.add_subplot(gs[0])
+        sp2 = fig.add_subplot(gs[1])
+        #sp3 = fig.add_subplot(gs[0,2])
+        sp4 = fig.add_subplot(gs[2])
+        sp5 = fig.add_subplot(gs[3])
+        #sp11 = fig.add_subplot(gs[1,0])
+        #sp12 = fig.add_subplot(gs[1,1])
+        #sp13 = fig.add_subplot(gs[1,2])
+        #sp14 = fig.add_subplot(gs[1,2])
+        #sp15 = fig.add_subplot(gs[1,3])
+        
+        #sp4.set_facecolor('k')
+        #sp5.set_facecolor('k')
         
         
         #--------------
@@ -1177,69 +1175,77 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         
         sp1.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_face.value), cmap="magma", extent=disc_region, origin="lower", )
         sp2.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_face.value), cmap="viridis", extent=disc_region, origin="lower", )
-        sp3.imshow(vel_map_face.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
+        #sp3.imshow(vel_map_face.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
         sp4.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_face.value), cmap="Greens", extent=disc_region, origin="lower", )
         sp5.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_face.value), cmap="Blues", extent=disc_region, origin="lower", )
         
-        sp11.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_edge.value), cmap="magma", extent=disc_region, origin="lower", )
-        sp12.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_edge.value), cmap="viridis", extent=disc_region, origin="lower", )
-        sp13.imshow(vel_map_edge.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
-        sp14.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_edge.value), cmap="Greens", extent=disc_region, origin="lower", )
-        sp15.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_edge.value), cmap="Blues", extent=disc_region, origin="lower", )
+        #sp11.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_edge.value), cmap="magma", extent=disc_region, origin="lower", )
+        #sp12.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_edge.value), cmap="viridis", extent=disc_region, origin="lower", )
+        #sp13.imshow(vel_map_edge.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
+        #sp14.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_edge.value), cmap="Greens", extent=disc_region, origin="lower", )
+        #sp15.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_edge.value), cmap="Blues", extent=disc_region, origin="lower", )
     
     
         #--------------
         ### general formatting
         sp1.set_ylabel(f"y' [{disc_radius.units}]")
+        sp1.set_xlabel(f"x' [{disc_radius.units}]")
         sp1.set_xticks([-40, -20, 0, 20, 40])
-        sp1.set_xticklabels([])
+        sp1.set_xticklabels([-40, -20, 0, 20, 40])
+        #sp1.set_xticklabels([])
         #sp1.set_yticklabels([])
 
         sp2.set_xticklabels([])
+        sp2.set_xlabel(f"x' [{disc_radius.units}]")
         sp2.set_xticks([-40, -20, 0, 20, 40])
+        sp2.set_xticklabels([-40, -20, 0, 20, 40])
         sp2.set_yticklabels([])
         
-        sp3.set_xticklabels([])
-        sp3.set_xticks([-40, -20, 0, 20, 40])
-        sp3.set_yticklabels([])
+        #sp3.set_xticklabels([])
+        #sp3.set_xticks([-40, -20, 0, 20, 40])
+        #sp3.set_yticklabels([])
         
         sp4.set_xticklabels([])
+        sp4.set_xlabel(f"x' [{disc_radius.units}]")
         sp4.set_xticks([-40, -20, 0, 20, 40])
+        sp4.set_xticklabels([-40, -20, 0, 20, 40])
         sp4.set_yticklabels([])
 
         sp5.set_xticklabels([])
+        sp5.set_xlabel(f"x' [{disc_radius.units}]")
         sp5.set_xticks([-40, -20, 0, 20, 40])
+        sp5.set_xticklabels([-40, -20, 0, 20, 40])
         sp5.set_yticklabels([])
         
-        sp11.set_ylabel(f"y' [{disc_radius.units}]")
-        sp11.set_xlabel(f"x' [{disc_radius.units}]")
-        sp11.set_xticks([-40, -20, 0, 20, 40])
+        #sp11.set_ylabel(f"y' [{disc_radius.units}]")
+        #sp11.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp11.set_xticks([-40, -20, 0, 20, 40])
         #sp11.set_xticklabels([])
         #sp11.set_yticklabels([])
         
         #sp12.set_ylabel(f"y' [{disc_radius.units}]")
-        sp12.set_xlabel(f"x' [{disc_radius.units}]")
-        sp12.set_xticks([-40, -20, 0, 20, 40])
+        #sp12.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp12.set_xticks([-40, -20, 0, 20, 40])
         #sp12.set_xticklabels([])
-        sp12.set_yticklabels([])
+        #sp12.set_yticklabels([])
         
         #sp13.set_ylabel(f"y' [{disc_radius.units}]")
-        sp13.set_xlabel(f"x' [{disc_radius.units}]")
-        sp13.set_xticks([-40, -20, 0, 20, 40])
+        #sp13.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp13.set_xticks([-40, -20, 0, 20, 40])
         #sp13.set_xticklabels([])
-        sp13.set_yticklabels([])
+        #sp13.set_yticklabels([])
         
         #sp14.set_ylabel(f"y' [{disc_radius.units}]")
-        sp14.set_xlabel(f"x' [{disc_radius.units}]")
-        sp14.set_xticks([-40, -20, 0, 20, 40])
+        #sp14.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp14.set_xticks([-40, -20, 0, 20, 40])
         #sp14.set_xticklabels([])
-        sp14.set_yticklabels([])
+        #sp14.set_yticklabels([])
         
         #sp12.set_ylabel(f"y' [{disc_radius.units}]")
-        sp15.set_xlabel(f"x' [{disc_radius.units}]")
-        sp15.set_xticks([-40, -20, 0, 20, 40])
+        #sp15.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp15.set_xticks([-40, -20, 0, 20, 40])
         #sp12.set_xticklabels([])
-        sp15.set_yticklabels([])
+        #sp15.set_yticklabels([])
     
     
     
@@ -1247,7 +1253,7 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         ### Annotation
         sp1.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp1.transAxes, fontsize=7)
         sp2.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp2.transAxes, fontsize=7)
-        sp3.text(0.9, 0.9, "Velocity", color="k", ha="right", va="top", transform=sp3.transAxes, fontsize=7)
+        #sp3.text(0.9, 0.9, "Velocity", color="k", ha="right", va="top", transform=sp3.transAxes, fontsize=7)
         sp4.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp4.transAxes, fontsize=7)
         sp5.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp5.transAxes, fontsize=7)
         
@@ -1259,7 +1265,14 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
     
     #--------------
     ### Title
-    sp1.set_title(f"SOAP index = %i, redshift = %.1f" %(soap_index, redshift), loc='left', fontsize=7)
+    #sp1.set_title(f"TrackID = %i, redshift = %.1f" %(track_id, redshift), loc='left', fontsize=7)
+    text_title = r'<<L100m6>><<..>><<TrackID = %i, $z=%.1f$>>'%(track_id, redshift)
+    fig_text(x=0.103, y=0.945, ha='left', s=text_title, fontsize=7, ax=sp1, delim=('<<', '>>'),
+            highlight_textprops=[
+                {"color": "#1B9E77", "fontname": 'Courier New', "bbox": {"edgecolor": "#1B9E77", "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
+                {"color": "white"},
+                {"color": "black"}
+            ])
     
     
     #--------------
@@ -1277,19 +1290,16 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
     if showfig:
         plt.show()
     plt.close()
-    
-
-
-
 
 
 #========================================================================
 # Manual sample or load input:
 
-"""soap_indicies_sample = [9120823, 10173515, 1702242] 
+"""soap_indicies_sample = [2718163, 7214567] 
 sample_input = {'name_of_preset': 'ETG1011_109_H2_inclFR',
                 'virtual_snapshot_file': '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/colibre_with_SOAP_membership_0127.hdf5'),
-                'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5')
+                'soap_catalogue_file':   '%s'%('/home/cosmos/c22048063/COLIBRE/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5' if answer == '2' else '/cosma8/data/dp004/colibre/Runs/L100_m6/THERMAL_AGN_m6/SOAP-HBT/halo_properties_0127.hdf5'),
+                'simulation_run': 'L100_m6', 'simulation_type': 'THERMAL_AGN_m6', 'simulation_dir': 'L100_m6/THERMAL_AGN_m6', 
                 }
 savefig_txt_in = ''
 save_folder_visual = sample_input['name_of_preset']"""
@@ -1299,6 +1309,8 @@ soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample_ETG_109_H2_exclFR
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample_ETG_109_H2_inclFR
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample_ETG1011_109_H2_inclFR
+soap_indicies_sample = soap_indicies_sample.tolist()
+print('SOAP indicies: \n', soap_indicies_sample)
 savefig_txt_in = ''
 save_folder_visual = sample_input['name_of_preset']
 #========================================================================
@@ -1324,6 +1336,11 @@ output_figures = sgs.map(_visualize_galaxy_gas)"""
 sgs = SWIFTGalaxies(sample_input['virtual_snapshot_file'], SOAP(sample_input['soap_catalogue_file'], soap_index=soap_indicies_sample, ), auto_recentre=False,
                     preload={"gas.coordinates", "gas.masses", "gas.velocities", "gas.element_mass_fractions.hydrogen", "gas.species_fractions.HI", "gas.species_fractions.H2", "gas.smoothing_lengths", "stars.coordinates", "stars.masses", "stars.smoothing_lengths", },)       
 output_figures = sgs.map(_visualize_galaxy_paper_format)
+
+
+
+
+
 
 
 
