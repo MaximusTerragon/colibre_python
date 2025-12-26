@@ -818,7 +818,7 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
                       showfig       = False,
                       savefig       = True,
                         file_format = 'pdf',
-                        savefig_txt = '', 
+                        savefig_txt = 'test', 
                       #--------------------------
                       print_progress = False,
                         debug = False):
@@ -1174,7 +1174,7 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         ### Plot imshow
         
         sp1.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_face.value), cmap="magma", extent=disc_region, origin="lower", )
-        sp2.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_face.value), cmap="viridis", extent=disc_region, origin="lower", )
+        sp2.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_face.value), cmap="Greens", extent=disc_region, origin="lower", )
         #sp3.imshow(vel_map_face.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
         sp4.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_face.value), cmap="Greens", extent=disc_region, origin="lower", )
         sp5.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_face.value), cmap="Blues", extent=disc_region, origin="lower", )
