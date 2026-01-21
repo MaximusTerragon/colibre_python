@@ -1414,14 +1414,14 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
             {"color": "white"},
             {"color": "black"}
         ])"""
-    ax1.set_title(r'L100m6%s' %(title_text_in), size=7, x=0.1, y=1.02, pad=3, c=title_color_dict['L100m6'], bbox={"edgecolor": title_color_dict['L100m6'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
-    ax2.set_title(r'L200m6%s' %(title_text_in), size=7, x=0.1, y=1.02, pad=3, c=title_color_dict['L200m6'], bbox={"edgecolor": title_color_dict['L200m6'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
+    ax2.set_title(r'L100m6%s' %(title_text_in), size=7, x=0.1, y=1.02, pad=3, c=title_color_dict['L100m6'], bbox={"edgecolor": title_color_dict['L100m6'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
+    ax1.set_title(r'L200m6%s' %(title_text_in), size=7, x=0.1, y=1.02, pad=3, c=title_color_dict['L200m6'], bbox={"edgecolor": title_color_dict['L200m6'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
     ax3.set_title(r'L100m6h%s' %(title_text_in), size=7, x=0.12, y=1.02, pad=3, c=title_color_dict['L100m6h'], bbox={"edgecolor": title_color_dict['L100m6h'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
     
     
     #-----------
     # Legend
-    ax1.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    ax1.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2, fontsize=6, handletextpad=0.6)
         
     #-----------
     # other
@@ -2558,29 +2558,45 @@ _sample_stellar_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_a
                      savefig       = True)
 _sample_stellar_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
-                     savefig       = True)
-_sample_stellar_mass_function_3x1(csv_samples1 = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
-                                  csv_samples2 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     savefig       = True)"""
+_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                                  csv_samples2 = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                                   csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
-                     savefig       = True)"""
+                     savefig       = True)
 
 
 
 #-------------------
 # H1 mass function of samples
-_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)
-"""_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_50kpc',
-                     showfig       = False,
-                     savefig       = True)
-_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)"""
+"""_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True)"""
+# thermal + hybrid:
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = 'HYBRID_THERMAL')"""
+# 10 kpc H1 aperture
+"""_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_10kpc',
+                     showfig       = False,
+                     savefig       = True)
+_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_10kpc',
+                     showfig       = False,
+                     savefig       = True)"""
+
 # Central and satellite
 """_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
@@ -2594,6 +2610,32 @@ _sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_g
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                      savefig       = True)"""
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True)"""
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_satellites', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True)"""
+                     
+#----------------                 
 # H1 mass fraction = H1 / H1 + M* function of samples
 """_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
@@ -2602,11 +2644,28 @@ _sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_g
 _sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
-                     savefig       = True)
-_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     savefig       = True)"""
+"""_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)"""
+# thermal + hybrid:
+"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = 'HYBRID_THERMAL')"""
+
+# 10 kpc H1 aperture
+"""_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_10kpc',
+                     showfig       = False,
+                     savefig       = True)
+_sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_10kpc',
+                     showfig       = False,
+                     savefig       = True)"""
+
 # Central and satellite
 """_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
@@ -2620,21 +2679,64 @@ _sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                      savefig       = True)"""
+"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True)"""
+"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_satellites', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True)"""
+
+
 
 #-------------------
 # H2 mass function of samples
 """_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
-                         savefig       = True)"""
-"""_sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         savefig       = True)
+_sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                         savefig       = True)"""
+"""_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                         savefig       = True)"""
+# thermal + hybrid:
+"""_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = 'HYBRID_THERMAL')"""
+
+# 10 kpc H2 aperture
+"""_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_10kpc',
                          showfig       = False,
                          savefig       = True)
-_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
-                         aperture_h2 = 'exclusive_sphere_50kpc',
-                         showfig       = False,
-                         savefig       = True)"""
+_sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h2 = 'exclusive_sphere_10kpc',
+                     showfig       = False,
+                     savefig       = True)"""
+
 # Central and satellite
 """_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
@@ -2647,8 +2749,33 @@ _sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_g
                          showfig       = False,
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
-                         savefig       = True) """             
-                         
+                         savefig       = True) """   
+"""_sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_satellites', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True)  
+_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True)   """      
+
+#---------------
 # H2 mass fraction = H2 / H2 + M* function of samples
 """_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
@@ -2657,11 +2784,29 @@ _sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_g
 _sample_H2_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
-                         savefig       = True)
-_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         savefig       = True)"""
+"""_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
                          savefig       = True)"""
+
+# thermal + hybrid:
+"""_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = 'HYBRID_THERMAL')"""
+
+# 10 kpc H2 aperture
+"""_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_10kpc',
+                         showfig       = False,
+                         savefig       = True)
+_sample_H2_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h2 = 'exclusive_sphere_10kpc',
+                     showfig       = False,
+                     savefig       = True)"""
+
 # Central and satellite
 """_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
@@ -2675,6 +2820,30 @@ _sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                          savefig       = True)"""
+"""_sample_H2_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H2_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_satellites', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True) """
+"""_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'centrals',
+                        savefig_txt = 'centrals', 
+                     savefig       = True)
+_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_satellites', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_satellites'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                        title_text_in = 'satellites',
+                        savefig_txt = 'satellites', 
+                     savefig       = True)  """ 
 
 
 

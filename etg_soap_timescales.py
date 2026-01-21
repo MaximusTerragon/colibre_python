@@ -136,6 +136,9 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
         
         
         # Find indicies of where TrackID was found
+        
+        raise Exception('below is not correct as it doesnt preserve order, fix before continuing')
+        
         soap_indicies_sample = np.nonzero(np.in1d(trackid, trackid_sample))[0]
         print('TrackID found in %i sample:     %i'%(snap_i, len(soap_indicies_sample)))
         

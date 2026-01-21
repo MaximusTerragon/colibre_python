@@ -1149,8 +1149,8 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         
         #--------------
         ### Figure initialising
-        fig = plt.figure(figsize=(7.5, 2.0))
-        gs  = fig.add_gridspec(1, 4,  width_ratios=(1, 1, 1, 1),
+        fig = plt.figure(figsize=(7.5, 3.9))
+        gs  = fig.add_gridspec(2, 4,  height_ratios=(1, 1), width_ratios=(1, 1, 1, 1),
                               left=0.1, right=0.9, bottom=0.1, top=0.9,
                               wspace=0, hspace=0)
         
@@ -1160,11 +1160,11 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         #sp3 = fig.add_subplot(gs[0,2])
         sp4 = fig.add_subplot(gs[2])
         sp5 = fig.add_subplot(gs[3])
-        #sp11 = fig.add_subplot(gs[1,0])
-        #sp12 = fig.add_subplot(gs[1,1])
+        sp11 = fig.add_subplot(gs[1,0])
+        sp12 = fig.add_subplot(gs[1,1])
         #sp13 = fig.add_subplot(gs[1,2])
-        #sp14 = fig.add_subplot(gs[1,2])
-        #sp15 = fig.add_subplot(gs[1,3])
+        sp14 = fig.add_subplot(gs[1,2])
+        sp15 = fig.add_subplot(gs[1,3])
         
         #sp4.set_facecolor('k')
         #sp5.set_facecolor('k')
@@ -1174,31 +1174,32 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         ### Plot imshow
         
         sp1.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_face.value), cmap="magma", extent=disc_region, origin="lower", )
-        sp2.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_face.value), cmap="Greens", extent=disc_region, origin="lower", )
+        sp2.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_face.value), cmap="viridis", extent=disc_region, origin="lower", )
         #sp3.imshow(vel_map_face.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
         sp4.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_face.value), cmap="Greens", extent=disc_region, origin="lower", )
         sp5.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_face.value), cmap="Blues", extent=disc_region, origin="lower", )
         
-        #sp11.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_edge.value), cmap="magma", extent=disc_region, origin="lower", )
-        #sp12.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_edge.value), cmap="viridis", extent=disc_region, origin="lower", )
+        sp11.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(star_map_edge.value), cmap="magma", extent=disc_region, origin="lower", )
+        sp12.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gas_map_edge.value), cmap="viridis", extent=disc_region, origin="lower", )
         #sp13.imshow(vel_map_edge.value, vmin=-200, vmax=200, cmap="coolwarm", extent=disc_region, origin="lower", )
-        #sp14.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_edge.value), cmap="Greens", extent=disc_region, origin="lower", )
-        #sp15.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_edge.value), cmap="Blues", extent=disc_region, origin="lower", )
+        sp14.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasHI_map_edge.value), cmap="Greens", extent=disc_region, origin="lower", )
+        sp15.imshow(colors.LogNorm(vmin=10**6, vmax=10**10)(gasH2_map_edge.value), cmap="Blues", extent=disc_region, origin="lower", )
     
     
         #--------------
         ### general formatting
         sp1.set_ylabel(f"y' [{disc_radius.units}]")
-        sp1.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp1.set_xlabel(f"x' [{disc_radius.units}]")
         sp1.set_xticks([-40, -20, 0, 20, 40])
-        sp1.set_xticklabels([-40, -20, 0, 20, 40])
-        #sp1.set_xticklabels([])
+        #sp1.set_xticklabels([-40, -20, 0, 20, 40])
+        sp1.set_xticklabels([])
         #sp1.set_yticklabels([])
 
         sp2.set_xticklabels([])
-        sp2.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp2.set_xlabel(f"x' [{disc_radius.units}]")
         sp2.set_xticks([-40, -20, 0, 20, 40])
-        sp2.set_xticklabels([-40, -20, 0, 20, 40])
+        #sp2.set_xticklabels([-40, -20, 0, 20, 40])
+        sp1.set_xticklabels([])
         sp2.set_yticklabels([])
         
         #sp3.set_xticklabels([])
@@ -1206,28 +1207,32 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         #sp3.set_yticklabels([])
         
         sp4.set_xticklabels([])
-        sp4.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp4.set_xlabel(f"x' [{disc_radius.units}]")
         sp4.set_xticks([-40, -20, 0, 20, 40])
-        sp4.set_xticklabels([-40, -20, 0, 20, 40])
+        #sp4.set_xticklabels([-40, -20, 0, 20, 40])
         sp4.set_yticklabels([])
+        sp1.set_xticklabels([])
 
         sp5.set_xticklabels([])
-        sp5.set_xlabel(f"x' [{disc_radius.units}]")
+        #sp5.set_xlabel(f"x' [{disc_radius.units}]")
         sp5.set_xticks([-40, -20, 0, 20, 40])
-        sp5.set_xticklabels([-40, -20, 0, 20, 40])
+        #sp5.set_xticklabels([-40, -20, 0, 20, 40])
         sp5.set_yticklabels([])
+        sp1.set_xticklabels([])
         
-        #sp11.set_ylabel(f"y' [{disc_radius.units}]")
-        #sp11.set_xlabel(f"x' [{disc_radius.units}]")
-        #sp11.set_xticks([-40, -20, 0, 20, 40])
+        sp11.set_ylabel(f"y' [{disc_radius.units}]")
+        sp11.set_xlabel(f"x' [{disc_radius.units}]")
+        sp11.set_xticks([-40, -20, 0, 20, 40])
+        sp11.set_xticklabels([-40, -20, 0, 20, 40])
         #sp11.set_xticklabels([])
         #sp11.set_yticklabels([])
         
         #sp12.set_ylabel(f"y' [{disc_radius.units}]")
-        #sp12.set_xlabel(f"x' [{disc_radius.units}]")
-        #sp12.set_xticks([-40, -20, 0, 20, 40])
+        sp12.set_xlabel(f"x' [{disc_radius.units}]")
+        sp12.set_xticks([-40, -20, 0, 20, 40])
+        sp12.set_xticklabels([-40, -20, 0, 20, 40])
         #sp12.set_xticklabels([])
-        #sp12.set_yticklabels([])
+        sp12.set_yticklabels([])
         
         #sp13.set_ylabel(f"y' [{disc_radius.units}]")
         #sp13.set_xlabel(f"x' [{disc_radius.units}]")
@@ -1236,28 +1241,31 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
         #sp13.set_yticklabels([])
         
         #sp14.set_ylabel(f"y' [{disc_radius.units}]")
-        #sp14.set_xlabel(f"x' [{disc_radius.units}]")
-        #sp14.set_xticks([-40, -20, 0, 20, 40])
+        sp14.set_xlabel(f"x' [{disc_radius.units}]")
+        sp14.set_xticks([-40, -20, 0, 20, 40])
+        sp14.set_xticklabels([-40, -20, 0, 20, 40])
         #sp14.set_xticklabels([])
-        #sp14.set_yticklabels([])
+        sp14.set_yticklabels([])
         
-        #sp12.set_ylabel(f"y' [{disc_radius.units}]")
-        #sp15.set_xlabel(f"x' [{disc_radius.units}]")
-        #sp15.set_xticks([-40, -20, 0, 20, 40])
+        #sp15.set_ylabel(f"y' [{disc_radius.units}]")
+        sp15.set_xlabel(f"x' [{disc_radius.units}]")
+        sp15.set_xticks([-40, -20, 0, 20, 40])
+        sp15.set_xticklabels([-40, -20, 0, 20, 40])
         #sp12.set_xticklabels([])
-        #sp15.set_yticklabels([])
+        sp15.set_yticklabels([])
     
     
     
         #--------------
         ### Annotation
         sp1.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp1.transAxes, fontsize=7)
+        sp1.text(0.05, 0.95, r"face-on", color="white", ha="left", va="top", transform=sp1.transAxes, fontsize=7)
         sp2.text(0.9, 0.9, r"$\Sigma_{\mathrm{gas}}$", color="white", ha="right", va="top", transform=sp2.transAxes, fontsize=7)
         #sp3.text(0.9, 0.9, "Velocity", color="k", ha="right", va="top", transform=sp3.transAxes, fontsize=7)
         sp4.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp4.transAxes, fontsize=7)
         sp5.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp5.transAxes, fontsize=7)
         
-        #sp11.text(0.9, 0.9, r"$\Sigma_{\mathrm{*}}$", color="white", ha="right", va="top", transform=sp11.transAxes, fontsize=7)
+        sp11.text(0.05, 0.95, r"edge-on", color="white", ha="left", va="top", transform=sp11.transAxes, fontsize=7)
         #sp12.text(0.9, 0.9, "Velocity", color="white", ha="right", va="top", transform=sp12.transAxes, fontsize=7)
         #sp13.text(0.9, 0.9, r"$\Sigma_{\mathrm{HI}}$", color="k", ha="right", va="top", transform=sp13.transAxes, fontsize=7)
         #sp14.text(0.9, 0.9, r"$\Sigma_{\mathrm{H2}}$", color="k", ha="right", va="top", transform=sp14.transAxes, fontsize=7)
@@ -1266,8 +1274,8 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
     #--------------
     ### Title
     #sp1.set_title(f"TrackID = %i, redshift = %.1f" %(track_id, redshift), loc='left', fontsize=7)
-    text_title = r'<<L100m6>><<..>><<TrackID = %i, $z=%.1f$>>'%(track_id, redshift)
-    fig_text(x=0.103, y=0.945, ha='left', s=text_title, fontsize=7, ax=sp1, delim=('<<', '>>'),
+    text_title = r'<<L100m6>><<..>><<TrackID = %i, $\mathrm{log}_{\mathrm{10}}(M_*/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\mathrm{log}_{\mathrm{10}}(M_{\mathrm{H_I}}/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\mathrm{log}_{\mathrm{10}}(M_{\mathrm{H_2}}/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\kappa_{\mathrm{co}}^{*}=%.2f$>>'%(track_id, np.log10(stelmass50), np.log10(HImass50), np.log10(H2mass50), kappastars)
+    fig_text(x=0.104, y=0.939, ha='left', s=text_title, fontsize=7, ax=sp1, delim=('<<', '>>'),
             highlight_textprops=[
                 {"color": "#1B9E77", "fontname": 'Courier New', "bbox": {"edgecolor": "#1B9E77", "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
                 {"color": "white"},
@@ -1305,7 +1313,7 @@ savefig_txt_in = ''
 save_folder_visual = sample_input['name_of_preset']"""
 #------------------------------------------------------------------------
 # Load a sample from a given snapshot
-soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample_ETG1011_109_H2_inclFR')
+soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample_ETG_109_H2_paper')
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample_ETG_109_H2_exclFR
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample_ETG_109_H2_inclFR
                                                                                     # L100_m6_THERMAL_AGN_m6_127_sample_ETG1011_109_H2_inclFR
@@ -1334,7 +1342,8 @@ output_figures = sgs.map(_visualize_galaxy_gas)"""
 #---------------------
 # Visualise galaxy plot format
 sgs = SWIFTGalaxies(sample_input['virtual_snapshot_file'], SOAP(sample_input['soap_catalogue_file'], soap_index=soap_indicies_sample, ), auto_recentre=False,
-                    preload={"gas.coordinates", "gas.masses", "gas.velocities", "gas.element_mass_fractions.hydrogen", "gas.species_fractions.HI", "gas.species_fractions.H2", "gas.smoothing_lengths", "stars.coordinates", "stars.masses", "stars.smoothing_lengths", },)       
+                    #preload={"gas.coordinates", "gas.masses", "gas.velocities", "gas.element_mass_fractions.hydrogen", "gas.species_fractions.HI", "gas.species_fractions.H2", "gas.smoothing_lengths", "stars.coordinates", "stars.masses", "stars.smoothing_lengths", },
+                    )       
 output_figures = sgs.map(_visualize_galaxy_paper_format)
 
 
