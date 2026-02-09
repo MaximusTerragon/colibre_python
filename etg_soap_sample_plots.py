@@ -202,12 +202,15 @@ def _sample_stelmass_u_r(csv_sample = '',  title_text_in = '',
                   'all_ETGs_plus_redspiral': "ETGs ($\kappa_{\mathrm{co}}^{*}<0.4$ incl. red FRs)"
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<%s><..><%s%s>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     fig_text(x=0.105, y=0.96, ha='left', s=text_title, fontsize=7, ax=ax_scat,
@@ -810,12 +813,15 @@ def _sample_stellar_mass_function(csv_samples = [],  title_text_in = '',
     #-----------
     # Title
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
     fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
@@ -1400,12 +1406,15 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
     #-----------
     # Title
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
     """fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
@@ -1498,6 +1507,7 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
                    'all_ETGs_plus_redspiral': 'D',
                    'all_ETGs_plus_redspiral_centrals': 'D',
                    'all_ETGs_plus_redspiral_satellites': 'D'}
+    alpha_i = 1
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -1558,15 +1568,67 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
         ms_i    = dict_ms[sample_input['name_of_preset']]
+        if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+            if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                label_i = ''
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = '--'
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
+            elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                label_i = ''
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = '--'
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
+            else:
+                label_i = dict_labels[sample_input['name_of_preset']]
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = dict_ls[sample_input['name_of_preset']]
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
         
         # Plotting all points as dashed 
-        axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+            bin_midpoints_i = []
+            hist_masses_masked_i = []
+            hist_err_masked_i = []
+            index_i = 0
+            for mid_i, mass_i, err_i, n_i in zip(bin_midpoints, hist_masses, hist_err, hist_n):
+                if (index_i+1) == len(hist_n):
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif n_i < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif hist_n[index_i+1] < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif index_i == 0:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif hist_n[index_i-1] < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                else:
+                    bin_midpoints_i.append(math.nan)
+                    hist_masses_masked_i.append(math.nan)
+                    hist_err_masked_i.append(math.nan)
+                index_i = index_i + 1
+            axs.plot(np.flip(bin_midpoints_i), np.flip(hist_masses_masked_i), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        else:
+            axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
         
         # Plotting only those with hist_n >= 10
         hist_masses_masked = np.ma.masked_where(hist_n < 10, hist_masses)
         hist_err_masked    = np.ma.masked_where(hist_n < 10, hist_err)
         #axs.fill_between(bin_midpoints, (10**(np.log10(hist_masses_masked-hist_err_masked))), (10**(np.log10(hist_masses_masked+hist_err_masked))), alpha=0.4, fc=linecol, zorder=-5)
-        lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+        lines = axs.plot(np.flip(bin_midpoints), np.flip(hist_masses_masked), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
         
         """# Find bins with more than 10 entry
         hist_mask_n = hist_n >= 10
@@ -1724,23 +1786,41 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
     #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Add extra lines if combining some runs
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        label_ii  = ('L100m6' if savefig_txt == '_HYBRID_THERMAL' else 'L200m6')
+        label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
+    
+        # Custom lines for black and dashed
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+    
+    
+    #-----------
     # Title
-    title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
-    title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    title_color_dict = {'L100m6': "#1B9E77", 
-                        'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
-    run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
-    fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
-        highlight_textprops=[
-            {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
-            {"color": "white"},
-            {"color": "black"}
-        ])
-    #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        sample_input['simulation_run'] = 'LXXX_mX'
+        sample_input['simulation_type'] = 'XXX_AGN_mX'
+    else:
+        title_run_dict = {'L100_m6': 'L100m6', 
+                          'L200_m6': 'L200m6',
+    					  'L200_m7': 'L200m7'}
+        title_type_dict = {'THERMAL_AGN_m6': '',
+    					   'THERMAL_AGN_m7': '',
+                           'HYBRID_AGN_m6': 'h'}
+        title_color_dict = {'L100m6': "#1B9E77", 
+                            'L100m6h': "#D95F02", 
+                            'L200m6': "#7570B3",
+    						'L200m7': "red"}
+        run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
+        text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
+        fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
+            highlight_textprops=[
+                {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
+                {"color": "white"},
+                {"color": "black"}
+            ])
+        #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     #-----------
     # Legend
@@ -1819,6 +1899,7 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
                    'all_ETGs_plus_redspiral': 'D',
                    'all_ETGs_plus_redspiral_centrals': 'D',
                    'all_ETGs_plus_redspiral_satellites': 'D'}
+    alpha_i = 1
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -1884,15 +1965,67 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
         ms_i    = dict_ms[sample_input['name_of_preset']]
+        if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+            if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                label_i = ''
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = '--'
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
+            elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                label_i = ''
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = '--'
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
+            else:
+                label_i = dict_labels[sample_input['name_of_preset']]
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = dict_ls[sample_input['name_of_preset']]
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
         
         # Plotting all points as dashed 
-        axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+            bin_midpoints_i = []
+            hist_masses_masked_i = []
+            hist_err_masked_i = []
+            index_i = 0
+            for mid_i, mass_i, err_i, n_i in zip(bin_midpoints, hist_masses, hist_err, hist_n):
+                if (index_i+1) == len(hist_n):
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif n_i < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif hist_n[index_i+1] < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif index_i == 0:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif hist_n[index_i-1] < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                else:
+                    bin_midpoints_i.append(math.nan)
+                    hist_masses_masked_i.append(math.nan)
+                    hist_err_masked_i.append(math.nan)
+                index_i = index_i + 1
+            axs.plot(np.flip(bin_midpoints_i), np.flip(hist_masses_masked_i), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        else:
+            axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
         
         # Plotting only those with hist_n >= 10
         hist_masses_masked = np.ma.masked_where(hist_n < 10, hist_masses)
         hist_err_masked    = np.ma.masked_where(hist_n < 10, hist_err)
         #axs.fill_between(bin_midpoints, (10**(np.log10(hist_masses_masked-hist_err_masked))), (10**(np.log10(hist_masses_masked+hist_err_masked))), alpha=0.4, fc=linecol, zorder=-5)
-        lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+        lines = axs.plot(np.flip(bin_midpoints), np.flip(hist_masses_masked), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
         
     #-----------------
     # Add observations
@@ -1960,23 +2093,41 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
     #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Add extra lines if combining some runs
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        label_ii  = ('L100m6' if savefig_txt == '_HYBRID_THERMAL' else 'L200m6')
+        label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
+    
+        # Custom lines for black and dashed
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+    
+    
+    #-----------
     # Title
-    title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
-    title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    title_color_dict = {'L100m6': "#1B9E77", 
-                        'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
-    run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
-    fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
-        highlight_textprops=[
-            {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
-            {"color": "white"},
-            {"color": "black"}
-        ])
-    #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        sample_input['simulation_run'] = 'LXXX_mX'
+        sample_input['simulation_type'] = 'XXX_AGN_mX'
+    else:
+        title_run_dict = {'L100_m6': 'L100m6', 
+                          'L200_m6': 'L200m6',
+    					  'L200_m7': 'L200m7'}
+        title_type_dict = {'THERMAL_AGN_m6': '',
+    					   'THERMAL_AGN_m7': '',
+                           'HYBRID_AGN_m6': 'h'}
+        title_color_dict = {'L100m6': "#1B9E77", 
+                            'L100m6h': "#D95F02", 
+                            'L200m6': "#7570B3",
+    						'L200m7': "red"}
+        run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
+        text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
+        fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
+            highlight_textprops=[
+                {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
+                {"color": "white"},
+                {"color": "black"}
+            ])
+        #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     #-----------
     # Legend
@@ -2057,6 +2208,7 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
                    'all_ETGs_plus_redspiral': 'D',
                    'all_ETGs_plus_redspiral_centrals': 'D',
                    'all_ETGs_plus_redspiral_satellites': 'D'}
+    alpha_i = 1
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -2118,15 +2270,69 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
         ms_i    = dict_ms[sample_input['name_of_preset']]
+        if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+            if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                label_i = ''
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = '--'
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
+            elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                label_i = ''
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = '--'
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
+            else:
+                label_i = dict_labels[sample_input['name_of_preset']]
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = dict_ls[sample_input['name_of_preset']]
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
         
         # Plotting all points as dashed 
-        axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+            bin_midpoints_i = []
+            hist_masses_masked_i = []
+            hist_err_masked_i = []
+            index_i = 0
+            for mid_i, mass_i, err_i, n_i in zip(bin_midpoints, hist_masses, hist_err, hist_n):
+                if (index_i+1) == len(hist_n):
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif n_i < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif hist_n[index_i+1] < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif index_i == 0:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif hist_n[index_i-1] < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                else:
+                    bin_midpoints_i.append(math.nan)
+                    hist_masses_masked_i.append(math.nan)
+                    hist_err_masked_i.append(math.nan)
+                index_i = index_i + 1
+            axs.plot(np.flip(bin_midpoints_i), np.flip(hist_masses_masked_i), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        else:
+            axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
         
         # Plotting only those with hist_n >= 10
         hist_masses_masked = np.ma.masked_where(hist_n < 10, hist_masses)
         hist_err_masked    = np.ma.masked_where(hist_n < 10, hist_err)
         #axs.fill_between(bin_midpoints, (10**(np.log10(hist_masses_masked-hist_err_masked))), (10**(np.log10(hist_masses_masked+hist_err_masked))), alpha=0.4, fc=linecol, zorder=-5)
-        lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+        lines = axs.plot(np.flip(bin_midpoints), np.flip(hist_masses_masked), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+        
+            
         
     #-----------------
     # Add observations
@@ -2263,23 +2469,42 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
     #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Add extra lines if combining some runs
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        label_ii  = ('L100m6' if savefig_txt == '_HYBRID_THERMAL' else 'L200m6')
+        label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
+    
+        # Custom lines for black and dashed
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+    
+    
+    #-----------
     # Title
-    title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
-    title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    title_color_dict = {'L100m6': "#1B9E77", 
-                        'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
-    run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
-    fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
-        highlight_textprops=[
-            {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
-            {"color": "white"},
-            {"color": "black"}
-        ])
-    #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        sample_input['simulation_run'] = 'LXXX_mX'
+        sample_input['simulation_type'] = 'XXX_AGN_mX'
+    else:
+        title_run_dict = {'L100_m6': 'L100m6', 
+                          'L200_m6': 'L200m6',
+    					  'L200_m7': 'L200m7'}
+        title_type_dict = {'THERMAL_AGN_m6': '',
+    					   'THERMAL_AGN_m7': '',
+                           'HYBRID_AGN_m6': 'h'}
+        title_color_dict = {'L100m6': "#1B9E77", 
+                            'L100m6h': "#D95F02", 
+                            'L200m6': "#7570B3",
+    						'L200m7': "red"}
+        run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
+        text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
+        fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
+            highlight_textprops=[
+                {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
+                {"color": "white"},
+                {"color": "black"}
+            ])
+        #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
+    
     
     #-----------
     # Legend
@@ -2358,6 +2583,7 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
                    'all_ETGs_plus_redspiral': 'D',
                    'all_ETGs_plus_redspiral_centrals': 'D',
                    'all_ETGs_plus_redspiral_satellites': 'D'}
+    alpha_i = 1
     for csv_sample_i in csv_samples:
         soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
         
@@ -2423,15 +2649,67 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
         linecol = dict_colors[sample_input['name_of_preset']]
         ls_i    = dict_ls[sample_input['name_of_preset']]
         ms_i    = dict_ms[sample_input['name_of_preset']]
+        if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+            if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                label_i = ''
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = '--'
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
+            elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                label_i = ''
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = '--'
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
+            else:
+                label_i = dict_labels[sample_input['name_of_preset']]
+                linecol = dict_colors[sample_input['name_of_preset']]
+                ls_i    = dict_ls[sample_input['name_of_preset']]
+                ms_i    = dict_ms[sample_input['name_of_preset']]
+                alpha_i = 1
         
         # Plotting all points as dashed 
-        axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+            bin_midpoints_i = []
+            hist_masses_masked_i = []
+            hist_err_masked_i = []
+            index_i = 0
+            for mid_i, mass_i, err_i, n_i in zip(bin_midpoints, hist_masses, hist_err, hist_n):
+                if (index_i+1) == len(hist_n):
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif n_i < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif hist_n[index_i+1] < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif index_i == 0:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                elif hist_n[index_i-1] < 10:
+                    bin_midpoints_i.append(mid_i)
+                    hist_masses_masked_i.append(mass_i)
+                    hist_err_masked_i.append(err_i)
+                else:
+                    bin_midpoints_i.append(math.nan)
+                    hist_masses_masked_i.append(math.nan)
+                    hist_err_masked_i.append(math.nan)
+                index_i = index_i + 1
+            axs.plot(np.flip(bin_midpoints_i), np.flip(hist_masses_masked_i), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        else:
+            axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
         
         # Plotting only those with hist_n >= 10
         hist_masses_masked = np.ma.masked_where(hist_n < 10, hist_masses)
         hist_err_masked    = np.ma.masked_where(hist_n < 10, hist_err)
         #axs.fill_between(bin_midpoints, (10**(np.log10(hist_masses_masked-hist_err_masked))), (10**(np.log10(hist_masses_masked+hist_err_masked))), alpha=0.4, fc=linecol, zorder=-5)
-        lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+        lines = axs.plot(np.flip(bin_midpoints), np.flip(hist_masses_masked), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
         
     #-----------------
     # Add observations
@@ -2496,23 +2774,41 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
     #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
     
     #-----------
+    # Add extra lines if combining some runs
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        label_ii  = ('L100m6' if savefig_txt == '_HYBRID_THERMAL' else 'L200m6')
+        label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
+    
+        # Custom lines for black and dashed
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+    
+    
+    #-----------
     # Title
-    title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
-    title_type_dict = {'THERMAL_AGN_m6': '',
-                       'HYBRID_AGN_m6': 'h'}
-    title_color_dict = {'L100m6': "#1B9E77", 
-                        'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
-    run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
-    fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
-        highlight_textprops=[
-            {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
-            {"color": "white"},
-            {"color": "black"}
-        ])
-    #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        sample_input['simulation_run'] = 'LXXX_mX'
+        sample_input['simulation_type'] = 'XXX_AGN_mX'
+    else:
+        title_run_dict = {'L100_m6': 'L100m6', 
+                          'L200_m6': 'L200m6',
+    					  'L200_m7': 'L200m7'}
+        title_type_dict = {'THERMAL_AGN_m6': '',
+    					   'THERMAL_AGN_m7': '',
+                           'HYBRID_AGN_m6': 'h'}
+        title_color_dict = {'L100m6': "#1B9E77", 
+                            'L100m6h': "#D95F02", 
+                            'L200m6': "#7570B3",
+    						'L200m7': "red"}
+        run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
+        text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
+        fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
+            highlight_textprops=[
+                {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
+                {"color": "white"},
+                {"color": "black"}
+            ])
+        #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
     
     #-----------
     # Legend
@@ -2535,7 +2831,10 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
 
 #=====================================
 
-#-------------------
+
+
+
+#=====================================
 # Similar to the correa+17 plot.   USE WITH ALL GALAXIES
 """_sample_stelmass_u_r(csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies',
                      showfig       = False,
@@ -2546,9 +2845,12 @@ _sample_stelmass_u_r(csv_sample = 'L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies
 _sample_stelmass_u_r(csv_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies',
                      showfig       = False,
                      savefig       = True)"""
+"""_sample_stelmass_u_r(csv_sample = 'L200_m7_THERMAL_AGN_m7_127_sample_all_galaxies',
+                     showfig       = False,
+                     savefig       = True)"""
 
 
-#-------------------
+#=====================================
 # Stellar mass function of samples
 """_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
@@ -2559,15 +2861,18 @@ _sample_stellar_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_a
 _sample_stellar_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
                      savefig       = True)"""
-_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_stellar_mass_function(csv_samples = ['L200_m7_THERMAL_AGN_m7_127_sample_all_galaxies', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                     showfig       = False,
+                     savefig       = True)"""
+"""_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                                   csv_samples2 = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                                   csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
-                     savefig       = True)
+                     savefig       = True)"""
 
 
 
-#-------------------
+#=====================================
 # H1 mass function of samples
 """_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
@@ -2581,12 +2886,10 @@ _sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ga
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)"""
-# thermal + hybrid:
-"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_H1_mass_function(csv_samples = ['L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
-                     savefig       = True, 
-                       savefig_txt = 'HYBRID_THERMAL')"""
+                     savefig       = True)"""
 # 10 kpc H1 aperture
 """_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_10kpc',
@@ -2634,8 +2937,23 @@ _sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ET
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                      savefig       = True)"""
+#--------------------
+# thermal + hybrid:
+_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_HYBRID_THERMAL')
+"""_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_m6_m7')"""
                      
-#----------------                 
+                     
+                     
+                     
+#=====================================                
 # H1 mass fraction = H1 / H1 + M* function of samples
 """_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
@@ -2649,13 +2967,10 @@ _sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_a
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True)"""
-# thermal + hybrid:
-"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_H1_mass_frac_function(csv_samples = ['L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
-                     savefig       = True, 
-                       savefig_txt = 'HYBRID_THERMAL')"""
-
+                     savefig       = True)"""
 # 10 kpc H1 aperture
 """_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_10kpc',
@@ -2703,10 +3018,23 @@ _sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_a
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                      savefig       = True)"""
-
-
-
 #-------------------
+# thermal + hybrid:
+_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_HYBRID_THERMAL')
+_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_m6_m7')
+
+
+
+
+#=====================================
 # H2 mass function of samples
 """_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
@@ -2720,13 +3048,10 @@ _sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ga
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
                          savefig       = True)"""
-# thermal + hybrid:
-"""_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_50kpc',
-                     showfig       = False,
-                     savefig       = True, 
-                       savefig_txt = 'HYBRID_THERMAL')"""
-
+"""_sample_H2_mass_function(csv_samples = ['L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                         savefig       = True)"""
 # 10 kpc H2 aperture
 """_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_10kpc',
@@ -2773,9 +3098,25 @@ _sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_E
                      showfig       = False,
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
-                     savefig       = True)   """      
-
+                     savefig       = True)   """  
 #---------------
+# thermal + hybrid:
+"""_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_HYBRID_THERMAL')
+_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_m6_m7') """ 
+
+
+
+
+
+#===================================
 # H2 mass fraction = H2 / H2 + M* function of samples
 """_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
@@ -2789,14 +3130,10 @@ _sample_H2_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_a
                          aperture_h2 = 'exclusive_sphere_50kpc',
                          showfig       = False,
                          savefig       = True)"""
-
-# thermal + hybrid:
-"""_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
-                     aperture_h1 = 'exclusive_sphere_50kpc',
-                     showfig       = False,
-                     savefig       = True, 
-                       savefig_txt = 'HYBRID_THERMAL')"""
-
+"""_sample_H2_mass_frac_function(csv_samples = ['L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                         savefig       = True)"""
 # 10 kpc H2 aperture
 """_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_10kpc',
@@ -2844,7 +3181,18 @@ _sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                      savefig       = True)  """ 
-
+#----------------
+# thermal + hybrid:
+"""_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_HYBRID_THERMAL')
+_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_m6_m7')  """
 
 
 

@@ -349,7 +349,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_I}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -397,7 +397,7 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_I}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -513,12 +513,15 @@ def _etg_stelmass_h1mass(soap_indicies_sample=[], sample_input=[], title_text_in
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -819,7 +822,7 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_I}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -867,7 +870,7 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_I}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -992,12 +995,15 @@ def _etg_stelmass_h1massfraction(soap_indicies_sample=[], sample_input=[], title
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -1285,7 +1291,7 @@ def _etg_stelmass_h1mass_double(soap_indicies_sample=[], sample_input=[], title_
             upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
             ax_top.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-            ax_top.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+            ax_top.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs,\n$\mathrm{H_I}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
             ax_top.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             ax_top.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             #ax_top.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -1333,7 +1339,7 @@ def _etg_stelmass_h1mass_double(soap_indicies_sample=[], sample_input=[], title_
             upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
             ax_top.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-            ax_top.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+            ax_top.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs,\n$\mathrm{H_I}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
             ax_top.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             ax_top.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             #ax_top.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -1767,12 +1773,15 @@ def _etg_stelmass_h1mass_double(soap_indicies_sample=[], sample_input=[], title_
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -1884,6 +1893,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
     simulation_dir  = sample_input['simulation_dir']
     soap_catalogue_file = sample_input['soap_catalogue_file']
     data = sw.load(f'%s'%soap_catalogue_file)
+    
 
     # Get metadata from file
     z = data.metadata.redshift
@@ -2158,7 +2168,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -2206,7 +2216,7 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -2368,12 +2378,15 @@ def _etg_stelmass_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -2674,7 +2687,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -2722,7 +2735,7 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -2889,12 +2902,15 @@ def _etg_stelmass_h2massfraction(soap_indicies_sample=[], sample_input=[], title
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -3181,7 +3197,7 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
             upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
             ax_top.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-            ax_top.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+            ax_top.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
             ax_top.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             ax_top.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             #ax_top.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -3229,7 +3245,7 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
             upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
             ax_top.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-            ax_top.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+            ax_top.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
             ax_top.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             ax_top.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             #ax_top.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -3536,7 +3552,7 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
             upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
             ax_bot.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-            ax_bot.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+            ax_bot.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
             ax_bot.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             ax_bot.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             #ax_bot.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -3584,7 +3600,7 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
             upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
             ax_bot.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-            ax_bot.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+            ax_bot.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
             ax_bot.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             ax_bot.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
             #ax_bot.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -3761,12 +3777,15 @@ def _etg_stelmass_h2mass_double(soap_indicies_sample=[], sample_input=[], title_
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -4743,12 +4762,15 @@ def _aperture_fdet(sim_box_size_name_1 = 'L100_m6',
     #-----------
     # Title
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
     """fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
@@ -5045,7 +5067,7 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -5091,7 +5113,7 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -5245,12 +5267,15 @@ def _etg_m200c_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -5885,12 +5910,15 @@ def _etg_stelmass_m200c(soap_indicies_sample=[], sample_input=[], title_text_in 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -6217,7 +6245,7 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -6264,7 +6292,7 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -6402,12 +6430,15 @@ def _etg_stelmass_u_r(soap_indicies_sample=[], sample_input=[], title_text_in = 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -6726,7 +6757,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -6769,7 +6800,7 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -6907,14 +6938,17 @@ def _etg_stelmass_sfr(soap_indicies_sample=[], sample_input=[], title_text_in = 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
+    text_title = r'<<%s>><<..>><<%s (SFR $>$ 0) %s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
         fig_text(x=0.107, y=0.957, ha='left', s=text_title, fontsize=7, ax=ax_hist, delim=('<<', '>>'),
             highlight_textprops=[
@@ -7240,7 +7274,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -7283,7 +7317,7 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -7406,8 +7440,8 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
     #axs.axhspan(-11, -17, color='grey', alpha=0.3, zorder=-30, edgecolor=None)
     axs.axhline(-11, color='k', zorder=40, ls='--', lw=1)
     ax_hist.axhline(-11, color='k', zorder=40, ls='--', lw=1)
-    axs.text(12.45, -11.05, 'quiescent', color='k', zorder=40, fontsize=7, horizontalalignment='right', verticalalignment='top')
-    axs.text(12.45, -10.95, 'star-forming', color='k', zorder=40, fontsize=7, horizontalalignment='right', verticalalignment='bottom')
+    ax_hist.text(0.06, -11.05, 'quiescent', color='k', zorder=40, fontsize=7, horizontalalignment='left', verticalalignment='top')
+    ax_hist.text(0.06, -10.95, 'star-forming', color='k', zorder=40, fontsize=7, horizontalalignment='left', verticalalignment='bottom')
     title_dict = {'all_galaxies': 'All galaxies',
                   'all_galaxies_centrals': 'All central galaxies',
                   'all_galaxies_satellites': 'All satellite galaxies',
@@ -7426,14 +7460,17 @@ def _etg_stelmass_ssfr(soap_indicies_sample=[], sample_input=[], title_text_in =
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
+    text_title = r'<<%s>><<..>><<%s (SFR $>$ 0) %s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
         fig_text(x=0.107, y=0.957, ha='left', s=text_title, fontsize=7, ax=ax_hist, delim=('<<', '>>'),
             highlight_textprops=[
@@ -7951,12 +7988,15 @@ def _etg_stelmass_tdep(soap_indicies_sample=[], sample_input=[], title_text_in =
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -8564,12 +8604,15 @@ def _etg_stelmass_r50(soap_indicies_sample=[], sample_input=[], title_text_in = 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -8888,7 +8931,7 @@ def _etg_stelmass_r50H1(soap_indicies_sample=[], sample_input=[], title_text_in 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs,\n$\mathrm{H_I}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -8931,7 +8974,7 @@ def _etg_stelmass_r50H1(soap_indicies_sample=[], sample_input=[], title_text_in 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs,\n$\mathrm{H_I}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -9071,14 +9114,17 @@ def _etg_stelmass_r50H1(soap_indicies_sample=[], sample_input=[], title_text_in 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
+    text_title = r'<<%s>><<..>><<%s ($M_{\mathrm{H_I}}>10^{7}$ M$_{\odot}$) %s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
         fig_text(x=0.107, y=0.957, ha='left', s=text_title, fontsize=7, ax=ax_hist, delim=('<<', '>>'),
             highlight_textprops=[
@@ -9389,7 +9435,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs,\n$\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -9432,7 +9478,7 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs,\n$\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -9710,14 +9756,17 @@ def _etg_stelmass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
+    text_title = r'<<%s>><<..>><<%s ($M_{\mathrm{H_2}}>10^{7}$ M$_{\odot}$) %s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
         fig_text(x=0.107, y=0.957, ha='left', s=text_title, fontsize=7, ax=ax_hist, delim=('<<', '>>'),
             highlight_textprops=[
@@ -10043,7 +10092,7 @@ def _etg_stelmass_r50r50H2(soap_indicies_sample=[], sample_input=[], title_text_
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs,\n$\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -10086,7 +10135,7 @@ def _etg_stelmass_r50r50H2(soap_indicies_sample=[], sample_input=[], title_text_
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, np.log10(upper_1sigma))
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs,\n$\mathrm{H_2}>10^7$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -10368,14 +10417,17 @@ def _etg_stelmass_r50r50H2(soap_indicies_sample=[], sample_input=[], title_text_
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
+    text_title = r'<<%s>><<..>><<%s ($M_{\mathrm{H_2}}>10^{7}$ M$_{\odot}$) %s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
         fig_text(x=0.107, y=0.957, ha='left', s=text_title, fontsize=7, ax=ax_hist, delim=('<<', '>>'),
             highlight_textprops=[
@@ -10868,12 +10920,15 @@ def _etg_r50_r50H1(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -11507,12 +11562,15 @@ def _etg_r50_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '',
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -12015,12 +12073,15 @@ def _etg_r50H1_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = '
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -12467,12 +12528,15 @@ def _etg_r50_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = ''
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -12987,12 +13051,15 @@ def _etg_h2mass_r50H2(soap_indicies_sample=[], sample_input=[], title_text_in = 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -13497,12 +13564,15 @@ def _gas_surface_ratios(soap_indicies_sample=[], sample_input=[], title_text_in 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -13774,12 +13844,15 @@ def _aperture_fdet_missing_gas(csv_samples = [], title_text_in = '',
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s>>'%(run_name_title, title_text_in)
     fig_text(x=0.133, y=0.98, ha='left', s=text_title, fontsize=7, ax=axs, delim=('<<', '>>'),
@@ -14473,12 +14546,15 @@ def _etg_stelmass_ellip(soap_indicies_sample=[], trackID_sample=[], sample_input
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -15062,12 +15138,15 @@ def _etg_stelmass_triax(soap_indicies_sample=[], trackID_sample=[], sample_input
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -15573,12 +15652,15 @@ def _etg_stelmass_kappaco(soap_indicies_sample=[], sample_input=[], title_text_i
                   'all_red_centrals': '$u-r > 2$, centrals'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -16088,12 +16170,15 @@ def _etg_stelmass_kappaco_red(soap_indicies_sample=[], sample_input=[], title_te
                   'all_red_centrals': '$u-r > 2$, centrals'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -16173,6 +16258,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], trackID_sample=[], sample_inp
                      add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                      add_median_line = False,
                    add_detection_hist = True,
+                   use_interpolation = False,
                    #=====================================
                    showfig       = False,
                    savefig       = True,
@@ -16223,17 +16309,29 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], trackID_sample=[], sample_inp
     data = sw.load(f'%s'%soap_catalogue_file)
     
     # Get Victor morphology data
-    soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N3008/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
-    data_morph = sw.load(f'%s'%soap_catalogue_file)
-    #print(dir(data_morph.exclusive_sphere_halfmassradiusstars))
-    #print(' ')
-    #print(dir(data_morph))
+    if not use_interpolation:
+        if simulation_run == 'L200_m6' & simulation_type == 'THERMAL_AGN_m6':
+            soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N3008/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+        elif simulation_run == 'L100_m6' & simulation_type == 'HYBRID_AGN_m6':
+            soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0100N1504/Hybrid/SOAP_uncompressed/halo_properties_0127.hdf5'
+        elif simulation_run == 'L100_m6' & simulation_type == 'THERMAL_AGN_m6':
+            soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0100N1504/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+        elif simulation_run == 'L200_m7' & simulation_type == 'THERMAL_AGN_m7':
+            soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N1504/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+        else:
+            raise Exception('Victor morphology data not available for %s %s'%(simulation_run, simulation_type))
+        data_morph = sw.load(f'%s'%soap_catalogue_file)
+        #print(dir(data_morph.exclusive_sphere_halfmassradiusstars))
+        #print(' ')
+        #print(dir(data_morph))
     
-    # Get new soap indicies
-    trackID_morph = data_morph.input_halos_hbtplus.track_id
-    soap_indicies_sample_morph = np.where(np.in1d(trackID_morph, trackID_sample))[0]       # limits to sample, but not in same order
-    trackID_morph_sample = trackID_morph[soap_indicies_sample_morph]
-    index_sort = np.where(trackID_morph_sample==trackID_sample[:,None])[1]
+        # Get new soap indicies
+        trackID_morph = data_morph.input_halos_hbtplus.track_id
+        soap_indicies_sample_morph = np.where(np.in1d(trackID_morph, trackID_sample))[0]       # limits to sample, but not in same order
+        trackID_morph_sample = trackID_morph[soap_indicies_sample_morph]
+        index_sort = np.where(trackID_morph_sample==trackID_sample[:,None])[1]
+    
+    
 
     # Get metadata from file
     z = data.metadata.redshift
@@ -16275,14 +16373,13 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], trackID_sample=[], sample_inp
 
         return stellar_vel_disp
         
-    if aperture_sigma == 'r50':
+    if (aperture_sigma == 'r50') & (use_interpolation == False):
         stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_halfmassradiusstars.stellar_velocity_dispersion_matrix')(data_morph))[soap_indicies_sample_morph][index_sort]
         stellar_vel_disp_matrix.convert_to_units(u.km**2 / u.s**2)
         stellar_vel_disp_matrix.convert_to_physical()
         stellar_vel_disp_plot = np.sqrt((stellar_vel_disp_matrix[:,0] + stellar_vel_disp_matrix[:,1] + stellar_vel_disp_matrix[:,2])/3)
         
-        
-        """
+    if use_interpolation:
         # old method with interpolation
         r50 = attrgetter('%s.%s'%(aperture, 'half_mass_radius_stars'))(data)[soap_indicies_sample]
         r50.convert_to_units('kpc')
@@ -16311,7 +16408,7 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], trackID_sample=[], sample_inp
             yinterp = np.interp(r50_i, x, y)
             stellar_vel_disp_plot.append(yinterp)
         stellar_vel_disp_plot = np.array(stellar_vel_disp_plot)
-        stellar_vel_disp_plot = cosmo_array(stellar_vel_disp_plot, (u.km / u.s), comoving=False, scale_factor=data.metadata.a, scale_exponent=0)   """     
+        stellar_vel_disp_plot = cosmo_array(stellar_vel_disp_plot, (u.km / u.s), comoving=False, scale_factor=data.metadata.a, scale_exponent=0)      
     else:
         stellar_vel_disp_plot = _compute_vel_disp(aperture_veldisp='50kpc')
     
@@ -16815,12 +16912,15 @@ def _etg_stelmass_veldisp(soap_indicies_sample=[], trackID_sample=[], sample_inp
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -16884,6 +16984,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], trackID_sample=[], sample_inpu
                      add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                      add_median_line = False,
                    add_detection_hist = True,
+                   use_interpolation = False,
                    #=====================================
                    showfig       = False,
                    savefig       = True,
@@ -16934,17 +17035,28 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], trackID_sample=[], sample_inpu
     data = sw.load(f'%s'%soap_catalogue_file)
     
     # Get Victor morphology data
-    soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N3008/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
-    data_morph = sw.load(f'%s'%soap_catalogue_file)
-    #print(dir(data_morph.exclusive_sphere_3xhalfmassradiusstars))
-    #print(' ')
-    #print(dir(data_morph))
+    if not use_interpolation:
+        if simulation_run == 'L200_m6' & simulation_type == 'THERMAL_AGN_m6':
+            soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N3008/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+        elif simulation_run == 'L100_m6' & simulation_type == 'HYBRID_AGN_m6':
+            soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0100N1504/Hybrid/SOAP_uncompressed/halo_properties_0127.hdf5'
+        elif simulation_run == 'L100_m6' & simulation_type == 'THERMAL_AGN_m6':
+            soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0100N1504/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+        elif simulation_run == 'L200_m7' & simulation_type == 'THERMAL_AGN_m7':
+            soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N1504/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+        else:
+            raise Exception('Victor morphology data not available for %s %s'%(simulation_run, simulation_type))
+        data_morph = sw.load(f'%s'%soap_catalogue_file)
+        #print(dir(data_morph.exclusive_sphere_3xhalfmassradiusstars))
+        #print(' ')
+        #print(dir(data_morph))
     
-    # Get new soap indicies
-    trackID_morph = data_morph.input_halos_hbtplus.track_id
-    soap_indicies_sample_morph = np.where(np.in1d(trackID_morph, trackID_sample))[0]       # limits to sample, but not in same order
-    trackID_morph_sample = trackID_morph[soap_indicies_sample_morph]
-    index_sort = np.where(trackID_morph_sample==trackID_sample[:,None])[1]                 # re-orderes to make consistent with [data]
+        # Get new soap indicies
+        trackID_morph = data_morph.input_halos_hbtplus.track_id
+        soap_indicies_sample_morph = np.where(np.in1d(trackID_morph, trackID_sample))[0]       # limits to sample, but not in same order
+        trackID_morph_sample = trackID_morph[soap_indicies_sample_morph]
+        index_sort = np.where(trackID_morph_sample==trackID_sample[:,None])[1]                 # re-orderes to make consistent with [data]
+    
     
     
     # Get metadata from file
@@ -17002,13 +17114,13 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], trackID_sample=[], sample_inpu
         
         return eta_kin
     
-    if aperture_sigma == 'r50':
+    if (aperture_sigma == 'r50') & (use_interpolation == False):
         stellar_vel_disp_matrix = (attrgetter('exclusive_sphere_halfmassradiusstars.stellar_velocity_dispersion_matrix')(data_morph))[soap_indicies_sample_morph][index_sort]
         stellar_vel_disp_matrix.convert_to_units(u.km**2 / u.s**2)
         stellar_vel_disp_matrix.convert_to_physical()
         stellar_vel_disp_plot = np.sqrt((stellar_vel_disp_matrix[:,0] + stellar_vel_disp_matrix[:,1] + stellar_vel_disp_matrix[:,2])/3)
-        
-        """ # Old interpolation
+    if use_interpolation:
+        # Old interpolation
         r50 = attrgetter('%s.%s'%(aperture, 'half_mass_radius_stars'))(data)[soap_indicies_sample]
         r50.convert_to_units('kpc')
         r50.convert_to_physical()
@@ -17036,7 +17148,7 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], trackID_sample=[], sample_inpu
             yinterp = np.interp(r50_i, x, y)
             stellar_vel_disp_plot.append(yinterp)
         stellar_vel_disp_plot = np.array(stellar_vel_disp_plot)
-        stellar_vel_disp_plot = cosmo_array(stellar_vel_disp_plot, (u.km / u.s), comoving=False, scale_factor=data.metadata.a, scale_exponent=0) """       
+        stellar_vel_disp_plot = cosmo_array(stellar_vel_disp_plot, (u.km / u.s), comoving=False, scale_factor=data.metadata.a, scale_exponent=0)      
     else:
         stellar_vel_disp_plot = _compute_vel_disp(aperture_veldisp='50kpc')
     eta_kin_plot = _compute_eta_kin(stellar_vel_disp_plot, aperture_etakin='50')
@@ -17536,12 +17648,15 @@ def _etg_stelmass_etakin(soap_indicies_sample=[], trackID_sample=[], sample_inpu
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -17655,7 +17770,16 @@ def _etg_stelmass_etakinModified(soap_indicies_sample=[], trackID_sample=[], sam
     data = sw.load(f'%s'%soap_catalogue_file)
 
     # Get Victor morphology data
-    soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N3008/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+    if simulation_run == 'L200_m6' & simulation_type == 'THERMAL_AGN_m6':
+        soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N3008/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+    elif simulation_run == 'L100_m6' & simulation_type == 'HYBRID_AGN_m6':
+        soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0100N1504/Hybrid/SOAP_uncompressed/halo_properties_0127.hdf5'
+    elif simulation_run == 'L100_m6' & simulation_type == 'THERMAL_AGN_m6':
+        soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0100N1504/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+    elif simulation_run == 'L200_m7' & simulation_type == 'THERMAL_AGN_m7':
+        soap_catalogue_file = '/home/cosmos/c22048063/COLIBRE/outputs/complete_morphology_metrics/L0200N1504/Thermal/SOAP_uncompressed/halo_properties_0127.hdf5'
+    else:
+        raise Exception('Victor morphology data not available for %s %s'%(simulation_run, simulation_type))
     data_morph = sw.load(f'%s'%soap_catalogue_file)
     #print(dir(data_morph.exclusive_sphere_3xhalfmassradiusstars))
     #print(' ')
@@ -18257,12 +18381,15 @@ def _etg_stelmass_etakinModified(soap_indicies_sample=[], trackID_sample=[], sam
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -18665,12 +18792,15 @@ def _etg_lstar_h2mass(soap_indicies_sample=[], sample_input=[], title_text_in = 
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -19180,12 +19310,15 @@ def _etg_stelmass_coldgas_massflow(soap_indicies_sample=[], sample_input=[], tit
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -19254,8 +19387,8 @@ def _etg_stelmass_h2_massflow(soap_indicies_sample=[], sample_input=[], title_te
     #---------------------------
     # Graph initialising and base formatting
     if add_detection_hist:
-        fig = plt.figure(figsize=(10/2.5, 2.5))
-        gs  = fig.add_gridspec(1, 2,  width_ratios=(1, 3),
+        fig = plt.figure(figsize=(10/3, 2.5))
+        gs  = fig.add_gridspec(1, 2,  width_ratios=(0.7, 3),
                                   left=0.1, right=0.9, bottom=0.1, top=0.9,
                                   wspace=0.05, hspace=0.5)
         # Create the Axes.
@@ -19340,7 +19473,7 @@ def _etg_stelmass_h2_massflow(soap_indicies_sample=[], sample_input=[], title_te
     
     mask_inflow = gas_inflow > cosmo_quantity(1e-3, u.Msun/u.yr, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)  
     mask_inflow_SRs = np.logical_and.reduce([mask_inflow, mask_SRs])       # detection kappa < 0.4
-    
+    mask_inflow_h2 = np.logical_and.reduce([mask_h2, mask_inflow])
     
     #-----------------
     # Spearman with gas mass
@@ -19348,6 +19481,41 @@ def _etg_stelmass_h2_massflow(soap_indicies_sample=[], sample_input=[], title_te
     print('\nSpearman incl. FR:    M* - H2 gas_inflow >1e-3 rank: %.3f    p-value:   %.3e' %(res.statistic, res.pvalue))
     res = scipy.stats.spearmanr(stellar_mass[mask_inflow_SRs], gas_inflow[mask_inflow_SRs])
     print('Spearman excl. FR:    M* - H2 gas_inflow >1e-3 rank: %.3f    p-value:   %.3e' %(res.statistic, res.pvalue))
+
+
+    #-----------------
+    # incidence of H2 reservoirs
+    h2_detection_limit_i = h2_detection_limit
+    f_detected_i = len(stellar_mass[mask_inflow_h2])/len(stellar_mass[mask_inflow]) 
+    f_detected_err_i = binom_conf_interval(k=len(stellar_mass[mask_inflow_h2]), n=len(stellar_mass[mask_inflow]), confidence_level= 0.68269, interval='jeffreys')
+    f_detected_err_lower_i = f_detected_i - f_detected_err_i[0]
+    f_detected_err_upper_i = f_detected_err_i[1] - f_detected_i
+    print('\n  FRACTION OF INFLOW > 1E-3 WITH H2 > %.1e:      %.3f (-%.3f + %.3f),  count: %s / %s'%(h2_detection_limit_i, f_detected_i, f_detected_err_lower_i, f_detected_err_upper_i, len(stellar_mass[mask_inflow_h2]), len(stellar_mass[mask_inflow])))
+    
+    
+    #-----------------
+    # incidence of inflow among h2 reservoirs
+    mask_inflow_mod = gas_inflow > cosmo_quantity(1e-3, u.Msun/u.yr, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)  
+    mask_inflow_h2_mod = np.logical_and.reduce([mask_h2, mask_inflow_mod])
+    h2_detection_limit_i = h2_detection_limit
+    f_detected_i = len(stellar_mass[mask_inflow_h2_mod])/len(stellar_mass[mask_h2]) 
+    f_detected_err_i = binom_conf_interval(k=len(stellar_mass[mask_inflow_h2_mod]), n=len(stellar_mass[mask_h2]), confidence_level= 0.68269, interval='jeffreys')
+    f_detected_err_lower_i = f_detected_i - f_detected_err_i[0]
+    f_detected_err_upper_i = f_detected_err_i[1] - f_detected_i
+    print('\n  FRACTION OF H2 > %.1e WITH INFLOW > 1e-3:      %.3f (-%.3f + %.3f),  count: %s / %s'%(h2_detection_limit_i, f_detected_i, f_detected_err_lower_i, f_detected_err_upper_i, len(stellar_mass[mask_inflow_h2_mod]), len(stellar_mass[mask_h2])))
+    
+    
+    mask_inflow_mod = gas_inflow > cosmo_quantity(1e-1, u.Msun/u.yr, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)  
+    mask_inflow_h2_mod = np.logical_and.reduce([mask_h2, mask_inflow_mod])
+    h2_detection_limit_i = h2_detection_limit
+    f_detected_i = len(stellar_mass[mask_inflow_h2_mod])/len(stellar_mass[mask_h2]) 
+    f_detected_err_i = binom_conf_interval(k=len(stellar_mass[mask_inflow_h2_mod]), n=len(stellar_mass[mask_h2]), confidence_level= 0.68269, interval='jeffreys')
+    f_detected_err_lower_i = f_detected_i - f_detected_err_i[0]
+    f_detected_err_upper_i = f_detected_err_i[1] - f_detected_i
+    print('  FRACTION OF H2 > %.1e WITH INFLOW > 1e-1:      %.3f (-%.3f + %.3f),  count: %s / %s'%(h2_detection_limit_i, f_detected_i, f_detected_err_lower_i, f_detected_err_upper_i, len(stellar_mass[mask_inflow_h2_mod]), len(stellar_mass[mask_h2])))
+    
+    
+    
     
     
     #==========================================================
@@ -19505,7 +19673,7 @@ def _etg_stelmass_h2_massflow(soap_indicies_sample=[], sample_input=[], title_te
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C0',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line1 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C0', linewidth=1, label='excl. FRs, $\dot{M}^{\mathrm{H_2}}_{\mathrm{in}}>10^{-3}$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C0', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -19552,7 +19720,7 @@ def _etg_stelmass_h2_massflow(soap_indicies_sample=[], sample_input=[], title_te
         upper_1sigma_masked = np.ma.masked_where(bins_n < 10, upper_1sigma)
         
         axs.plot(np.flip(bin_centers), np.flip(medians_log), color='C1',   ls=(0, (1, 1)), linewidth=1, zorder=10, path_effects=[outline], alpha=0.9)
-        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs', zorder=20, path_effects=[outline], alpha=0.9)
+        line2 = axs.plot(np.flip(bin_centers), np.flip(medians_masked), color='C1', linewidth=1, label='incl. FRs, $\dot{M}^{\mathrm{H_2}}_{\mathrm{in}}>10^{-3}$', zorder=20, path_effects=[outline], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(lower_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         axs.plot(np.flip(bin_centers), np.flip(upper_1sigma_masked), color='C1', linewidth=0.6, ls=(5, (10, 3)), zorder=20, path_effects=[outline2], alpha=0.9)
         #axs.fill_between(bin_centers, lower_1sigma_masked, upper_1sigma_masked, color='k', alpha=0.3)
@@ -19687,12 +19855,15 @@ def _etg_stelmass_h2_massflow(soap_indicies_sample=[], sample_input=[], title_te
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -19761,8 +19932,8 @@ def _etg_stelmass_h1_massflow(soap_indicies_sample=[], sample_input=[], title_te
     #---------------------------
     # Graph initialising and base formatting
     if add_detection_hist:
-        fig = plt.figure(figsize=(10/2.5, 2.5))
-        gs  = fig.add_gridspec(1, 2,  width_ratios=(1, 3),
+        fig = plt.figure(figsize=(10/3, 2.5))
+        gs  = fig.add_gridspec(1, 2,  width_ratios=(0.7, 3),
                                   left=0.1, right=0.9, bottom=0.1, top=0.9,
                                   wspace=0.05, hspace=0.5)
         # Create the Axes.
@@ -20197,12 +20368,15 @@ def _etg_stelmass_h1_massflow(soap_indicies_sample=[], sample_input=[], title_te
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -20713,12 +20887,15 @@ def _etg_stelmass_net_coldgas_massflow(soap_indicies_sample=[], sample_input=[],
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -21225,12 +21402,15 @@ def _etg_stelmass_net_h2_massflow(soap_indicies_sample=[], sample_input=[], titl
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -21740,12 +21920,15 @@ def _etg_stelmass_net_h1_massflow(soap_indicies_sample=[], sample_input=[], titl
                   'all_LTGs_excl_redspiral': 'LTGs'
                   }
     title_run_dict = {'L100_m6': 'L100m6', 
-                      'L200_m6': 'L200m6'}
+                      'L200_m6': 'L200m6',
+					  'L200_m7': 'L200m7'}
     title_type_dict = {'THERMAL_AGN_m6': '',
+					   'THERMAL_AGN_m7': '',
                        'HYBRID_AGN_m6': 'h'}
     title_color_dict = {'L100m6': "#1B9E77", 
                         'L100m6h': "#D95F02", 
-                        'L200m6': "#7570B3"}
+                        'L200m6': "#7570B3",
+						'L200m7': "red"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
     text_title = r'<<%s>><<..>><<%s%s>>'%(run_name_title, title_dict[sample_input['name_of_preset']], title_text_in)
     if add_detection_hist:
@@ -21801,8 +21984,8 @@ def _etg_stelmass_net_h1_massflow(soap_indicies_sample=[], sample_input=[], titl
 
 #===================================================================================
 ### Load a sample from a given snapshot and a given run
-sim_box_size_name = 'L200_m6'
-sim_type_name     = 'THERMAL_AGN_m6'    # THERMAL_AGN_m6    HYBRID_AGN_m6
+sim_box_size_name = 'L100_m6'
+sim_type_name     = 'THERMAL_AGN_m6'    # THERMAL_AGN_m6    HYBRID_AGN_m6       THERMAL_AGN_m7
 snapshot_name     = '127'
 
 
@@ -21824,7 +22007,7 @@ soap_indicies_sample_all_ETGs_plus_redspiral,            trackid_sample_all_ETGs
 soap_indicies_sample_all_ETGs_plus_redspiral_centrals,   trackid_sample_all_ETGs_plus_redspiral_centrals, sample_input_all_ETGs_plus_redspiral_centrals   = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_centrals'%(sim_box_size_name, sim_type_name, snapshot_name))  
 soap_indicies_sample_all_ETGs_plus_redspiral_satellites, _, sample_input_all_ETGs_plus_redspiral_satellites   = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_satellites'%(sim_box_size_name, sim_type_name, snapshot_name))  
 soap_indicies_sample_all_ETGs_plus_redspiral_cluster,    _, sample_input_all_ETGs_plus_redspiral_cluster    = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_cluster'%(sim_box_size_name, sim_type_name, snapshot_name)) 
-soap_indicies_sample_all_ETGs_plus_redspiral_cluster_centrals,    _, sample_input_all_ETGs_plus_redspiral_cluster_centrals    = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_cluster_centrals'%(sim_box_size_name, sim_type_name, snapshot_name)) 
+#soap_indicies_sample_all_ETGs_plus_redspiral_cluster_centrals,    _, sample_input_all_ETGs_plus_redspiral_cluster_centrals    = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_cluster_centrals'%(sim_box_size_name, sim_type_name, snapshot_name)) 
 soap_indicies_sample_all_ETGs_plus_redspiral_groupfield, _, sample_input_all_ETGs_plus_redspiral_groupfield = _load_soap_sample(sample_dir, csv_sample = '%s_%s_%s_sample_all_ETGs_plus_redspiral_groupfield'%(sim_box_size_name, sim_type_name, snapshot_name)) 
 
 ### Load LTGs excl. FRs
@@ -21832,6 +22015,7 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
 #centrals
 #satellites                                                                                                                                                         
 #===================================================================================
+
 
 
 
@@ -21934,18 +22118,18 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
 #==========================================
 ###     H2 plots: environment
 # Plot M200c mass - H2 mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_m200c_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_count',         # [ scatter_old / scatter_new / hexbin_count / hexbin_H2 ]
                         add_median_line = True,
-                        savefig       = True)"""
+                        savefig       = True)
 #------------
 # Plot stelmass - M200c mass
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_m200c(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         savefig       = True,
-                          savefig_txt = 'graph format')"""
+                          savefig_txt = 'graph format')
 # 10 kpc test
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_m200c(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
@@ -22002,11 +22186,11 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
 #==========================================
 ###     ETG H2 plots: H2 morph and extent
 # Plot stelmass - r50 projected
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         use_projected = True,
-                        savefig       = True)"""
+                        savefig       = True)
 # 10 kpc H2 test
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
@@ -22030,11 +22214,11 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
                         savefig       = True)"""
 #-------------
 # Plot stelmass - r50 H2 projected, detected only
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         use_projected = True,
-                        savefig       = True)"""
+                        savefig       = True)
 # 10 kpc H2 test
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
@@ -22072,11 +22256,11 @@ soap_indicies_sample_all_LTGs_excl_redspiral,            _, sample_input_all_LTG
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         savefig       = True)"""
 # Plot stelmass - r50 H2 / r50 projected
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_LTGs_excl_redspiral], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_LTGs_excl_redspiral]):
     _etg_stelmass_r50r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         use_projected = True,
-                        savefig       = True)"""
+                        savefig       = True)
 #------------
 # Plot r50 - r50 HI, detected only
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
@@ -22193,7 +22377,7 @@ for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indici
                         savefig       = True)"""
 #--------------
 # Plot stelmass - triax
-for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_triax(soap_indicies_sample=soap_indicies_sample_i, trackID_sample = trackid_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         use_projected = False,
@@ -22204,7 +22388,7 @@ for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indici
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         aperture_h2 = 'exclusive_sphere_10kpc',
                         use_projected = False,
-                        savefig       = True)
+                        savefig       = True)"""
 #--------------
 # Plot stelmass - kappaco stars
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals, soap_indicies_sample_all_ETGs_plus_redspiral_satellites], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals, sample_input_all_ETGs_plus_redspiral_satellites]):
@@ -22213,11 +22397,11 @@ for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indici
                         savefig       = True)"""
 #------------
 # Plot stelmass - kappaco stars, but with red
-"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_kappaco_red(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         savefig       = True,
-                          savefig_txt = 'WITH_RED')"""
+                          savefig_txt = 'WITH_RED')
 # 10 kpc test
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_kappaco_red(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
@@ -22231,12 +22415,12 @@ for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indici
 #==========================================
 ###     ETG H2 plots: galaxy kinematics    
 # Returns stelmass - veldisp, (r50 from victor)
-"""for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_veldisp(soap_indicies_sample=soap_indicies_sample_i, trackID_sample = trackid_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         savefig       = True)
 # 10 kpc test
-for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_veldisp(soap_indicies_sample=soap_indicies_sample_i, trackID_sample = trackid_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         aperture_h2 = 'exclusive_sphere_10kpc',
@@ -22250,12 +22434,12 @@ for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indici
                         savefig_txt = '_ETAKIN_50KPC')"""
 #---------------              
 # Returns stelmass - eta kin = Msun^1/3 / sigma, Msun^1/3 km-1 s , (r50 from victor)
-"""for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_etakin(soap_indicies_sample=soap_indicies_sample_i, trackID_sample = trackid_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         savefig       = True)
 # 50 kpc kinematic aperture
-for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
     _etg_stelmass_etakin(soap_indicies_sample=soap_indicies_sample_i, trackID_sample = trackid_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                         aperture_sigma = 'exclusive_sphere_50kpc',
@@ -22288,10 +22472,6 @@ for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indici
 
 
 
-
-
-
-                        
 #==========================================  
 ###     ETG H2 plots: gas mass flow  
 # Returns stelmass - cold gas (T < 1000 K) inflow at 0.1r200c, 0.3r200c, and r200c for CENTRALS
@@ -22300,9 +22480,9 @@ for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indici
         _etg_stelmass_coldgas_massflow(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
                           inflow_radius = radius_i,        # [ 0.1 / 0.3 / 1.0 ]
-                        savefig       = True)             
+                        savefig       = True)"""         
 # Returns stelmass - HI inflow at 0.1r200c, 0.3r200c, and r200c for CENTRALS
-for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral_centrals]):
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral_centrals]):
     for radius_i in ['0.1', '0.3', '1.0']:
         _etg_stelmass_h1_massflow(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
@@ -22313,10 +22493,9 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
     for radius_i in ['0.1', '0.3', '1.0']:
         _etg_stelmass_h2_massflow(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
                             scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
-                            add_detection_hist = False,
                               inflow_radius = radius_i,        # [ 0.1 / 0.3 / 1.0 ]
                             savefig       = True,
-                              savefig_txt = '_PAPERFORMAT') """     
+                              savefig_txt = '_PAPERFORMAT')  """ 
 #----------------
 # Returns stelmass - NET cold gas (T < 1000 K) inflow at 0.1r200c, 0.3r200c, and r200c for CENTRALS
 """for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral_centrals]):
@@ -22343,6 +22522,53 @@ for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs
                         
                         
                             
-                            
+#==========================================  
+###         m7 resolution analysis
+# Mstar - H2 mass
+"""for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+    _etg_stelmass_h2mass(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        scatter_or_hexbin       = 'hexbin_count',         # [ scatter_old / scatter_new / hexbin_count / hexbin_H2 ]
+                          add_median_line      = True,
+                          print_fdet = True,
+                          print_typical_galaxy = True,
+                        savefig       = True)
+# Mstar - H2 mass fraction
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+    _etg_stelmass_h2massfraction(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_new / hexbin_count / hexbin_H2 ]
+                          add_median_line      = True,
+                          print_fdet = True,
+                        savefig       = True)
+# Mstar - r50 proj
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+    _etg_stelmass_r50(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
+                        use_projected = True,
+                        savefig       = True)
+# Mstar - r50H2 proj
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+    _etg_stelmass_r50H2(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
+                        use_projected = True,
+                        savefig       = True)
+# Mstar - kappaco
+for soap_indicies_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+    _etg_stelmass_kappaco(soap_indicies_sample=soap_indicies_sample_i, sample_input=sample_input_i,
+                        scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
+                        savefig       = True)"""
+# Mstar - sigma
+"""for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+    _etg_stelmass_veldisp(soap_indicies_sample=soap_indicies_sample_i, trackID_sample = trackid_sample_i, sample_input=sample_input_i,
+                        scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
+                        use_interpolation = True,
+                        savefig       = True)
+# Mstar - etakin
+for soap_indicies_sample_i, trackid_sample_i, sample_input_i in zip([soap_indicies_sample_all_ETGs_plus_redspiral, soap_indicies_sample_all_ETGs_plus_redspiral_centrals], [trackid_sample_all_ETGs_plus_redspiral, trackid_sample_all_ETGs_plus_redspiral_centrals], [sample_input_all_ETGs_plus_redspiral, sample_input_all_ETGs_plus_redspiral_centrals]):
+    _etg_stelmass_etakin(soap_indicies_sample=soap_indicies_sample_i, trackID_sample = trackid_sample_i, sample_input=sample_input_i,
+                        scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
+                        use_interpolation = True,
+                        savefig       = True)"""
+
+           
 
 

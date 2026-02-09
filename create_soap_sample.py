@@ -1324,22 +1324,24 @@ _create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m
 
 #=====================
 # Create samples of massive >109.5 galaxies that are red (u-r > 2)
-_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_red',
                     csv_file = True)
-_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_red_centrals',
                     csv_file = True)
-_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'HYBRID_AGN_m6', 
+"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'HYBRID_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_red',
                     csv_file = True)
 _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'HYBRID_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_red_centrals',
-                    csv_file = True)
+                    csv_file = True)"""
+
+
 
 
 #=====================
@@ -1347,8 +1349,8 @@ _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'HYBRID_AGN_m6
 """_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_ETGs',
-                    csv_file = True)
-_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    csv_file = True)"""
+"""_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_ETGs_centrals',
                     csv_file = True)
@@ -1369,8 +1371,8 @@ _create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m
 """_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_ETGs_plus_redspiral',
-                    csv_file = True)
-_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    csv_file = True)"""
+"""_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_ETGs_plus_redspiral_centrals',
                     csv_file = True)
