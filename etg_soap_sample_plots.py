@@ -140,7 +140,7 @@ def _sample_stelmass_u_r(csv_sample = '',  title_text_in = '',
     print('Number of LTG kappa>0.4 and u-r<2:               %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['LTG'], dict_sample_numbers['kappa_mag_cut']['LTG']/dict_sample_numbers['total']))
     print('                   of which u-r>2:               %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['LTG_red'], dict_sample_numbers['kappa_mag_cut']['LTG_red']/dict_sample_numbers['kappa_mag_cut']['LTG']))
     print('Number of ETG kappa<0.4 or kappa>0.4 + u-r>2:    %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG'], dict_sample_numbers['kappa_mag_cut']['ETG']/dict_sample_numbers['total']))
-    print('                              of which u-r>2:    %s  (%.3f)' %(dict_sample_numbers['kappa_mag_cut']['ETG_red'], dict_sample_numbers['kappa_mag_cut']['ETG_red']/dict_sample_numbers['kappa_mag_cut']['ETG']))
+    print('                              of which u-r>2:    %s  (%.3f) of ETG sample is red' %(dict_sample_numbers['kappa_mag_cut']['ETG_red'], dict_sample_numbers['kappa_mag_cut']['ETG_red']/dict_sample_numbers['kappa_mag_cut']['ETG']))
     
     # Plot scatter
     ax_scat.scatter(np.log10(stellar_mass), mag_plot, c=kappa_stars, s=1.5, cmap=mymap, norm=norm, marker='o', linewidths=0, edgecolor='none', alpha=0.75)
@@ -856,6 +856,7 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
                           aperture = 'exclusive_sphere_50kpc', 
                           #----------
                           add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
+                          include_m7 = False,
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -899,6 +900,9 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
             simulation_dir  = sample_input['simulation_dir']
             soap_catalogue_file = sample_input['soap_catalogue_file']
             data = sw.load(f'%s'%soap_catalogue_file)
+            
+            if simulation_run == 'L200_m7':
+                include_m7 = True
     
             # Get metadata from file
             z = data.metadata.redshift
@@ -1423,8 +1427,11 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
             {"color": "white"},
             {"color": "black"}
         ])"""
-    ax2.set_title(r'L100m6%s' %(title_text_in), size=7, x=0.1, y=1.02, pad=3, c=title_color_dict['L100m6'], bbox={"edgecolor": title_color_dict['L100m6'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
     ax1.set_title(r'L200m6%s' %(title_text_in), size=7, x=0.1, y=1.02, pad=3, c=title_color_dict['L200m6'], bbox={"edgecolor": title_color_dict['L200m6'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
+    if include_m7:
+        ax2.set_title(r'L200m7%s' %(title_text_in), size=7, x=0.1, y=1.02, pad=3, c=title_color_dict['L200m7'], bbox={"edgecolor": title_color_dict['L200m7'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
+    else:
+        ax2.set_title(r'L100m6%s' %(title_text_in), size=7, x=0.1, y=1.02, pad=3, c=title_color_dict['L100m6'], bbox={"edgecolor": title_color_dict['L100m6'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
     ax3.set_title(r'L100m6h%s' %(title_text_in), size=7, x=0.12, y=1.02, pad=3, c=title_color_dict['L100m6h'], bbox={"edgecolor": title_color_dict['L100m6h'], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'})
     
     
@@ -1445,7 +1452,6 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
         plt.show()
     plt.close()
 
-
 #------------------
 # Returns H2 mass function for given set of samples
 def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
@@ -1454,6 +1460,7 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
                           aperture_h2 = 'exclusive_sphere_50kpc', 
                           #----------
                           add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
+                          limit_atlas3d_mass = False,
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -1536,6 +1543,14 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
         H2_mass.convert_to_units('Msun')
     
         central_sat = attrgetter('input_halos.is_central')(data)[soap_indicies_sample]
+        
+        # Limit M* to within 10**11.3 to mimic atlas3d better
+        if limit_atlas3d_mass:
+            atlas_mask = stellar_mass < cosmo_quantity(10**(11.3), u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+            
+            stellar_mass = stellar_mass[atlas_mask]
+            H2_mass = H2_mass[atlas_mask]
+            central_sat = central_sat[atlas_mask]
     
     
         #---------------
@@ -1570,21 +1585,21 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
         ms_i    = dict_ms[sample_input['name_of_preset']]
         if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
             if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
-                label_i = ''
+                label_i = dict_labels[sample_input['name_of_preset']]
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = '--'
+                ls_i    = '-'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
             elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
-                label_i = ''
+                label_i = dict_labels[sample_input['name_of_preset']]
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = '--'
+                ls_i    = '-'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
             else:
-                label_i = dict_labels[sample_input['name_of_preset']]
+                label_i = ''
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = dict_ls[sample_input['name_of_preset']]
+                ls_i    = '--'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
         
@@ -1792,8 +1807,8 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
         label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
     
         # Custom lines for black and dashed
-        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
-        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
     
     
     #-----------
@@ -1846,6 +1861,7 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
                           aperture_h2 = 'exclusive_sphere_50kpc', 
                           #----------
                           add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
+                          limit_atlas3d_mass = False,
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -1928,7 +1944,16 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
         H2_mass.convert_to_units('Msun')
     
         central_sat = attrgetter('input_halos.is_central')(data)[soap_indicies_sample]
-    
+
+        
+        # Limit M* to within 10**11.3 to mimic atlas3d better
+        if limit_atlas3d_mass:
+            atlas_mask = stellar_mass < cosmo_quantity(10**(11.3), u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+            
+            stellar_mass = stellar_mass[atlas_mask]
+            H2_mass = H2_mass[atlas_mask]
+            central_sat = central_sat[atlas_mask]
+            
         #======================
         # Calculated values
         #H2_mass_fraction = np.divide(H2_mass, H2_mass + stellar_mass)
@@ -1967,21 +1992,21 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
         ms_i    = dict_ms[sample_input['name_of_preset']]
         if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
             if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
-                label_i = ''
+                label_i = dict_labels[sample_input['name_of_preset']]
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = '--'
+                ls_i    = '-'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
             elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
-                label_i = ''
+                label_i = dict_labels[sample_input['name_of_preset']]
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = '--'
+                ls_i    = '-'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
             else:
-                label_i = dict_labels[sample_input['name_of_preset']]
+                label_i = ''
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = dict_ls[sample_input['name_of_preset']]
+                ls_i    = '--'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
         
@@ -2099,8 +2124,8 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
         label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
     
         # Custom lines for black and dashed
-        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
-        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
     
     
     #-----------
@@ -2155,6 +2180,7 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
                           aperture_h1 = 'exclusive_sphere_50kpc', 
                           #----------
                           add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
+                          limit_atlas3d_mass = False,
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -2238,7 +2264,14 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
     
         central_sat = attrgetter('input_halos.is_central')(data)[soap_indicies_sample]
     
-    
+        # Limit M* to within 10**11.3 to mimic atlas3d better
+        if limit_atlas3d_mass:
+            atlas_mask = stellar_mass < cosmo_quantity(10**(11.3), u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+            
+            stellar_mass = stellar_mass[atlas_mask]
+            H1_mass = H1_mass[atlas_mask]
+            central_sat = central_sat[atlas_mask]
+            
         #---------------
         # Histograms   
         hist_bin_width = 0.2
@@ -2272,21 +2305,21 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
         ms_i    = dict_ms[sample_input['name_of_preset']]
         if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
             if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
-                label_i = ''
+                label_i = dict_labels[sample_input['name_of_preset']]
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = '--'
+                ls_i    = '-'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
             elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
-                label_i = ''
+                label_i = dict_labels[sample_input['name_of_preset']]
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = '--'
+                ls_i    = '-'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
             else:
-                label_i = dict_labels[sample_input['name_of_preset']]
+                label_i = ''
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = dict_ls[sample_input['name_of_preset']]
+                ls_i    = '--'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
         
@@ -2475,8 +2508,8 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
         label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
     
         # Custom lines for black and dashed
-        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
-        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
     
     
     #-----------
@@ -2530,6 +2563,7 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
                           aperture_h1 = 'exclusive_sphere_50kpc', 
                           #----------
                           add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
+                          limit_atlas3d_mass = False,
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -2612,6 +2646,14 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
         H1_mass.convert_to_units('Msun')
     
         central_sat = attrgetter('input_halos.is_central')(data)[soap_indicies_sample]
+        
+        # Limit M* to within 10**11.3 to mimic atlas3d better
+        if limit_atlas3d_mass:
+            atlas_mask = stellar_mass < cosmo_quantity(10**(11.3), u.Msun, comoving=False, scale_factor=data.metadata.a, scale_exponent=0)
+            
+            stellar_mass = stellar_mass[atlas_mask]
+            H1_mass = H1_mass[atlas_mask]
+            central_sat = central_sat[atlas_mask]
     
         #======================
         # Calculated values
@@ -2651,21 +2693,21 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
         ms_i    = dict_ms[sample_input['name_of_preset']]
         if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
             if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
-                label_i = ''
+                label_i = dict_labels[sample_input['name_of_preset']]
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = '--'
+                ls_i    = '-'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
             elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
-                label_i = ''
+                label_i = dict_labels[sample_input['name_of_preset']]
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = '--'
+                ls_i    = '-'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
             else:
-                label_i = dict_labels[sample_input['name_of_preset']]
+                label_i = ''
                 linecol = dict_colors[sample_input['name_of_preset']]
-                ls_i    = dict_ls[sample_input['name_of_preset']]
+                ls_i    = '--'
                 ms_i    = dict_ms[sample_input['name_of_preset']]
                 alpha_i = 1
         
@@ -2780,8 +2822,8 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
         label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
     
         # Custom lines for black and dashed
-        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
-        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
     
     
     #-----------
@@ -2869,6 +2911,12 @@ _sample_stellar_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_
                                   csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
                      savefig       = True)"""
+_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                                  csv_samples2 = ['L200_m7_THERMAL_AGN_m7_127_sample_all_galaxies', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                                  csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     showfig       = False,
+                       savefig_txt = 'm7',
+                     savefig       = True)
 
 
 
@@ -2937,14 +2985,30 @@ _sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ET
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                      savefig       = True)"""
+#---------------
+# limit sample to M* < 1011.3 to mimic atlas3d better
+"""_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h1 = 'exclusive_sphere_50kpc',
+                          limit_atlas3d_mass = True,
+                          title_text_in = 'excl. high-M*',
+                          savefig_txt = '_exclhighmass', 
+                         showfig       = False,
+                         savefig       = True)"""
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h1 = 'exclusive_sphere_50kpc',
+                          limit_atlas3d_mass = True,
+                          title_text_in = 'excl. high-M*',
+                          savefig_txt = '_exclhighmass', 
+                         showfig       = False,
+                         savefig       = True)"""
 #--------------------
 # thermal + hybrid:
-_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
                        savefig_txt = '_HYBRID_THERMAL')
-"""_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
@@ -3018,9 +3082,25 @@ _sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_a
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                      savefig       = True)"""
+#---------------
+# limit sample to M* < 1011.3 to mimic atlas3d better
+"""_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h1 = 'exclusive_sphere_50kpc',
+                          limit_atlas3d_mass = True,
+                          title_text_in = 'excl. high-M*',
+                          savefig_txt = '_exclhighmass', 
+                         showfig       = False,
+                         savefig       = True)"""
+"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h1 = 'exclusive_sphere_50kpc',
+                          limit_atlas3d_mass = True,
+                          title_text_in = 'excl. high-M*',
+                          savefig_txt = '_exclhighmass', 
+                         showfig       = False,
+                         savefig       = True)"""
 #-------------------
 # thermal + hybrid:
-_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_H1_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
@@ -3029,7 +3109,7 @@ _sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
-                       savefig_txt = '_m6_m7')
+                       savefig_txt = '_m6_m7')"""
 
 
 
@@ -3100,6 +3180,22 @@ _sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_E
                         savefig_txt = 'satellites', 
                      savefig       = True)   """  
 #---------------
+# limit sample to M* < 1011.3 to mimic atlas3d better
+"""_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                          limit_atlas3d_mass = True,
+                          title_text_in = 'excl. high-M*',
+                          savefig_txt = '_exclhighmass', 
+                         showfig       = False,
+                         savefig       = True)"""
+"""_sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                          limit_atlas3d_mass = True,
+                          title_text_in = 'excl. high-M*',
+                          savefig_txt = '_exclhighmass', 
+                         showfig       = False,
+                         savefig       = True)"""
+#---------------
 # thermal + hybrid:
 """_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h2 = 'exclusive_sphere_50kpc',
@@ -3110,7 +3206,7 @@ _sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_E
                      aperture_h2 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
-                       savefig_txt = '_m6_m7') """ 
+                       savefig_txt = '_m6_m7') """
 
 
 
@@ -3181,6 +3277,22 @@ _sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_
                         title_text_in = 'satellites',
                         savefig_txt = 'satellites', 
                      savefig       = True)  """ 
+#---------------
+# limit sample to M* < 1011.3 to mimic atlas3d better
+"""_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                          limit_atlas3d_mass = True,
+                          title_text_in = 'excl. high-M*',
+                          savefig_txt = '_exclhighmass', 
+                         showfig       = False,
+                         savefig       = True)"""
+"""_sample_H2_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                          limit_atlas3d_mass = True,
+                          title_text_in = 'excl. high-M*',
+                          savefig_txt = '_exclhighmass', 
+                         showfig       = False,
+                         savefig       = True)"""
 #----------------
 # thermal + hybrid:
 """_sample_H2_mass_frac_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],

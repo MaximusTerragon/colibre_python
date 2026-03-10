@@ -282,7 +282,7 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
     axs_top.set_xticks(ageticks)
     
     axs.set_xlim(0, 8)
-    axs.set_xlabel('Lookbacktime [Gyr]')
+    axs.set_xlabel('Lookback time [Gyr]')
     #axs.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='major')
     #axs.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='minor')
     axs.invert_xaxis()
