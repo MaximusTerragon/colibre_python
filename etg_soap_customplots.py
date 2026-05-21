@@ -2182,26 +2182,26 @@ def _etg_stelmass_etakin(csv_samples = [], title_text_in = '',
 
 #=====================================
 # Plots 3 graphs with only median lines: stelmass - H2, stelmass - H2/M*, stelmass - r50H2 projected
-"""_stelmass_H2_H2frac_r50H2(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+_stelmass_H2_H2frac_r50H2(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                          aperture_h2 = 'exclusive_sphere_50kpc',
-                           use_projected = True,
+                           use_projected = False,
                          showfig       = False,
-                         savefig       = True)"""
+                         savefig       = True)
 
 
 #--------------
 # Plot stelmass - kappaco stars
-_etg_stelmass_kappaco(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_etg_stelmass_kappaco(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                         aperture_h2 = 'exclusive_sphere_50kpc',
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
-                        savefig       = True)
+                        savefig       = True)"""
 
 #---------------              
 # Returns stelmass - eta kin = Msun^1/3 / sigma, Msun^1/3 km-1 s , (r50 from victor)
-_etg_stelmass_etakin(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_etg_stelmass_etakin(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                         aperture_h2 = 'exclusive_sphere_50kpc',
                         scatter_or_hexbin       = 'hexbin_H2',         # [ scatter_old / scatter_kappa / scatter_new / hexbin_count / hexbin_H2 ]
-                        savefig       = True)
+                        savefig       = True)"""
 
 
 

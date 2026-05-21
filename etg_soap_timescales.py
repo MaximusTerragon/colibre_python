@@ -64,11 +64,13 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
                           aperture_h2 = 'exclusive_sphere_50kpc', 
                             h2_detection_limit = 10**7,
                           plot_lowStelmass = True,
+                          only_use_SRs = False,
                           #=====================================
                           showfig       = False,
                           savefig       = True,
                             file_format = 'pdf',
                             savefig_txt = '', 
+                            csv_file = True,
                           #--------------------------
                           print_progress = False,
                             debug = False):
@@ -85,6 +87,7 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
     simulation_type = sample_input['simulation_type']
     snapshot_no     = sample_input['snapshot_no']
     simulation_dir  = sample_input['simulation_dir']
+    name_of_preset  = sample_input['name_of_preset']
     soap_catalogue_file = sample_input['soap_catalogue_file']
     data = sw.load(f'%s'%soap_catalogue_file)
     
@@ -245,9 +248,31 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
         
     
     #=====================================
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            ''' Special json encoder for numpy types '''
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                  
+        # Combining all dictionaries
+        csv_dict = dict_class
+                    
+        json.dump(csv_dict, open('%s/etg_time_analysis/%s_%s_H2_ETG_popdecay_%s%s.csv' %(fig_dir, simulation_run, simulation_type, name_of_preset), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/etg_time_analysis/%s_%s_H2_ETG_popdecay_%s%s.csv' %(fig_dir, simulation_run, simulation_type, name_of_preset))
+    
+    
+    #=====================================
     # Graph initialising and base formatting
     fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
     
     #-----------
     # Plotting
@@ -349,7 +374,134 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
         plt.show()
     plt.close()
     
+
+#---------------
+# Returns population decay of ETG samples
+def _h2_etg_timescale_manual(csv_1 = 'csv_1',
+                             csv_2 = 'csv_2',
+                          #=====================================
+                          showfig       = False,
+                          savefig       = True,
+                            file_format = 'pdf',
+                            savefig_txt = '', 
+                          #--------------------------
+                          print_progress = False,
+                            debug = False):
     
+    #=====================================
+    # Load data
+    dict_class_1 = json.load(open('%s/etg_time_analysis/%s.csv' %(fig_dir, csv_1), 'r'))
+    dict_class_2 = json.load(open('%s/etg_time_analysis/%s.csv' %(fig_dir, csv_2), 'r'))
+    
+    
+    
+    
+    
+    #=====================================
+    # Graph initialising and base formatting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    #-----------
+    # Plotting
+    colors = {'etg_h2': 'orangered',
+              'etg_non': 'orange',
+              'ltg_h2': 'mediumblue',
+              'ltg_non': 'cornflowerblue',
+              'min_Mstar': 'grey',
+              }
+    
+    x1 = np.array(dict_class_1['lookbacktime'])
+    y1 = np.zeros(len(dict_class_1['etg_h2']))
+    y2 = np.array(dict_class_1['etg_h2'])/(dict_class_1['total'][0])
+    #axs.fill_between(x1, y1, y2, alpha=0.9, fc=colors['etg_h2'], zorder=-5, label='$\mathrm{H_{2}}$ ETGs (incl. FRs)')
+    axs.plot(x1, y2, ls='-', linewidth=1, c='C1', zorder=-3, path_effects=[outline], label='$\mathrm{H_{2}}$ ETGs (incl. FRs)')
+    print('Number of snaps plotted csv_1: ', len(np.array(dict_class_1['lookbacktime'])))
+    
+    x1 = np.array(dict_class_2['lookbacktime'])
+    y1 = np.zeros(len(dict_class_2['etg_h2']))
+    y2 = np.array(dict_class_2['etg_h2'])/(dict_class_2['total'][0])
+    #axs.fill_between(x1, y1, y2, alpha=0.9, fc=colors['etg_h2'], zorder=-5, label='$\mathrm{H_{2}}$ ETGs (excl. FRs)')
+    axs.plot(x1, y2, ls='-', linewidth=1, c='C0', zorder=-3, path_effects=[outline], label='$\mathrm{H_{2}}$ ETGs (excl. FRs)')
+    print('Number of snaps plotted csv_2: ', len(np.array(dict_class_2['lookbacktime'])))
+      
+    
+    #-----------
+    # Axis formatting
+    redshiftticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 1, 1.5, 2, 5, 10, 20]
+    ageticks = 13.8205298 - FlatLambdaCDM(H0=68.1, Om0=0.306, Ob0 = 0.0486).age(redshiftticks).value
+    axs_top = axs.twiny()
+    axs_top.set_xticks(ageticks)
+    
+    axs.set_xlim(0, 8)
+    axs.set_xlabel('Lookback time [Gyr]')
+    #axs.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='major')
+    #axs.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='minor')
+    axs.invert_xaxis()
+    
+    axs_top.set_xlim(0, 8)
+    axs_top.set_xlabel('Redshift')
+    #axs_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major')
+    #axs_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
+    axs_top.set_xticklabels(['{:g}'.format(z_i) for z_i in redshiftticks])
+    ax_top.invert_xaxis()
+    
+    axs.set_ylim(0, 1)
+    if only_use_SRs:
+        axs.set_ylabel('Fraction of $M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$\nETG population at $z=0$')
+    else:
+        axs.set_ylabel('Fraction of $M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$\nETG population at $z=0$')
+    axs.tick_params(axis='x', which='minor')
+    axs.tick_params(axis='y', which='minor')
+    axs.minorticks_on()
+    
+    
+    #-----------  
+    # Annotations
+    #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    
+    #-----------
+    # Title
+    title_run_dict = {'L100_m6': 'L100m6', 
+                      'L200_m6': 'L200m6'}
+    title_type_dict = {'THERMAL_AGN_m6': '',
+                       'HYBRID_AGN_m6': 'h'}
+    title_color_dict = {'L100m6': "#1B9E77", 
+                        'L100m6h': "#D95F02", 
+                        'L200m6': "#7570B3"}
+    run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
+    text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
+    fig_text(x=0.135, y=1.01, ha='left', s=text_title, fontsize=7, ax=axs,
+        highlight_textprops=[
+            {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
+            {"color": "white"},
+            {"color": "black"}
+        ])
+    
+    
+    #-----------
+    # Legend
+    # Shrink current axis by 20%
+    #box = axs.get_position()
+    #axs.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    # Put a legend to the right of the current axis
+    #axs.legend(loc='center left', frameon=False, labelspacing=0.9, labelcolor='linecolor', handlelength=0, bbox_to_anchor=(1, 0.5), handletextpad=0.2, alignment='center')
+        
+    #-----------
+    # other
+    #plt.tight_layout()
+    
+    if savefig:
+        savefig_txt_save = aperture_h2 + '_' + savefig_txt
+        
+        plt.savefig("%s/etg_time_analysis/%s_%s_ETG_z=0_H2_popdecay%s%s_onlyH2ETG.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], ('_exclFRs' if only_use_SRs else ''), savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
+        print("\n  SAVED: %s/etg_time_analysis/%s_%s_ETG_z=0_H2_popdecay%s%s_onlyH2ETG.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], ('_exclFRs' if only_use_SRs else ''), savefig_txt_save, file_format))
+    if showfig:
+        plt.show()
+    plt.close()
+    
+
 
 #-------------------
 # RUN ON COSMA FOR MORE HALO_PROPERTIES FILES
@@ -370,8 +522,22 @@ _etg_sample_timescales(z0_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_p
                            only_use_SRs = False,
                          showfig       = False,
                          savefig       = True)
+                         
+_etg_sample_timescales(z0_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs',
+                           #snapshot_list = [127, 119, 114, 110],    # np.flip(np.arange(88, 128, 1))
+                           snapshot_list = np.flip(np.arange(90, 128, 1)),    # np.flip(np.arange(88, 128, 1))
+                           plot_lowStelmass = True,     # includes category where the etg ends up below stelmass limit
+                           title_text_in = '',
+                           only_use_SRs = True,
+                         showfig       = False,
+                         savefig       = True)                         
 
-
+#-------------------
+# RUN LOCAL
+"""_h2_etg_timescale_manual(csv_1 = 'csv_1',
+                            csv_2 = 'csv_2',
+                              showfig       = False,
+                              savefig       = True)"""
 
 
 

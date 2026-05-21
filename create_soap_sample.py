@@ -1175,6 +1175,151 @@ def _create_soap_sample(simulation_run = '',
     elif name_of_preset == 'test_galaxies':
         soap_indicies = np.array([482830, 7088094])
         selection_criteria = {}
+    elif name_of_preset == 'all_galaxies_109':
+        # Used parameters
+        min_stelmass     = 10**(9)
+        max_stelmass     = 1e15
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass}
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
+    elif name_of_preset == 'all_ETGs_109':
+        # Used parameters
+        min_stelmass     = 10**(9)
+        max_stelmass     = 1e15
+        kappa_co_ETG     = 0.4          # will select less than
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'kappa_co_ETG': kappa_co_ETG}
+        
+        # Create additional criteria
+        kappa_condition = cosmo_quantity(kappa_co_ETG, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        kappa_co    = swiftdata.exclusive_sphere_50kpc.kappa_corot_stars
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           kappa_co < kappa_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
+    elif name_of_preset == 'all_ETGs_plus_redspiral_109':
+        # Used parameters
+        min_stelmass     = 10**(9)
+        max_stelmass     = 1e15
+        kappa_co_ETG     = 0.4
+        u_r_min          = 2    # will include kappa above but for which u-r is above this
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'kappa_co_ETG': kappa_co_ETG, 'u_r_min': u_r_min}
+        
+        # Create additional criteria
+        kappa_condition = cosmo_quantity(kappa_co_ETG, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        kappa_co    = swiftdata.exclusive_sphere_50kpc.kappa_corot_stars
+        u_mag50 = -2.5*np.log10((attrgetter('exclusive_sphere_50kpc.stellar_luminosity')(sw.load(f'{soap_dir}halo_properties_0{snapshot_no}.hdf5')))[:,0])
+        r_mag50 = -2.5*np.log10((attrgetter('exclusive_sphere_50kpc.stellar_luminosity')(sw.load(f'{soap_dir}halo_properties_0{snapshot_no}.hdf5')))[:,2])
+        u_r_mag = cosmo_array(np.zeros(stelmass50.shape), u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        u_r_mag[stelmass50 > 0.0] = u_mag50[stelmass50 > 0.0] - r_mag50[stelmass50 > 0.0]
+        
+        # Select regular sample as before
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           kappa_co < kappa_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select additional: red FRs for above kappa
+        u_r_condition = cosmo_quantity(u_r_min, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        soap_indicies_extra = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                                 kappa_co > kappa_condition, 
+                                                                 u_r_mag > u_r_condition])).squeeze() 
+        soap_indicies = np.concatenate([soap_indicies, soap_indicies_extra])
+        if print_sample:
+            print('  >0.4 kappa sample:   %s' %len(soap_indicies_extra))
+        # Select sub-set
+    elif name_of_preset == 'all_bulgeratio03_109':
+        # Used parameters
+        min_stelmass     = 10**(9)
+        max_stelmass     = 1e15
+        bulge_to_total   = 0.25      # disc_to_total (in SOAP) = 1 - bulge_to_total
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'bulge_to_total': bulge_to_total}
+        
+        # Create additional criteria
+        disc_condition = cosmo_quantity(1-bulge_to_total, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        disc_to_tot    = swiftdata.exclusive_sphere_50kpc.disc_to_total_stellar_mass_fraction
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           disc_to_tot > disc_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
+    elif name_of_preset == 'all_bulgeratio0305_109':
+        # Used parameters
+        min_stelmass     = 10**(9)
+        max_stelmass     = 1e15
+        bulge_to_total_min   = 0.25      # disc_to_total (in SOAP) = 1 - bulge_to_total
+        bulge_to_total_max   = 0.5      # disc_to_total (in SOAP) = 1 - bulge_to_total
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'bulge_to_total_min': bulge_to_total_min, 'bulge_to_total_max':bulge_to_total_max}
+        
+        # Create additional criteria
+        disc_condition_1 = cosmo_quantity(1-bulge_to_total_min, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        disc_condition_2 = cosmo_quantity(1-bulge_to_total_max, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        disc_to_tot    = swiftdata.exclusive_sphere_50kpc.disc_to_total_stellar_mass_fraction
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           disc_to_tot < disc_condition_1,
+                                                           disc_to_tot > disc_condition_2])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
+    elif name_of_preset == 'all_bulgeratio05_109':
+        # Used parameters
+        min_stelmass     = 10**(9)
+        max_stelmass     = 1e15
+        bulge_to_total   = 0.5      # disc_to_total (in SOAP) = 1 - bulge_to_total
+        selection_criteria = {'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass, 'bulge_to_total': bulge_to_total}
+        
+        # Create additional criteria
+        disc_condition = cosmo_quantity(1-bulge_to_total, u.dimensionless, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0)
+        
+        # Select candidates that meet mass sample
+        stelmass50  = swiftdata.exclusive_sphere_50kpc.stellar_mass
+        stelmass50.convert_to_units('Msun')
+        central_sat = swiftdata.input_halos.is_central
+        disc_to_tot    = swiftdata.exclusive_sphere_50kpc.disc_to_total_stellar_mass_fraction
+        soap_indicies = np.argwhere(np.logical_and.reduce([stelmass50 > cosmo_quantity(min_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           stelmass50 < cosmo_quantity(max_stelmass, u.Msun, comoving=True, scale_factor=swiftdata.metadata.a, scale_exponent=0), 
+                                                           disc_to_tot < disc_condition])).squeeze() 
+        if print_sample:
+            print('Initial sample size:   %s' %len(soap_indicies))
+        
+        # Select sub-set
     else:
         raise Exception('name of preset not recognised')
     
@@ -1324,14 +1469,14 @@ _create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m
 
 #=====================
 # Create samples of massive >109.5 galaxies that are red (u-r > 2)
-_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
+"""_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_red',
                     csv_file = True)
 _create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_red_centrals',
-                    csv_file = True)
+                    csv_file = True)"""
 """_create_soap_sample(simulation_run = 'L100_m6', simulation_type = 'HYBRID_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_red',
@@ -1427,7 +1572,32 @@ _create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m
                     
                     
                     
-                    
+#======================
+# special samples for Tim
+_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'all_galaxies_109',
+                    csv_file = True)
+_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'all_ETGs_109',
+                    csv_file = True)
+_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'all_ETGs_plus_redspiral_109',
+                    csv_file = True)
+_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'all_bulgeratio03_109',
+                    csv_file = True)
+_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'all_bulgeratio0305_109',
+                    csv_file = True)
+_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+                    snapshot_no = 127,
+                      name_of_preset = 'all_bulgeratio05_109',
+                    csv_file = True)
                     
                     
                     

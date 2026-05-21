@@ -1274,7 +1274,7 @@ def _visualize_galaxy_paper_format(sg, plot_annotate = None, savefig_txt_in = No
     #--------------
     ### Title
     #sp1.set_title(f"TrackID = %i, redshift = %.1f" %(track_id, redshift), loc='left', fontsize=7)
-    text_title = r'<<L100m6>><<..>><<TrackID = %i, $\mathrm{log}_{\mathrm{10}}(M_*/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\mathrm{log}_{\mathrm{10}}(M_{\mathrm{H_I}}/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\mathrm{log}_{\mathrm{10}}(M_{\mathrm{H_2}}/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\kappa_{\mathrm{co}}^{*}=%.2f$>>'%(track_id, np.log10(stelmass50), np.log10(HImass50), np.log10(H2mass50), kappastars)
+    text_title = r'<<L100m6>><<..>><<TrackID = %i, $\mathrm{log}_{\mathrm{10}}(M_*/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\mathrm{log}_{\mathrm{10}}(M_{\mathrm{HI}}/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\mathrm{log}_{\mathrm{10}}(M_{\mathrm{H_2}}/\mathrm{M}_{\mathrm{\odot}})=%.1f$, $\kappa_{\mathrm{co}}^{*}=%.2f$>>'%(track_id, np.log10(stelmass50), np.log10(HImass50), np.log10(H2mass50), kappastars)
     fig_text(x=0.104, y=0.939, ha='left', s=text_title, fontsize=7, ax=sp1, delim=('<<', '>>'),
             highlight_textprops=[
                 {"color": "#1B9E77", "fontname": 'Courier New', "bbox": {"edgecolor": "#1B9E77", "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},

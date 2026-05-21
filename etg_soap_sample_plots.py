@@ -8,6 +8,7 @@ import csv
 import time
 import math
 import astropy
+import pandas as pd
 from swiftsimio import cosmo_quantity, cosmo_array
 from operator import attrgetter
 from tqdm import tqdm
@@ -341,7 +342,7 @@ def _sample_stellar_mass_function(csv_samples = [],  title_text_in = '',
         hist_masses, bin_edges =  np.histogram(np.log10(stellar_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
         # turn into a density by dividing by volume (n/cMpc**3, density)
         hist_masses = hist_masses[:]/(box_size)**3      # in units of /cMpc**-3
-        # divide by bin widths (log10 M*) to get dn/dlog10(M) in [cMpc**-3]
+        # divide by bin widths (log10 M*) to get dn/dlog10(M) in [cMpc**-3] | mass density -> number density
         hist_masses = hist_masses/hist_bin_width        
         bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
         
@@ -375,6 +376,8 @@ def _sample_stellar_mass_function(csv_samples = [],  title_text_in = '',
         #axs.fill_between(bin_midpoints, (10**(np.log10(hist_masses_masked-hist_err_masked))), (10**(np.log10(hist_masses_masked+hist_err_masked))), alpha=0.4, fc=linecol, zorder=-5)
         lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
         
+        
+        
     #-----------------
     # Add observations
     axs.plot([],[])    # skip C0
@@ -398,6 +401,8 @@ def _sample_stellar_mass_function(csv_samples = [],  title_text_in = '',
         add_kelvin2014_etg_schechter           = False   # z=0, morph types E and S0-Sa
         add_kelvin2014_etg_plus_lbs_schechter  = False   # z=0, morph types E and S0-Sa, plus LBS galaxies (little blue spheroids)
         add_kelvin2014_ltg_schechter           = False   # z=0, morph types Sab-Scd, Sd-Irr)
+        
+        add_cappellari2011  = True  # ATLAS3D
         
         if add_leja2020:    #  ($z=0.2$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
@@ -789,7 +794,75 @@ def _sample_stellar_mass_function(csv_samples = [],  title_text_in = '',
                 
             axs.plot(np.log10(M), np.log10(phi_M), label='Kelvin+14 (LTGs)', ls='-', linewidth=1, alpha=0.9, zorder=-30, c='C4')
             
-            
+        if add_cappellari2011:
+            print('PLOTTING ATLAS3D')
+            # Plotting ATLAS3D
+            with h5py.File('%s/Davis2019_ATLAS3D.hdf5'%obs_dir, 'r') as file:
+                obs_names_1 = file['data/Galaxy/values'][:]
+                obs_H2_1       = file['data/log_H2/values'][:] #* u.Unit(file['data/log_H2/values'].attrs['units'])
+                obs_Mstar_1    = file['data/log_Mstar/values'][:] #* u.Unit(file['data/log_Mstar/values'].attrs['units'])
+                obs_mask_1     = file['data/det_mask/values'][:]
+                obs_isvirgo_1  = file['data/Virgo/values'][:]
+                obs_iscentral_1  = file['data/BCG/values'][:]
+
+            obs_names_1 = np.array(obs_names_1)
+            obs_mask_1  = np.array(obs_mask_1, dtype=bool)
+            obs_isvirgo_1  = np.array(obs_isvirgo_1, dtype=bool)
+            obs_iscentral_1  = np.array(obs_iscentral_1, dtype=bool)
+            obs_count = len(obs_names_1)
+            #obs_H2_1.to('Msun')
+            #obs_Mstar_1.to('Msun')
+    
+    
+        
+            stellar_mass = 10**obs_Mstar_1
+            box_volume = 1.16e5
+        
+            #--------------------
+            hist_bin_width = 0.2
+            lower_mass_limit = 10**9
+            upper_mass_limit = 10**13
+    
+            # start with histogram of masses (n, count)
+            hist_masses, bin_edges =  np.histogram(np.log10(stellar_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+            # turn into a density by dividing by volume (n/cMpc**3, density)
+            hist_masses = hist_masses[:]/(box_volume)     # in units of /cMpc**-3
+            # divide by bin widths (log10 M*) to get dn/dlog10(M) in [cMpc**-3]
+            hist_masses = hist_masses/hist_bin_width        
+            bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+            # Add poisson errors to each bin (sqrt N)
+            hist_n, _ = np.histogram(np.log10(stellar_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+            hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+
+            # Masking out nans
+            with np.errstate(divide='ignore', invalid='ignore'):
+                hist_mask_finite = np.isfinite(np.log10(hist_masses))
+            hist_masses = hist_masses[hist_mask_finite]
+            bin_midpoints   = bin_midpoints[hist_mask_finite]
+            hist_err    = hist_err[hist_mask_finite]
+            hist_n      = hist_n[hist_mask_finite]
+    
+    
+            #-----------
+            # Line formatting
+            label_i = 'ATLAS3D'
+            linecol = 'g'
+            ls_i    = '-'
+            ms_i    = 'o'
+    
+            # Plotting all points as dashed 
+            #axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+            axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label='Cappellari+11 (ATLAS$^{\mathrm{3D}}$)', ls='none', linewidth=1, elinewidth=0.7, marker='*', ms=3.5, alpha=0.9, zorder=-20, markerfacecolor='green', c='green')
+        
+        
+            # Plotting only those with hist_n >= 2
+            #hist_masses_masked = np.ma.masked_where(hist_n < 2, hist_masses)
+            #hist_err_masked    = np.ma.masked_where(hist_n < 2, hist_err)
+    
+            #axs.fill_between(bin_midpoints, (10**(np.log10(hist_masses_masked-hist_err_masked))), (10**(np.log10(hist_masses_masked+hist_err_masked))), alpha=0.4, fc=linecol, zorder=-5)
+            #lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+            #lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
             
     #-----------
     # Axis formatting
@@ -985,6 +1058,8 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
             add_kelvin2014_etg_schechter           = False   # z=0, morph types E and S0-Sa
             add_kelvin2014_etg_plus_lbs_schechter  = False   # z=0, morph types E and S0-Sa, plus LBS galaxies (little blue spheroids)
             add_kelvin2014_ltg_schechter           = False   # z=0, morph types Sab-Scd, Sd-Irr)
+            
+            add_cappellari2011 = True
         
             if add_leja2020:    #  ($z=0.2$)
                 # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
@@ -1376,7 +1451,76 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
                 
                 ax_i.plot(np.log10(M), np.log10(phi_M), label='Kelvin+14 (LTGs)', ls='-', linewidth=1, alpha=0.9, zorder=-30, c='C4')
             
+            if add_cappellari2011:
+                print('PLOTTING ATLAS3D')
+                # Plotting ATLAS3D
+                with h5py.File('%s/Davis2019_ATLAS3D.hdf5'%obs_dir, 'r') as file:
+                    obs_names_1 = file['data/Galaxy/values'][:]
+                    obs_H2_1       = file['data/log_H2/values'][:] #* u.Unit(file['data/log_H2/values'].attrs['units'])
+                    obs_Mstar_1    = file['data/log_Mstar/values'][:] #* u.Unit(file['data/log_Mstar/values'].attrs['units'])
+                    obs_mask_1     = file['data/det_mask/values'][:]
+                    obs_isvirgo_1  = file['data/Virgo/values'][:]
+                    obs_iscentral_1  = file['data/BCG/values'][:]
+
+                obs_names_1 = np.array(obs_names_1)
+                obs_mask_1  = np.array(obs_mask_1, dtype=bool)
+                obs_isvirgo_1  = np.array(obs_isvirgo_1, dtype=bool)
+                obs_iscentral_1  = np.array(obs_iscentral_1, dtype=bool)
+                obs_count = len(obs_names_1)
+                #obs_H2_1.to('Msun')
+                #obs_Mstar_1.to('Msun')
+    
+    
         
+                stellar_mass = 10**obs_Mstar_1
+                box_volume = 1.16e5
+        
+                #--------------------
+                hist_bin_width = 0.2
+                lower_mass_limit = 10**9
+                upper_mass_limit = 10**13
+    
+                # start with histogram of masses (n, count)
+                hist_masses, bin_edges =  np.histogram(np.log10(stellar_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+                # turn into a density by dividing by volume (n/cMpc**3, density)
+                hist_masses = hist_masses[:]/(box_volume)     # in units of /cMpc**-3
+                # divide by bin widths (log10 M*) to get dn/dlog10(M) in [cMpc**-3]
+                hist_masses = hist_masses/hist_bin_width        
+                bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+                # Add poisson errors to each bin (sqrt N)
+                hist_n, _ = np.histogram(np.log10(stellar_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+                hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+
+                # Masking out nans
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    hist_mask_finite = np.isfinite(np.log10(hist_masses))
+                hist_masses = hist_masses[hist_mask_finite]
+                bin_midpoints   = bin_midpoints[hist_mask_finite]
+                hist_err    = hist_err[hist_mask_finite]
+                hist_n      = hist_n[hist_mask_finite]
+    
+    
+                #-----------
+                # Line formatting
+                label_i = 'ATLAS3D'
+                linecol = 'g'
+                ls_i    = '-'
+                ms_i    = 'o'
+    
+                # Plotting all points as dashed 
+                #axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+                ax_i.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label='Cappellari+11 (ATLAS$^{\mathrm{3D}}$)', ls='none', linewidth=1, elinewidth=0.7, marker='*', ms=3.5, alpha=0.9, zorder=-20, markerfacecolor='green', c='green')
+        
+        
+                # Plotting only those with hist_n >= 2
+                #hist_masses_masked = np.ma.masked_where(hist_n < 2, hist_masses)
+                #hist_err_masked    = np.ma.masked_where(hist_n < 2, hist_err)
+    
+                #axs.fill_between(bin_midpoints, (10**(np.log10(hist_masses_masked-hist_err_masked))), (10**(np.log10(hist_masses_masked+hist_err_masked))), alpha=0.4, fc=linecol, zorder=-5)
+                #lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+                #lines = axs.plot(bin_midpoints, hist_masses_masked, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+            
          
             
     #-----------
@@ -1452,6 +1596,312 @@ def _sample_stellar_mass_function_3x1(csv_samples1 = [], csv_samples2 = [], csv_
         plt.show()
     plt.close()
 
+
+#------------------
+# Returns H2 mass function for given set of samples
+def _obs_h2mass_function( add_observational = True,       
+                          showfig       = False,
+                          savefig       = True,
+                            file_format = 'pdf',
+                            savefig_txt = '', 
+                          #--------------------------
+                          print_progress = False,
+                            debug = False):
+                    
+
+    #---------------------------
+    # Graph initialising and base formatting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    
+    # ATLAS3D from Davis+19
+    with h5py.File('%s/Davis2019_ATLAS3D.hdf5'%obs_dir, 'r') as file:
+        obs_names_1 = file['data/Galaxy/values'][:]
+        obs_H2_1       = file['data/log_H2/values'][:] #* u.Unit(file['data/log_H2/values'].attrs['units'])
+        obs_Mstar_1    = file['data/log_Mstar/values'][:] #* u.Unit(file['data/log_Mstar/values'].attrs['units'])
+        obs_mask_1     = file['data/det_mask/values'][:]
+        obs_isvirgo_1  = file['data/Virgo/values'][:]
+        obs_iscentral_1  = file['data/BCG/values'][:]
+    
+    obs_names_1 = np.array(obs_names_1)
+    obs_mask_1  = np.array(obs_mask_1, dtype=bool)
+    obs_isvirgo_1  = np.array(obs_isvirgo_1, dtype=bool)
+    obs_iscentral_1  = np.array(obs_iscentral_1, dtype=bool)
+    obs_count = len(obs_names_1)
+    #obs_H2_1.to('Msun')
+    #obs_Mstar_1.to('Msun')
+    
+    obs_names_1 = obs_names_1[obs_mask_1]
+    obs_H2_1    = obs_H2_1[obs_mask_1]
+    obs_Mstar_1 = obs_Mstar_1[obs_mask_1]
+    obs_isvirgo_1 = obs_isvirgo_1[obs_mask_1]
+    obs_iscentral_1 = obs_iscentral_1[obs_mask_1]
+    
+    h2108_mask = obs_H2_1 > 8
+    print('detection rate:    %.3f' %(len(obs_H2_1)/obs_count))
+    print('108 detection rate:    %.3f' %(len(obs_H2_1[h2108_mask])/obs_count))
+    
+    
+    
+    box_volume = 1.16e5       # in cMpc^3 from Cappellari+11a
+    
+    
+    
+    
+    
+    #---------------
+    # Histograms   
+    hist_bin_width = 0.2
+    lower_mass_limit = 10**4
+    upper_mass_limit = 10**11
+    
+    hist_masses, bin_edges =  np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    
+    hist_masses = hist_masses[:]/box_volume      # in units of /cMpc**3
+    hist_masses = hist_masses/hist_bin_width        # density
+    bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+    # Add poisson errors to each bin (sqrt N)
+    hist_n, _ = np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+        
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask_finite = np.isfinite(np.log10(hist_masses))
+    hist_masses = hist_masses[hist_mask_finite]
+    bin_midpoints   = bin_midpoints[hist_mask_finite]
+    hist_err    = hist_err[hist_mask_finite]
+    hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+    
+    #-----------
+    # Line formatting
+    label_i = 'Atlas3D'
+    linecol = 'k'
+    ls_i    = '-'
+    ms_i    = 'o'
+    alpha_i = 1
+        
+    axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label=label_i, ls='-', elinewidth=0.7, marker=ms_i, ms=0.1, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='C0', c='C0', capsize=1.6)
+    
+    
+    #-------------
+    # Doing the same but with factor 2 less volume
+    """box_volume = box_volume/2
+    hist_masses, bin_edges =  np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    
+    hist_masses = hist_masses[:]/box_volume      # in units of /cMpc**3
+    hist_masses = hist_masses/hist_bin_width        # density
+    bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+    # Add poisson errors to each bin (sqrt N)
+    hist_n, _ = np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+        
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask_finite = np.isfinite(np.log10(hist_masses))
+    hist_masses = hist_masses[hist_mask_finite]
+    bin_midpoints   = bin_midpoints[hist_mask_finite]
+    hist_err    = hist_err[hist_mask_finite]
+    hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+    
+    #-----------
+    # Line formatting
+    label_i = 'Atlas3D * 0.5 volume'
+    linecol = 'k'
+    ls_i    = '-'
+    ms_i    = 'o'
+    alpha_i = 1
+        
+    axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label=label_i, ls='-', elinewidth=0.7, marker=ms_i, ms=0.1, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='C1', c='C1', capsize=1.6)
+    """
+    
+    #-------------
+    # Doing the same but with factor 2 less volume
+    box_volume = box_volume * (0.681**3)
+    hist_masses, bin_edges =  np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    
+    hist_masses = hist_masses[:]/box_volume      # in units of /cMpc**3
+    hist_masses = hist_masses/hist_bin_width        # density
+    bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+    # Add poisson errors to each bin (sqrt N)
+    hist_n, _ = np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+        
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask_finite = np.isfinite(np.log10(hist_masses))
+    hist_masses = hist_masses[hist_mask_finite]
+    bin_midpoints   = bin_midpoints[hist_mask_finite]
+    hist_err    = hist_err[hist_mask_finite]
+    hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+    
+    #-----------
+    # Line formatting
+    label_i = 'Atlas3D volume * h**3'
+    linecol = 'k'
+    ls_i    = '-'
+    ms_i    = 'o'
+    alpha_i = 1
+        
+    axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label=label_i, ls='-', elinewidth=0.7, marker=ms_i, ms=0.1, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='C1', c='C1', capsize=1.6)
+    
+    
+    
+    
+    #-----------------
+    # Add observations
+    axs.plot([],[])    # skip C0
+    if add_observational:
+        """
+        Pick observations we want to add
+        """
+        add_andreani2020    = False
+        add_fletcher2021    = False     # most robust where sample bias has been taken into account
+        add_lagos2015       = False
+        #add_guo2023 = True
+        
+        add_lagos2014_uncorr       = True
+        add_lagos2014_1Vcorr       = True
+        
+        if add_andreani2020:
+            logm = np.arange(6.5, 10.2, 0.25)
+            phi      = np.array([-2.36, -2.14, -2.02, -1.96, -1.93, -1.94, -1.98, -2.04, -2.12, -2.24, -2.40, -2.64, -3.78, -5.2, -6.00])
+            #phi_err  = np.array([])
+            
+            # removing 1.36 multiplier for He correction --> now is pure H2
+            phi = np.log10((10**phi)/1.36)
+            
+            #phi_err_lower = 10**phi - (10**(phi-phi_err))
+            #phi_err_upper = (10**(phi+phi_err)) - 10**phi
+            
+            axs.plot(logm, phi, ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
+            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20)                
+        if add_fletcher2021:
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyH2MassFunction/Fletcher2021.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+            
+                obs_x     = file['x/values'][:] * u.Unit(file['x/values'].attrs['units'])
+                obs_y = file['y/values'][:] * u.Unit(file['y/values'].attrs['units'])
+                obs_y_err= file['y/scatter'][:] * u.Unit(file['y/scatter'].attrs['units'])
+            obs_x = obs_x.to('Msun')/1.36     # divide to account for x1.36 He correction in observations
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20)           
+        if add_lagos2015:
+            print('lagos not available')
+        
+        if add_lagos2014_1Vcorr:      # ($z=0.0$)
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyH2MassFunction/Lagos2014_H2.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+                
+                obs_x     = file['data/massfunc/1Vcorr/x/values'][:] * u.Unit(file['data/massfunc/1Vcorr/x/values'].attrs['units'])
+                obs_y = file['data/massfunc/1Vcorr/y/values'][:] * u.Unit(file['data/massfunc/1Vcorr/y/values'].attrs['units'])
+                obs_y_err= file['data/massfunc/1Vcorr/y/scatter'][:] * u.Unit(file['data/massfunc/1Vcorr/y/scatter'].attrs['units'])
+                
+            obs_x = obs_x.to('Msun')
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 $1/V_{\mathrm{max}}$ corr', ls='none', elinewidth=0.7, marker='^', ms=3, fillstyle='none', alpha=0.9, zorder=-20, c='r', capsize=1.6)
+        if add_lagos2014_uncorr:      # ($z=0.0$)
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyH2MassFunction/Lagos2014_H2.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+                
+                obs_x     = file['data/massfunc/uncorr/x/values'][:] * u.Unit(file['data/massfunc/uncorr/x/values'].attrs['units'])
+                obs_y = file['data/massfunc/uncorr/y/values'][:] * u.Unit(file['data/massfunc/uncorr/y/values'].attrs['units'])
+                obs_y_err= file['data/massfunc/uncorr/y/scatter'][:] * u.Unit(file['data/massfunc/uncorr/y/scatter'].attrs['units'])
+                
+            obs_x = obs_x.to('Msun')
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 uncorr', ls='none', elinewidth=0.7, marker='^', ms=3.9, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='r', c='r', capsize=1.6)
+    
+    
+    
+    
+    #-----------
+    # Axis formatting
+    plt.xlim(6, 11)
+    plt.ylim(10**(-6), 10**(-1))
+    #plt.xscale("log")
+    plt.yscale("log")
+    #plt.yticks(np.arange(-5, -1.4, 0.5))
+    #plt.xticks(np.arange(9.5, 12.5, 0.5))
+    axs.minorticks_on()
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{2}}}$ [M$_{\odot}$]')
+    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{2}}}$) [cMpc$^{-3}$]')
+      
+    #-----------  
+    # Annotations
+    #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    
+    
+    #-----------
+    # Legend
+    axs.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+        
+    #-----------
+    # other
+    plt.tight_layout()
+    
+    if savefig:
+        savefig_txt_save = savefig_txt
+        
+        plt.savefig("%s/etg_sample_plots/manual_atlas3D_h2massfunc_%s.%s" %(fig_dir, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
+        print("\n  SAVED: %s/etg_sample_plots/manual_atlas3D_h2massfunc_%s.%s" %(fig_dir, savefig_txt_save, file_format))
+    if showfig:
+        plt.show()
+    plt.close()
+
+
+
 #------------------
 # Returns H2 mass function for given set of samples
 def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
@@ -1461,6 +1911,7 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
                           #----------
                           add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
                           limit_atlas3d_mass = False,
+                          test_halve_det = False,
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -1561,9 +2012,35 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
         
     
         hist_masses, bin_edges =  np.histogram(np.log10(H2_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
-        hist_masses = hist_masses[:]/(box_size)**3      # in units of /cMpc**3
-        hist_masses = hist_masses/hist_bin_width        # density
+        if test_halve_det:
+            print('\n\tMANUALLY LOWERING DETECTION TO MATCH OBS ISH $$$$$$$$4')
+            hist_masses = hist_masses/2
+        hist_masses = hist_masses[:]/(box_size)**3      # in units of counts in each bin/cMpc**3
+        hist_masses = hist_masses/hist_bin_width        # mass density -> number density
         bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+        
+        #-----------------
+        # test for Tim vs ATLAS3D
+        # integral under mass func for H2 > 107:
+        integral_i = 0
+        for massbin_ii, histval_ii in zip(bin_midpoints, hist_masses):
+            if massbin_ii > 7:
+                integral_i = integral_i + (0.2 * histval_ii.value)    # cumulatively sum the bin widthe (in logM*) * number density per interval
+                
+        print('integral from > 108: ', integral_i)
+        print('* 200**3 volume of COLIBRE L200 (i.e. count with >107)', (integral_i*(200**3)))      # sanity check, should be around 9800 for all_ETG sample in L200 thermal
+        
+        # integral under mass func for H2 > 108:
+        integral_i = 0
+        for massbin_ii, histval_ii in zip(bin_midpoints, hist_masses):
+            if massbin_ii > 8:
+                integral_i = integral_i + (0.2 * histval_ii.value)    # cumulatively sum the bin widthe (in logM*) * number density per interval
+                
+        print('integral from > 108: ', integral_i)
+        print('* 1.16e5: (i.e. expected count with >108 within atlas3d volume)', (integral_i*1.16e5))
+        print('/260: ', ((integral_i*1.16e5)/260))
+        
+        
         
         # Add poisson errors to each bin (sqrt N)
         hist_n, _ = np.histogram(np.log10(H2_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
@@ -1664,6 +2141,8 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
         axs.fill_between(bin_midpoints+fa_good, (10**(np.log10(hist_masses-hist_err)))+fa_good, (10**(np.log10(hist_masses+hist_err)))+fa_good, alpha=0.4, fc=linecol, zorder=-5)
         lines = axs.plot(bin_midpoints+fa_good, hist_masses+fa_good, label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3)
         axs.plot(bin_midpoints+fa_bad, hist_masses+fa_bad, marker=ms_i, color=lines[0].get_color(), ls='--', zorder=-4)"""
+        
+        
         
     #-----------------
     # Add observations
@@ -2494,8 +2973,8 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
                      'inclusive_sphere_10kpc': '10 pkpc',
                      'inclusive_sphere_30kpc': '30 pkpc', 
                      'inclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{I}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h1]))
-    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{I}}}$) [cMpc$^{-3}$]')
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{HI}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h1]))
+    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{HI}}$) [cMpc$^{-3}$]')
       
     #-----------  
     # Annotations
@@ -2808,8 +3287,8 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
                      'inclusive_sphere_10kpc': '10 pkpc',
                      'inclusive_sphere_30kpc': '30 pkpc', 
                      'inclusive_sphere_50kpc': '50 pkpc'}
-    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{I}}}/M_*$ (%s)'%(dict_aperture[aperture_h1]))
-    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{I}}}/M_*$) [cMpc$^{-3}$]')
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{HI}}/M_*$ (%s)'%(dict_aperture[aperture_h1]))
+    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{HI}}/M_*$) [cMpc$^{-3}$]')
       
     #-----------  
     # Annotations
@@ -2870,13 +3349,618 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
     plt.close()
 
 
+#------------------
+# Custom H2 mass func for Tim
+#------------------
+# Returns H2 mass function for given set of samples
+def _CUSTOM_sample_H2_mass_function(csv_samples = [],  title_text_in = '',
+                          #=====================================
+                          aperture = 'exclusive_sphere_50kpc', 
+                          aperture_h2 = 'exclusive_sphere_50kpc', 
+                          #----------
+                          add_observational = True,        # Adapts based on imput mass_type, and using references from pipeline
+                          #=====================================
+                          showfig       = False,
+                          savefig       = True,
+                            file_format = 'pdf',
+                            savefig_txt = '', 
+                          #--------------------------
+                          print_progress = False,
+                            debug = False):
+                    
+
+    #---------------------------
+    # Graph initialising and base formatting
+    fig, axs = plt.subplots(1, 1, figsize=[10/2, 3.5], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+                        
+    #---------------------------
+    # Extract data from samples:
+    dict_labels = {'all_galaxies_109': r'Total $M_{*}>10^{9}$ M$_\odot$',
+                   'all_ETGs_109': 'ETGs (excl. FRs)',
+                   'all_ETGs_plus_redspiral_109': 'ETGs (incl. FRs)',
+                   'all_bulgeratio03_109': '$B/T<0.3$',
+                   'all_bulgeratio0305_109': '$0.3 < B/T < 0.5$',
+                   'all_bulgeratio05_109': '$B/T > 0.5$'}
+    dict_colors = {'all_galaxies_109': 'k',
+                   'all_ETGs_109': 'C0',
+                   'all_ETGs_plus_redspiral_109': 'C1',
+                   'all_bulgeratio03_109': 'C2',
+                   'all_bulgeratio0305_109': 'C3',
+                   'all_bulgeratio05_109': 'C4'}
+    dict_ls     = {'all_galaxies_109': '-',
+                   'all_ETGs_109': '-',
+                   'all_ETGs_plus_redspiral_109': '-',
+                   'all_bulgeratio03_109': '-',
+                   'all_bulgeratio0305_109': '-',
+                   'all_bulgeratio05_109': '-'}
+    dict_ms     = {'all_galaxies_109': 'o',
+                   'all_ETGs_109': 's',
+                   'all_ETGs_plus_redspiral_109': 'D',
+                   'all_bulgeratio03_109': '^',
+                   'all_bulgeratio0305_109': 'P',
+                   'all_bulgeratio05_109':'v'}
+    alpha_i = 1
+    
+    with h5py.File("/home/cosmos/c22048063/COLIBRE/figures/etg_sample_plots/colibre_h2_massfunc.hdf5", "a") as f:
+        # Creating metadata
+        grp = f.create_group("metadata")
+        grp.attrs["comment"]      = "H2 given as molecular hydrogen, no helium correction applied. 0.2 dex bin widths, M* > 10^9 galaxies"
+        grp.attrs["name"]         = "H2 mass function COLIBRE"
+        
+        for csv_sample_i in csv_samples:
+            soap_indicies_sample, _, sample_input = _load_soap_sample(sample_dir, csv_sample = csv_sample_i)
+        
+            #-----------------
+            # Add SOAP data
+            simulation_run  = sample_input['simulation_run']
+            simulation_type = sample_input['simulation_type']
+            snapshot_no     = sample_input['snapshot_no']
+            simulation_dir  = sample_input['simulation_dir']
+            soap_catalogue_file = sample_input['soap_catalogue_file']
+            data = sw.load(f'%s'%soap_catalogue_file)
+    
+            # Get metadata from file
+            z = data.metadata.redshift
+            run_name = data.metadata.run_name
+            box_size = data.metadata.boxsize[0].to(u.Mpc)
+    
+    
+            #-------------------------------
+            # Get stelmass, molecular hydrogen, and magnitude data
+            stellar_mass = attrgetter('%s.%s'%(aperture, 'stellar_mass'))(data)[soap_indicies_sample]
+            stellar_mass.convert_to_units('Msun')
+            stellar_mass.convert_to_physical()
+        
+            H2_mass = attrgetter('%s.%s'%(aperture_h2, 'molecular_hydrogen_mass'))(data)[soap_indicies_sample]
+            H2_mass.convert_to_units('Msun')
+    
+            central_sat = attrgetter('input_halos.is_central')(data)[soap_indicies_sample]
+        
+            # Limit M* to within 10**11.3 to mimic atlas3d better
+    
+    
+            #---------------
+            # Histograms   
+            hist_bin_width = 0.2
+            lower_mass_limit = 10**5
+            upper_mass_limit = 10**11
+        
+    
+            hist_masses, bin_edges =  np.histogram(np.log10(H2_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+            hist_masses = hist_masses[:]/(box_size)**3      # in units of /cMpc**3
+            hist_masses = hist_masses/hist_bin_width        # density
+            bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+        
+            # Add poisson errors to each bin (sqrt N)
+            hist_n, _ = np.histogram(np.log10(H2_mass), bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+            hist_err = (np.sqrt(hist_n)/(box_size)**3)/hist_bin_width
+    
+            # Masking out nans
+            with np.errstate(divide='ignore', invalid='ignore'):
+                hist_mask_finite = np.isfinite(np.log10(hist_masses))
+            hist_masses = hist_masses[hist_mask_finite]
+            bin_midpoints   = bin_midpoints[hist_mask_finite]
+            hist_err    = hist_err[hist_mask_finite]
+            hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+        
+            #-----------
+            # Line formatting
+            label_i = dict_labels[sample_input['name_of_preset']]
+            linecol = dict_colors[sample_input['name_of_preset']]
+            ls_i    = dict_ls[sample_input['name_of_preset']]
+            ms_i    = dict_ms[sample_input['name_of_preset']]
+            if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+                if (sample_input['simulation_run'] == 'L100_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                    label_i = dict_labels[sample_input['name_of_preset']]
+                    linecol = dict_colors[sample_input['name_of_preset']]
+                    ls_i    = '-'
+                    ms_i    = dict_ms[sample_input['name_of_preset']]
+                    alpha_i = 1
+                elif (sample_input['simulation_run'] == 'L200_m6') & (sample_input['simulation_type'] == 'THERMAL_AGN_m6'):
+                    label_i = dict_labels[sample_input['name_of_preset']]
+                    linecol = dict_colors[sample_input['name_of_preset']]
+                    ls_i    = '-'
+                    ms_i    = dict_ms[sample_input['name_of_preset']]
+                    alpha_i = 1
+                else:
+                    label_i = ''
+                    linecol = dict_colors[sample_input['name_of_preset']]
+                    ls_i    = '--'
+                    ms_i    = dict_ms[sample_input['name_of_preset']]
+                    alpha_i = 1
+        
+            # Plotting all points as dashed 
+            if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+                bin_midpoints_i = []
+                hist_masses_masked_i = []
+                hist_err_masked_i = []
+                index_i = 0
+                for mid_i, mass_i, err_i, n_i in zip(bin_midpoints, hist_masses, hist_err, hist_n):
+                    if (index_i+1) == len(hist_n):
+                        bin_midpoints_i.append(mid_i)
+                        hist_masses_masked_i.append(mass_i)
+                        hist_err_masked_i.append(err_i)
+                    elif n_i < 10:
+                        bin_midpoints_i.append(mid_i)
+                        hist_masses_masked_i.append(mass_i)
+                        hist_err_masked_i.append(err_i)
+                    elif hist_n[index_i+1] < 10:
+                        bin_midpoints_i.append(mid_i)
+                        hist_masses_masked_i.append(mass_i)
+                        hist_err_masked_i.append(err_i)
+                    elif index_i == 0:
+                        bin_midpoints_i.append(mid_i)
+                        hist_masses_masked_i.append(mass_i)
+                        hist_err_masked_i.append(err_i)
+                    elif hist_n[index_i-1] < 10:
+                        bin_midpoints_i.append(mid_i)
+                        hist_masses_masked_i.append(mass_i)
+                        hist_err_masked_i.append(err_i)
+                    else:
+                        bin_midpoints_i.append(math.nan)
+                        hist_masses_masked_i.append(math.nan)
+                        hist_err_masked_i.append(math.nan)
+                    index_i = index_i + 1
+                axs.plot(np.flip(bin_midpoints_i), np.flip(hist_masses_masked_i), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+            else:
+                axs.plot(np.flip(bin_midpoints), np.flip(hist_masses), color=linecol, ls=(0, (1, 1)), zorder=-4, path_effects=[outline])
+        
+            # Plotting only those with hist_n >= 10
+            hist_masses_masked = np.ma.masked_where(hist_n < 10, hist_masses)
+            hist_err_masked    = np.ma.masked_where(hist_n < 10, hist_err)
+            #axs.fill_between(bin_midpoints, (10**(np.log10(hist_masses_masked-hist_err_masked))), (10**(np.log10(hist_masses_masked+hist_err_masked))), alpha=0.4, fc=linecol, zorder=-5)
+            lines = axs.plot(np.flip(bin_midpoints), np.flip(hist_masses_masked), label='%s'%label_i, ls=ls_i, linewidth=1, c=linecol, zorder=-3, path_effects=[outline])
+        
+        
+        
+            
+            #========================================
+            # Data output
+            if sample_input['name_of_preset'] == 'all_galaxies_109':
+                grp = f.create_group("data/x_H2massbin")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'log10 midpoints of binned histograms, H2 = molecular hydrogen'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/x_H2massbin/values", data=bin_midpoints)
+                dset.attrs["units"]    = 'Msun'
+            
+                grp = f.create_group("data/y_allgalaxy")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'number density of galaxies per log H2 mass interval (co-moving Mpc)'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/y_allgalaxy/values", data=hist_masses.value)
+                dset.attrs["units"]    = 'Mpc**(-3)'
+                
+                grp = f.create_group("data/N_allgalaxy")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'Bin count'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/N_allgalaxy/values", data=hist_n)
+                dset.attrs["units"]    = 'dimensionless'
+            if sample_input['name_of_preset'] == 'all_ETGs_109':
+            
+                grp = f.create_group("data/y_ETG_excl_FR")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'number density of galaxies per log H2 mass interval (co-moving Mpc). Kappa < 0.4 ETGs'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/y_ETG_excl_FR/values", data=hist_masses.value)
+                dset.attrs["units"]    = 'Mpc**(-3)'
+                
+                grp = f.create_group("data/N_ETG_excl_FR")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'Bin count'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/N_ETG_excl_FR/values", data=hist_n)
+                dset.attrs["units"]    = 'dimensionless'
+            if sample_input['name_of_preset'] == 'all_ETGs_plus_redspiral_109':
+            
+                grp = f.create_group("data/y_ETG_incl_FR")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'number density of galaxies per log H2 mass interval (co-moving Mpc). Kappa < 0.4 ETGs plus kappa > 0.4 with u-r > 2'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/y_ETG_incl_FR/values", data=hist_masses.value)
+                dset.attrs["units"]    = 'Mpc**(-3)'
+                
+                grp = f.create_group("data/N_ETG_incl_FR")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'Bin count'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/N_ETG_incl_FR/values", data=hist_n)
+                dset.attrs["units"]    = 'dimensionless'
+            if sample_input['name_of_preset'] == 'all_bulgeratio03_109':
+            
+                grp = f.create_group("data/y_BT025")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'number density of galaxies per log H2 mass interval (co-moving Mpc). B/T < 0.25 galaxies'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/y_BT025/values", data=hist_masses.value)
+                dset.attrs["units"]    = 'Mpc**(-3)'
+                
+                grp = f.create_group("data/N_BT025")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'Bin count'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/N_BT025/values", data=hist_n)
+                dset.attrs["units"]    = 'dimensionless'
+            if sample_input['name_of_preset'] == 'all_bulgeratio0305_109':
+            
+                grp = f.create_group("data/y_BT02505")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'number density of galaxies per log H2 mass interval (co-moving Mpc). 0.25 < B/T < 0.5 galaxies'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/y_BT02505/values", data=hist_masses.value)
+                dset.attrs["units"]    = 'Mpc**(-3)'
+                
+                grp = f.create_group("data/N_BT02505")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'Bin count'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/N_BT02505/values", data=hist_n)
+                dset.attrs["units"]    = 'dimensionless'
+            if sample_input['name_of_preset'] == 'all_bulgeratio05_109':
+            
+                grp = f.create_group("data/y_BT05")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'number density of galaxies per log H2 mass interval (co-moving Mpc). B/T > 0.5 galaxies'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/y_BT05/values", data=hist_masses.value)
+                dset.attrs["units"]    = 'Mpc**(-3)'
+                
+                grp = f.create_group("data/N_BT05")
+                grp.attrs["comoving"]    = True
+                grp.attrs["description"] = 'Bin count'
+                x    = bin_midpoints
+                dset = f.create_dataset("data/N_BT05/values", data=hist_n)
+                dset.attrs["units"]    = 'dimensionless'
+                
+    print("Successfully created: /home/cosmos/c22048063/COLIBRE/figures/etg_sample_plots/colibre_h2_massfunc.hdf5")
+    
+    
+    def _test_load(file_name = 'GalaxyH2MassFunction/Lagos2014_H2'):
+        # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+        with h5py.File('/home/cosmos/c22048063/COLIBRE/figures/etg_sample_plots/%s.hdf5'%(file_name), 'r') as file:
+        
+            """# A description of the file and data is in the metadata
+            print(f'File keys: {file.keys()}')
+            for k, v in file['metadata'].attrs.items():
+                print(f'{k}: {v}')
+            # Data
+            print(file['x'].keys())
+            print(file['y'].keys())
+            print(' ')"""
+        
+            obs_x     = file['data/x_H2massbin/values'][:] * u.Unit(file['data/x_H2massbin/values'].attrs['units'])
+            obs_y     = file['data/y_BT05/values'][:] * u.Unit(file['data/y_BT05/values'].attrs['units'])
+            obs_N     = file['data/N_BT05/values'][:] * u.Unit(file['data/N_BT05/values'].attrs['units'])
+        
+        x_out = obs_x.to('Msun')
+        y_out = obs_y.to('Mpc**(-3)')
+        N_out = obs_N.to('dimensionless')
+    
+        print(x_out)
+        print(y_out)
+        print(N_out)
+    _test_load(file_name='colibre_h2_massfunc')
+    
+        
+    #-----------------
+    # Add observations
+    axs.plot([],[])    # skip C0
+    if add_observational:
+        """
+        Pick observations we want to add
+        """
+        add_andreani2020    = False
+        add_fletcher2021    = False     # most robust where sample bias has been taken into account
+        add_lagos2015       = False
+        #add_guo2023 = True
+        
+        add_lagos2014_uncorr       = True
+        add_lagos2014_1Vcorr       = True
+        
+        if add_andreani2020:
+            logm = np.arange(6.5, 10.2, 0.25)
+            phi      = np.array([-2.36, -2.14, -2.02, -1.96, -1.93, -1.94, -1.98, -2.04, -2.12, -2.24, -2.40, -2.64, -3.78, -5.2, -6.00])
+            #phi_err  = np.array([])
+            
+            # removing 1.36 multiplier for He correction --> now is pure H2
+            phi = np.log10((10**phi)/1.36)
+            
+            #phi_err_lower = 10**phi - (10**(phi-phi_err))
+            #phi_err_upper = (10**(phi+phi_err)) - 10**phi
+            
+            axs.plot(logm, phi, ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
+            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20)                
+        if add_fletcher2021:
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyH2MassFunction/Fletcher2021.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+            
+                obs_x     = file['x/values'][:] * u.Unit(file['x/values'].attrs['units'])
+                obs_y = file['y/values'][:] * u.Unit(file['y/values'].attrs['units'])
+                obs_y_err= file['y/scatter'][:] * u.Unit(file['y/scatter'].attrs['units'])
+            obs_x = obs_x.to('Msun')/1.36     # divide to account for x1.36 He correction in observations
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20)           
+        if add_lagos2015:
+            print('lagos not available')
+        
+        if add_lagos2014_1Vcorr:      # ($z=0.0$)
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyH2MassFunction/Lagos2014_H2.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+                
+                obs_x     = file['data/massfunc/1Vcorr/x/values'][:] * u.Unit(file['data/massfunc/1Vcorr/x/values'].attrs['units'])
+                obs_y = file['data/massfunc/1Vcorr/y/values'][:] * u.Unit(file['data/massfunc/1Vcorr/y/values'].attrs['units'])
+                obs_y_err= file['data/massfunc/1Vcorr/y/scatter'][:] * u.Unit(file['data/massfunc/1Vcorr/y/scatter'].attrs['units'])
+                
+            obs_x = obs_x.to('Msun')
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 $1/V_{\mathrm{max}}$ corr', ls='none', elinewidth=0.7, marker='^', ms=3, fillstyle='none', alpha=0.9, zorder=-20, c='r', capsize=1.6)
+        if add_lagos2014_uncorr:      # ($z=0.0$)
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyH2MassFunction/Lagos2014_H2.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+                
+                obs_x     = file['data/massfunc/uncorr/x/values'][:] * u.Unit(file['data/massfunc/uncorr/x/values'].attrs['units'])
+                obs_y = file['data/massfunc/uncorr/y/values'][:] * u.Unit(file['data/massfunc/uncorr/y/values'].attrs['units'])
+                obs_y_err= file['data/massfunc/uncorr/y/scatter'][:] * u.Unit(file['data/massfunc/uncorr/y/scatter'].attrs['units'])
+                
+            obs_x = obs_x.to('Msun')
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 uncorr', ls='none', elinewidth=0.7, marker='^', ms=3.9, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='r', c='r', capsize=1.6)
+            
+    
+    #-----------
+    # Axis formatting
+    plt.xlim(6, 11)
+    plt.ylim(10**(-6.5), 10**(-1))
+    #plt.xscale("log")
+    plt.yscale("log")
+    #plt.yticks(np.arange(-5, -1.4, 0.5))
+    #plt.xticks(np.arange(9.5, 12.5, 0.5))
+    axs.minorticks_on()
+    dict_aperture = {'exclusive_sphere_10kpc': '10 pkpc',
+                     'exclusive_sphere_30kpc': '30 pkpc', 
+                     'exclusive_sphere_50kpc': '50 pkpc',
+                     'inclusive_sphere_10kpc': '10 pkpc',
+                     'inclusive_sphere_30kpc': '30 pkpc', 
+                     'inclusive_sphere_50kpc': '50 pkpc'}
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{2}}}$ (%s) [M$_{\odot}$]'%(dict_aperture[aperture_h2]))
+    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{2}}}$) [cMpc$^{-3}$]')
+      
+    #-----------  
+    # Annotations
+    #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    
+    #-----------
+    # Add extra lines if combining some runs
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        label_ii  = ('L100m6' if savefig_txt == '_HYBRID_THERMAL' else 'L200m6')
+        label_iii = ('L100m6h' if savefig_txt == '_HYBRID_THERMAL' else 'L200m7')
+    
+        # Custom lines for black and dashed
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_ii, ls='-', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+        axs.plot([-9, -8], [0.1, 0.01], label='%s'%label_iii, ls='--', linewidth=1, c='k', zorder=-3, path_effects=[outline], alpha = 1)
+    
+    
+    #-----------
+    # Title
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        sample_input['simulation_run'] = 'LXXX_mX'
+        sample_input['simulation_type'] = 'XXX_AGN_mX'
+    else:
+        title_run_dict = {'L100_m6': 'L100m6', 
+                          'L200_m6': 'L200m6',
+    					  'L200_m7': 'L200m7'}
+        title_type_dict = {'THERMAL_AGN_m6': '',
+    					   'THERMAL_AGN_m7': '',
+                           'HYBRID_AGN_m6': 'h'}
+        title_color_dict = {'L100m6': "#1B9E77", 
+                            'L100m6h': "#D95F02", 
+                            'L200m6': "#7570B3",
+    						'L200m7': "red"}
+        run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
+        text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
+        fig_text(x=0.195, y=0.935, ha='left', s=text_title, fontsize=7, ax=axs,
+            highlight_textprops=[
+                {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
+                {"color": "white"},
+                {"color": "black"}
+            ])
+        #axs.set_title(r'%s%s%s' %(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']], title_text_in), size=7, loc='left', pad=3)
+    
+    #-----------
+    # Legend
+    #axs.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    handles, labels = axs.get_legend_handles_labels()
+
+    handles_in = [handles[0], handles[1], handles[2], handles[3], handles[4], handles[5]]
+    labels_in = [labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]]
+    first_legend = axs.legend(handles_in, labels_in, ncol=2, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='lower left', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.3, markerscale=1)
+        
+    handles_in = [handles[-2], handles[-1]]
+    labels_in = [labels[-2], labels[-1]]
+    second_legend = axs.legend(handles_in, labels_in, ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper right', handletextpad=0.4, alignment='left', markerfirst=True, handlelength=1.3, markerscale=1)
+    
+    axs.add_artist(first_legend)
+        
+    #-----------
+    # other
+    plt.tight_layout()
+    
+    if savefig:
+        savefig_txt_save = aperture_h2 + '_' + savefig_txt
+        
+        plt.savefig("%s/etg_sample_plots/H2_mass_func/%s_%s_ALL_SAMPLES_sample_H2massfunc_%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
+        print("\n  SAVED: %s/etg_sample_plots/H2_mass_func/%s_%s_ALL_SAMPLES_sample_H2massfunc_%s%s.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], sample_input['snapshot_no'], savefig_txt_save, file_format))
+    if showfig:
+        plt.show()
+    plt.close()
+
+
+
+
+
 
 #=====================================
 
 
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# PLOTS USED IN PAPER:
+
+# Stellar mass function of samples
+_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                                  csv_samples2 = ['L200_m7_THERMAL_AGN_m7_127_sample_all_galaxies', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                                  csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     showfig       = False,
+                       savefig_txt = 'm7',
+                     savefig       = True)
+
+# H1 mass function of samples L200m6
+"""_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True)
+# H1 mass fraction = H1 / H1 + M* function of samples L200m6
+_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True)"""
+
+# H2 mass function of samples L200m6
+"""_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                         savefig       = True)"""
+# H2 mass fraction = H2 / H2 + M* function of samples
+"""_sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                         showfig       = False,
+                         savefig       = True)"""
 
 
-#=====================================
+# H1 mass function of samples m6 m7
+"""_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_m6_m7')"""
+# H2 mass function of samples m6 m7
+"""_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_m6_m7') """
+
+
+# H1 mass function of samples hybrid vs thermal
+"""_sample_H1_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h1 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_HYBRID_THERMAL')"""
+# H2 mass function of samples hybrid vs thermal
+"""_sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     aperture_h2 = 'exclusive_sphere_50kpc',
+                     showfig       = False,
+                     savefig       = True, 
+                       savefig_txt = '_HYBRID_THERMAL')"""
+
+
+# Similar to the correa+17 plot.   USE WITH ALL GALAXIES
+"""_sample_stelmass_u_r(csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies',
+                     showfig       = False,
+                     savefig       = True)
+_sample_stelmass_u_r(csv_sample = 'L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies',
+                     showfig       = False,
+                     savefig       = True)"""
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+# Checking Lagos+14
+"""_obs_h2mass_function(savefig       = True,
+                     showfig       = False)"""
+# plotting atlas3d stellar mass func
+"""_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                     showfig       = False,
+                     savefig       = True,
+                       savefig_txt = '_ATLAS3D')"""
+
+
+
+
+
+#========================================================================================================
 # Similar to the correa+17 plot.   USE WITH ALL GALAXIES
 """_sample_stelmass_u_r(csv_sample = 'L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies',
                      showfig       = False,
@@ -2911,12 +3995,12 @@ _sample_stellar_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_
                                   csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
                      savefig       = True)"""
-_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                                   csv_samples2 = ['L200_m7_THERMAL_AGN_m7_127_sample_all_galaxies', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
                                   csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
                        savefig_txt = 'm7',
-                     savefig       = True)
+                     savefig       = True)"""
 
 
 
@@ -3008,6 +4092,7 @@ _sample_H1_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ET
                      showfig       = False,
                      savefig       = True, 
                        savefig_txt = '_HYBRID_THERMAL')
+# m6 m7
 _sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
@@ -3104,8 +4189,9 @@ _sample_H1_mass_frac_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_a
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
-                       savefig_txt = '_HYBRID_THERMAL')
-_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                       savefig_txt = '_HYBRID_THERMAL')"""
+# m6 m7
+"""_sample_H1_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h1 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
@@ -3141,6 +4227,13 @@ _sample_H2_mass_function(csv_samples = ['L100_m6_HYBRID_AGN_m6_127_sample_all_ET
                      aperture_h2 = 'exclusive_sphere_10kpc',
                      showfig       = False,
                      savefig       = True)"""
+# manually halving detection rate to see what normalisation would be
+"""_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                           test_halve_det = True,
+                         showfig       = False,
+                         savefig       = True,
+                           savefig_txt = 'HALVE_DET_DONT_USE')"""
 
 # Central and satellite
 """_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_centrals', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_centrals'],
@@ -3201,8 +4294,9 @@ _sample_H2_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_E
                      aperture_h2 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
-                       savefig_txt = '_HYBRID_THERMAL')
-_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
+                       savefig_txt = '_HYBRID_THERMAL')"""
+# m6 m7
+"""_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
                      aperture_h2 = 'exclusive_sphere_50kpc',
                      showfig       = False,
                      savefig       = True, 
@@ -3309,5 +4403,21 @@ _sample_H2_mass_frac_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_
 
 
 
-
-
+#----------------
+# custom H2 mass funcs for Tim
+"""_CUSTOM_sample_H2_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies_109', 
+                                        'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_109', 
+                                        'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral_109', 
+                                        'L200_m6_THERMAL_AGN_m6_127_sample_all_bulgeratio03_109',
+                                        'L200_m6_THERMAL_AGN_m6_127_sample_all_bulgeratio0305_109',
+                                        'L200_m6_THERMAL_AGN_m6_127_sample_all_bulgeratio05_109'],
+                         aperture_h2 = 'exclusive_sphere_50kpc',
+                          title_text_in = '$M* \geq 10^9$',
+                         showfig       = False,
+                         savefig       = True,
+                           savefig_txt = 'CUSTOM_TIM')"""
+                         
+                         
+                         
+                         
+                         
