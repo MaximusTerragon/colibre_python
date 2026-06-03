@@ -1863,6 +1863,39 @@ def _obs_h2mass_function( add_observational = True,
                         
             axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 uncorr', ls='none', elinewidth=0.7, marker='^', ms=3.9, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='r', c='r', capsize=1.6)
     
+            #---------------
+            # rough integral estimation
+
+            bin_midpoints = np.log10(obs_x)
+            hist_masses = obs_y
+            hist_bin_width = 0.2
+            
+            # test for Tim vs ATLAS3D
+            # integral under mass func for H2 > 107:
+            integral_i = 0
+            for massbin_ii, histval_ii in zip(bin_midpoints, hist_masses):
+                if massbin_ii > 1:
+                    integral_i = integral_i + (0.2 * histval_ii.value)    # cumulatively sum the bin widthe (in logM*) * number density per interval
+                
+            print('(adjusted) atlas3d integral: ', integral_i)
+            print('(adjusted) * 1.16e5: (i.e. expected H2 det count within atlas3d volume):  %.2f' %(integral_i*1.16e5))
+            print('(adjusted) /260 (i.e. det rate in atlas3d volume):  %.4f' %(integral_i*1.16e5/260))
+            
+            bin_midpoints = np.log10(obs_x)
+            hist_masses = obs_y / (0.681**3)
+            hist_bin_width = 0.2
+            
+            
+            # test for Tim vs ATLAS3D
+            # integral under mass func for H2 > 107:
+            integral_i = 0
+            for massbin_ii, histval_ii in zip(bin_midpoints, hist_masses):
+                if massbin_ii > 1:
+                    integral_i = integral_i + (0.2 * histval_ii.value)    # cumulatively sum the bin widthe (in logM*) * number density per interval
+                
+            print('(original) atlas3d integral: ', integral_i)
+            print('(original) * 1.16e5: (i.e. expected H2 det count within atlas3d volume):  %.2f' %(integral_i*1.16e5))
+            print('(original) /260 (i.e. det rate in atlas3d volume):  %.4f' %(integral_i*1.16e5/260))
     
     
     
@@ -1896,6 +1929,416 @@ def _obs_h2mass_function( add_observational = True,
         
         plt.savefig("%s/etg_sample_plots/manual_atlas3D_h2massfunc_%s.%s" %(fig_dir, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
         print("\n  SAVED: %s/etg_sample_plots/manual_atlas3D_h2massfunc_%s.%s" %(fig_dir, savefig_txt_save, file_format))
+    if showfig:
+        plt.show()
+    plt.close()
+
+#------------------
+# Returns H2 mass function for given set of samples
+def _obs_h1mass_function( add_observational = True,       
+                          showfig       = False,
+                          savefig       = True,
+                            file_format = 'pdf',
+                            savefig_txt = '', 
+                          #--------------------------
+                          print_progress = False,
+                            debug = False):
+                    
+
+    #---------------------------
+    # Graph initialising and base formatting
+    fig, axs = plt.subplots(1, 1, figsize=[20/3, 5], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    
+    # ATLAS3D from Davis+19
+    with h5py.File('%s/Serra2012_ATLAS3D_HI.hdf5'%obs_dir, 'r') as file:
+        obs_names_1 = file['data/Galaxy/values'][:]
+        obs_H2_1       = file['data/log_H1/values'][:] #* u.Unit(file['data/log_H2/values'].attrs['units'])
+        obs_mask_1     = file['data/det_mask/values'][:]
+    
+    obs_names_1 = np.array(obs_names_1)
+    obs_mask_1  = np.array(obs_mask_1, dtype=bool)
+    obs_count = len(obs_names_1)
+    #obs_H2_1.to('Msun')
+    #obs_Mstar_1.to('Msun')
+    
+    obs_names_1 = obs_names_1[obs_mask_1]
+    obs_H2_1    = obs_H2_1[obs_mask_1]
+    
+    
+    box_volume = 1.16e5       # in cMpc^3 from Cappellari+11a
+    
+    
+    
+    
+    
+    #---------------
+    # Histograms   
+    hist_bin_width = 0.2
+    lower_mass_limit = 10**4
+    upper_mass_limit = 10**11
+    
+    hist_masses, bin_edges =  np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    
+    hist_masses = hist_masses[:]/box_volume      # in units of /cMpc**3
+    hist_masses = hist_masses/hist_bin_width        # density
+    bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+    # Add poisson errors to each bin (sqrt N)
+    hist_n, _ = np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+        
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask_finite = np.isfinite(np.log10(hist_masses))
+    hist_masses = hist_masses[hist_mask_finite]
+    bin_midpoints   = bin_midpoints[hist_mask_finite]
+    hist_err    = hist_err[hist_mask_finite]
+    hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+    
+    #-----------
+    # Line formatting
+    label_i = 'Atlas3D raw'
+    linecol = 'k'
+    ls_i    = '-'
+    ms_i    = 'o'
+    alpha_i = 1
+        
+    axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label=label_i, ls='-', elinewidth=0.7, marker=ms_i, ms=0.1, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='C0', c='C0', capsize=1.6)
+    
+    
+    #-------------
+    # Doing the same but with factor 2 less volume
+    """box_volume = box_volume/2
+    hist_masses, bin_edges =  np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    
+    hist_masses = hist_masses[:]/box_volume      # in units of /cMpc**3
+    hist_masses = hist_masses/hist_bin_width        # density
+    bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+    # Add poisson errors to each bin (sqrt N)
+    hist_n, _ = np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+        
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask_finite = np.isfinite(np.log10(hist_masses))
+    hist_masses = hist_masses[hist_mask_finite]
+    bin_midpoints   = bin_midpoints[hist_mask_finite]
+    hist_err    = hist_err[hist_mask_finite]
+    hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+    
+    #-----------
+    # Line formatting
+    label_i = 'Atlas3D * 0.5 volume'
+    linecol = 'k'
+    ls_i    = '-'
+    ms_i    = 'o'
+    alpha_i = 1
+        
+    axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label=label_i, ls='-', elinewidth=0.7, marker=ms_i, ms=0.1, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='C1', c='C1', capsize=1.6)
+    """
+    
+    #-------------
+    # Doing the same but accounting for 260 /166 sample size difference
+    box_volume = 1.16e5       # in cMpc^3 from Cappellari+11a
+    box_volume = box_volume * 166/260
+    hist_masses, bin_edges =  np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    
+    hist_masses = hist_masses[:]/box_volume      # in units of /cMpc**3
+    hist_masses = hist_masses/hist_bin_width        # density
+    bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+    # Add poisson errors to each bin (sqrt N)
+    hist_n, _ = np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+        
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask_finite = np.isfinite(np.log10(hist_masses))
+    hist_masses = hist_masses[hist_mask_finite]
+    bin_midpoints   = bin_midpoints[hist_mask_finite]
+    hist_err    = hist_err[hist_mask_finite]
+    hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+    
+    #-----------
+    # Line formatting
+    label_i = 'Atlas3D volume * 166/260'
+    linecol = 'k'
+    ls_i    = '-'
+    ms_i    = 'o'
+    alpha_i = 1
+        
+    axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label=label_i, ls='-', elinewidth=0.7, marker=ms_i, ms=0.1, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='C1', c='C1', capsize=1.6)
+    
+    
+    
+    #-------------
+    # Doing the same but accounting for h
+    box_volume = 1.16e5       # in cMpc^3 from Cappellari+11a
+    box_volume = box_volume * (0.681**3)
+    hist_masses, bin_edges =  np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    
+    hist_masses = hist_masses[:]/box_volume      # in units of /cMpc**3
+    hist_masses = hist_masses/hist_bin_width        # density
+    bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+    # Add poisson errors to each bin (sqrt N)
+    hist_n, _ = np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+        
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask_finite = np.isfinite(np.log10(hist_masses))
+    hist_masses = hist_masses[hist_mask_finite]
+    bin_midpoints   = bin_midpoints[hist_mask_finite]
+    hist_err    = hist_err[hist_mask_finite]
+    hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+    
+    #-----------
+    # Line formatting
+    label_i = 'Atlas3D volume * h**3'
+    linecol = 'k'
+    ls_i    = '-'
+    ms_i    = 'o'
+    alpha_i = 1
+        
+    axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label=label_i, ls='-', elinewidth=0.7, marker=ms_i, ms=0.1, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='C3', c='C3', capsize=1.6)
+    
+    
+    #-------------
+    # Doing the same but accounting for 260 /166 sample size difference and h
+    box_volume = 1.16e5       # in cMpc^3 from Cappellari+11a
+    box_volume = box_volume * (0.681**3) * (166/260)
+    hist_masses, bin_edges =  np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    
+    hist_masses = hist_masses[:]/box_volume      # in units of /cMpc**3
+    hist_masses = hist_masses/hist_bin_width        # density
+    bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+    # Add poisson errors to each bin (sqrt N)
+    hist_n, _ = np.histogram(obs_H2_1, bins=np.arange(np.log10(lower_mass_limit), np.log10(upper_mass_limit)+hist_bin_width, hist_bin_width))
+    hist_err = (np.sqrt(hist_n)/box_volume)/hist_bin_width
+        
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask_finite = np.isfinite(np.log10(hist_masses))
+    hist_masses = hist_masses[hist_mask_finite]
+    bin_midpoints   = bin_midpoints[hist_mask_finite]
+    hist_err    = hist_err[hist_mask_finite]
+    hist_n      = hist_n[hist_mask_finite]              # hist of bin counts
+    
+    #-----------
+    # Line formatting
+    label_i = 'Atlas3D volume * h**3 * 166/260'
+    linecol = 'k'
+    ls_i    = '-'
+    ms_i    = 'o'
+    alpha_i = 1
+        
+    axs.errorbar(bin_midpoints, hist_masses, yerr=hist_err, label=label_i, ls='-', elinewidth=0.7, marker=ms_i, ms=0.1, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='C2', c='C2', capsize=1.6)
+    
+    
+    
+    
+    #-----------------
+    # Add observations
+    axs.plot([],[])    # skip C0
+    if add_observational:
+        """
+        Pick observations we want to add
+        """
+        add_andreani2020    = False
+        add_fletcher2021    = False     # most robust where sample bias has been taken into account
+        add_lagos2015       = False
+        #add_guo2023 = True
+        add_lagos2014_uncorr       = True
+        add_lagos2014_1Vcorr       = True
+        
+        if add_andreani2020:
+            logm = np.arange(6.5, 10.2, 0.25)
+            phi      = np.array([-2.36, -2.14, -2.02, -1.96, -1.93, -1.94, -1.98, -2.04, -2.12, -2.24, -2.40, -2.64, -3.78, -5.2, -6.00])
+            #phi_err  = np.array([])
+            
+            # removing 1.36 multiplier for He correction --> now is pure H2
+            phi = np.log10((10**phi)/1.36)
+            
+            #phi_err_lower = 10**phi - (10**(phi-phi_err))
+            #phi_err_upper = (10**(phi+phi_err)) - 10**phi
+            
+            axs.plot(logm, phi, ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20, label='Andreani+20 (HRS) ($z=0.0$)')
+            #axs.errorbar(10**logm, 10**phi, yerr=np.array([phi_err_lower, phi_err_upper]), label='Andreani+20 (HRS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20)                
+        if add_fletcher2021:
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyH2MassFunction/Fletcher2021.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+            
+                obs_x     = file['x/values'][:] * u.Unit(file['x/values'].attrs['units'])
+                obs_y = file['y/values'][:] * u.Unit(file['y/values'].attrs['units'])
+                obs_y_err= file['y/scatter'][:] * u.Unit(file['y/scatter'].attrs['units'])
+            obs_x = obs_x.to('Msun')/1.36     # divide to account for x1.36 He correction in observations
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Fletcher+21 (xCOLD GASS) ($z=0.0$)', ls='none', linewidth=1, marker='o', ms=2, fillstyle='none', alpha=0.9, zorder=-20)           
+        if add_lagos2015:
+            print('lagos not available')
+        
+        if add_lagos2014_1Vcorr:      # ($z=0.0$)
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyHIMassFunction/Lagos2014_H1.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+                
+                obs_x     = file['data/massfunc/1Vcorr/x/values'][:] * u.Unit(file['data/massfunc/1Vcorr/x/values'].attrs['units'])
+                obs_y = file['data/massfunc/1Vcorr/y/values'][:] * u.Unit(file['data/massfunc/1Vcorr/y/values'].attrs['units'])
+                obs_y_err= file['data/massfunc/1Vcorr/y/scatter'][:] * u.Unit(file['data/massfunc/1Vcorr/y/scatter'].attrs['units'])
+                
+            obs_x = obs_x.to('Msun')
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 $1/V_{\mathrm{max}}$ corr', ls='none', elinewidth=0.7, marker='^', ms=3, fillstyle='full', alpha=0.9, zorder=-20, c='r', capsize=1.6)
+        
+            obs_x = obs_x.to('Msun')
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x.value), obs_y.value/0.691**3, yerr=obs_y_err.value, label='Lagos+14 $1/V_{\mathrm{max}}$ corr paper ver', ls='none', elinewidth=0.7, marker='^', ms=3, fillstyle='full', alpha=0.9, zorder=-20, c='c', capsize=1.6)
+            
+            
+        
+        
+        if add_lagos2014_uncorr:      # ($z=0.0$)
+            # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
+            with h5py.File('%s/GalaxyHIMassFunction/Lagos2014_H1.hdf5'%obs_dir, 'r') as file:
+                
+                """# A description of the file and data is in the metadata
+                print(f'File keys: {file.keys()}')
+                for k, v in file['metadata'].attrs.items():
+                    print(f'{k}: {v}')
+                # Data
+                print(file['x'].keys())
+                print(file['y'].keys())
+                print(' ')"""
+                
+                obs_x     = file['data/massfunc/uncorr/x/values'][:] * u.Unit(file['data/massfunc/uncorr/x/values'].attrs['units'])
+                obs_y = file['data/massfunc/uncorr/y/values'][:] * u.Unit(file['data/massfunc/uncorr/y/values'].attrs['units'])
+                obs_y_err= file['data/massfunc/uncorr/y/scatter'][:] * u.Unit(file['data/massfunc/uncorr/y/scatter'].attrs['units'])
+                
+            obs_x = obs_x.to('Msun')
+            obs_y = obs_y.to('Mpc**(-3)')
+            obs_y_err = obs_y_err.to('Mpc**(-3)')
+            
+            # Convert to log
+            #err_minus_log = np.log10(obs_y) - np.log10(obs_y - obs_y_err[0])
+            #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
+            #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
+                        
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 uncorr', ls='none', elinewidth=0.7, marker='^', ms=3.9, markeredgewidth=0.6, markerfacecolor='none', alpha=0.9, zorder=-20, markeredgecolor='r', c='r', capsize=1.6)
+    
+            
+
+            #---------------
+            # rough integral estimation
+
+            bin_midpoints = np.log10(obs_x)
+            hist_masses = obs_y
+            hist_bin_width = 0.2
+            
+            # test for Tim vs ATLAS3D
+            # integral under mass func for H2 > 107:
+            integral_i = 0
+            for massbin_ii, histval_ii in zip(bin_midpoints, hist_masses):
+                if massbin_ii > 1:
+                    integral_i = integral_i + (0.2 * histval_ii.value)    # cumulatively sum the bin widthe (in logM*) * number density per interval
+                
+            print('(adjusted) atlas3d integral: ', integral_i)
+            print('(adjusted) * 1.16e5: (i.e. expected H1 det count within atlas3d volume):  %.2f' %(integral_i*1.16e5))
+            print('(adjusted) /260 (i.e. det rate in atlas3d volume):  %.4f' %(integral_i*1.16e5/260))
+            
+            
+            bin_midpoints = np.log10(obs_x)
+            hist_masses = obs_y / ((260/166) * 0.681**3)
+            hist_bin_width = 0.2
+            
+            
+            # test for Tim vs ATLAS3D
+            # integral under mass func for H2 > 107:
+            integral_i = 0
+            for massbin_ii, histval_ii in zip(bin_midpoints, hist_masses):
+                if massbin_ii > 1:
+                    integral_i = integral_i + (0.2 * histval_ii.value)    # cumulatively sum the bin widthe (in logM*) * number density per interval
+                
+            print('(original) atlas3d integral: ', integral_i)
+            print('(original) * 1.16e5: (i.e. expected H1 det count within atlas3d volume):  %.2f' %(integral_i*1.16e5))
+            print('(original) /260 (i.e. det rate in atlas3d volume):  %.4f' %(integral_i*1.16e5/260))
+    
+            
+    
+    
+    
+    #-----------
+    # Axis formatting
+    plt.xlim(6, 11)
+    plt.ylim(10**(-7), 10**(-1))
+    #plt.xscale("log")
+    plt.yscale("log")
+    #plt.yticks(np.arange(-5, -1.4, 0.5))
+    #plt.xticks(np.arange(9.5, 12.5, 0.5))
+    axs.minorticks_on()
+    plt.xlabel(r'log$_{10}$ $M_{\mathrm{H_{I}}}$ [M$_{\odot}$]')
+    plt.ylabel(r'dn/dlog$_{10}$($M_{\mathrm{H_{I}}}$) [cMpc$^{-3}$]')
+      
+    #-----------  
+    # Annotations
+    #plt.text(0.8, 0.9, '${z=%.2f}$' %z, fontsize=7, transform = axs.transAxes)
+    
+    
+    #-----------
+    # Legend
+    axs.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+        
+    #-----------
+    # other
+    plt.tight_layout()
+    
+    if savefig:
+        savefig_txt_save = savefig_txt
+        
+        plt.savefig("%s/etg_sample_plots/manual_atlas3D_h1massfunc_%s.%s" %(fig_dir, savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
+        print("\n  SAVED: %s/etg_sample_plots/manual_atlas3D_h1massfunc_%s.%s" %(fig_dir, savefig_txt_save, file_format))
     if showfig:
         plt.show()
     plt.close()
@@ -2227,7 +2670,7 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
             #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
             #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
                         
-            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 $1/V_{\mathrm{max}}$ corr', ls='none', elinewidth=0.7, marker='^', ms=3, fillstyle='none', alpha=0.9, zorder=-20, c='r', capsize=1.6)
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 $1/V_{\mathrm{max}}$ corr', ls='none', elinewidth=0.7, marker='^', ms=3, fillstyle='full', alpha=0.9, zorder=-20, c='r', capsize=1.6)
         if add_lagos2014_uncorr:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyH2MassFunction/Lagos2014_H2.hdf5'%obs_dir, 'r') as file:
@@ -2318,7 +2761,28 @@ def _sample_H2_mass_function(csv_samples = [],  title_text_in = '',
     
     #-----------
     # Legend
-    axs.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    handles, labels = axs.get_legend_handles_labels()
+    
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        handles_in = [handles[0], handles[1], handles[2], handles[3]]
+        labels_in = [labels[0], labels[1], labels[2], labels[3]]
+        first_legend = axs.legend(handles_in, labels_in, ncol=1, loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    
+        handles_in = [handles[4], handles[5]]
+        labels_in = [labels[4], labels[5]]
+        second_legend = axs.legend(handles_in, labels_in, ncol=1, loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+        axs.add_artist(first_legend)
+    else:
+        handles_in = [handles[0], handles[1]]
+        labels_in = [labels[0], labels[1]]
+        first_legend = axs.legend(handles_in, labels_in, ncol=1, loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    
+        handles_in = [handles[2], handles[3]]
+        labels_in = [labels[2], labels[3]]
+        second_legend = axs.legend(handles_in, labels_in, ncol=1, loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+        axs.add_artist(first_legend)
+    
+    #axs.legend(loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
     #-----------
     # other
@@ -2635,7 +3099,16 @@ def _sample_H2_mass_frac_function(csv_samples = [],  title_text_in = '',
     
     #-----------
     # Legend
-    axs.legend(loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    handles, labels = axs.get_legend_handles_labels()
+    
+    handles_in = [handles[0], handles[1], handles[2]]
+    labels_in = [labels[0], labels[1], labels[2]]
+    first_legend = axs.legend(handles_in, labels_in, ncol=1, loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    
+    #handles_in = [handles[2]]
+    #labels_in = [labels[2]]
+    #second_legend = axs.legend(handles_in, labels_in, ncol=1, loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    #axs.add_artist(first_legend)
         
     #-----------
     # other
@@ -2928,7 +3401,7 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
             #err_plus_log  = np.log10(obs_y + obs_y_err[1]) - np.log10(obs_y)
             #log_obs_y_err = np.vstack([err_minus_log, err_plus_log])
                         
-            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 $1/V_{\mathrm{max}}$ corr', ls='none', elinewidth=0.7, marker='^', ms=3, fillstyle='none', alpha=0.9, zorder=-20, c='r', capsize=1.6)
+            axs.errorbar(np.log10(obs_x), obs_y, yerr=obs_y_err, label='Lagos+14 $1/V_{\mathrm{max}}$ corr', ls='none', elinewidth=0.7, marker='^', ms=3, fillstyle='full', alpha=0.9, zorder=-20, c='r', capsize=1.6)
         if add_lagos2014_uncorr:      # ($z=0.0$)
             # Load the observational data, specify the units we want, from RobMcGibbon's COLIBRE_Introduction
             with h5py.File('%s/GalaxyHIMassFunction/Lagos2014_H1.hdf5'%obs_dir, 'r') as file:
@@ -3020,7 +3493,27 @@ def _sample_H1_mass_function(csv_samples = [],  title_text_in = '',
     
     #-----------
     # Legend
-    axs.legend(loc='lower center', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    handles, labels = axs.get_legend_handles_labels()
+
+    if (savefig_txt == '_m6_m7') or (savefig_txt == '_HYBRID_THERMAL'):
+        handles_in = [handles[0], handles[1], handles[2], handles[3]]
+        labels_in = [labels[0], labels[1], labels[2], labels[3]]
+        first_legend = axs.legend(handles_in, labels_in, ncol=1, loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    
+        handles_in = [handles[4], handles[5]]
+        labels_in = [labels[4], labels[5]]
+        second_legend = axs.legend(handles_in, labels_in, ncol=1, loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+        axs.add_artist(first_legend)
+    else:
+        handles_in = [handles[0], handles[1]]
+        labels_in = [labels[0], labels[1]]
+        first_legend = axs.legend(handles_in, labels_in, ncol=1, loc='lower left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    
+        handles_in = [handles[2], handles[3]]
+        labels_in = [labels[2], labels[3]]
+        second_legend = axs.legend(handles_in, labels_in, ncol=1, loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+        axs.add_artist(first_legend)
+    
         
     #-----------
     # other
@@ -3333,7 +3826,7 @@ def _sample_H1_mass_frac_function(csv_samples = [],  title_text_in = '',
     
     #-----------
     # Legend
-    axs.legend(loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
+    axs.legend(loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.3)
         
     #-----------
     # other
@@ -3876,12 +4369,12 @@ def _CUSTOM_sample_H2_mass_function(csv_samples = [],  title_text_in = '',
 # PLOTS USED IN PAPER:
 
 # Stellar mass function of samples
-_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
+"""_sample_stellar_mass_function_3x1(csv_samples1 = ['L200_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                                   csv_samples2 = ['L200_m7_THERMAL_AGN_m7_127_sample_all_galaxies', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs', 'L200_m7_THERMAL_AGN_m7_127_sample_all_ETGs_plus_redspiral'],
                                   csv_samples3 = ['L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs', 'L100_m6_HYBRID_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,
                        savefig_txt = 'm7',
-                     savefig       = True)
+                     savefig       = True)"""
 
 # H1 mass function of samples L200m6
 """_sample_H1_mass_function(csv_samples = ['L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
@@ -3948,8 +4441,10 @@ _sample_stelmass_u_r(csv_sample = 'L100_m6_HYBRID_AGN_m6_127_sample_all_galaxies
 
 
 # Checking Lagos+14
-"""_obs_h2mass_function(savefig       = True,
-                     showfig       = False)"""
+_obs_h1mass_function(savefig       = True,
+                     showfig       = False)
+_obs_h2mass_function(savefig       = True,
+                     showfig       = False)
 # plotting atlas3d stellar mass func
 """_sample_stellar_mass_function(csv_samples = ['L100_m6_THERMAL_AGN_m6_127_sample_all_galaxies', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs', 'L100_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral'],
                      showfig       = False,

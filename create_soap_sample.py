@@ -1574,7 +1574,7 @@ _create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m
                     
 #======================
 # special samples for Tim
-_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
+"""_create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_galaxies_109',
                     csv_file = True)
@@ -1597,7 +1597,7 @@ _create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m
 _create_soap_sample(simulation_run = 'L200_m6', simulation_type = 'THERMAL_AGN_m6', 
                     snapshot_no = 127,
                       name_of_preset = 'all_bulgeratio05_109',
-                    csv_file = True)
+                    csv_file = True)"""
                     
                     
                     

@@ -8,6 +8,7 @@ import h5py
 import csv
 import time
 import math
+import json
 import astropy.stats
 import pandas as pd
 from swiftsimio import cosmo_quantity, cosmo_array
@@ -264,8 +265,8 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
         # Combining all dictionaries
         csv_dict = dict_class
                     
-        json.dump(csv_dict, open('%s/etg_time_analysis/%s_%s_H2_ETG_popdecay_%s%s.csv' %(fig_dir, simulation_run, simulation_type, name_of_preset), 'w'), cls=NumpyEncoder)
-        print('\n  SAVED: %s/etg_time_analysis/%s_%s_H2_ETG_popdecay_%s%s.csv' %(fig_dir, simulation_run, simulation_type, name_of_preset))
+        json.dump(csv_dict, open('%s/etg_time_analysis/%s_%s_H2_ETG_popdecay_%s.csv' %(fig_dir, simulation_run, simulation_type, name_of_preset), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/etg_time_analysis/%s_%s_H2_ETG_popdecay_%s.csv' %(fig_dir, simulation_run, simulation_type, name_of_preset))
     
     
     #=====================================
@@ -317,13 +318,13 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
     #axs_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major')
     #axs_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
     axs_top.set_xticklabels(['{:g}'.format(z_i) for z_i in redshiftticks])
-    ax_top.invert_xaxis()
+    axs_top.invert_xaxis()
     
     axs.set_ylim(0, 1)
     if only_use_SRs:
-        axs.set_ylabel('Fraction of $M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$\nETG (incl. FRs) population at $z=0$')
-    else:
         axs.set_ylabel('Fraction of $M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$\nETG (excl. FRs) population at $z=0$')
+    else:
+        axs.set_ylabel('Fraction of $M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$\nETG (incl. FRs) population at $z=0$')
     axs.tick_params(axis='x', which='minor')
     axs.tick_params(axis='y', which='minor')
     axs.minorticks_on()
@@ -379,6 +380,9 @@ def _etg_sample_timescales(z0_sample = '',  title_text_in = '',
 # Returns population decay of ETG samples
 def _h2_etg_timescale_manual(csv_1 = 'csv_1',
                              csv_2 = 'csv_2',
+                             aperture_h2 = 'exclusive_sphere_50kpc', 
+                             sample_input = {'simulation_run': 'L200_m6', 'simulation_type': 'THERMAL_AGN_m6'},
+                             title_text_in = '',
                           #=====================================
                           showfig       = False,
                           savefig       = True,
@@ -394,12 +398,34 @@ def _h2_etg_timescale_manual(csv_1 = 'csv_1',
     dict_class_2 = json.load(open('%s/etg_time_analysis/%s.csv' %(fig_dir, csv_2), 'r'))
     
     
+    #=====================================
+    # Print stats at z=0.3, z=1
+    print('------------------------------------------------------------')
+    print('Progenitors of z=0 H2 ETGs (fraction)')
+    print('incl. FRs               z=0       z=0.1       z=0.3        z=1')
+    print('etg_h2                  %.2f      %.2f        %.2f         %.2f' %( dict_class_1['etg_h2'][0]/dict_class_1['total'][0], dict_class_1['etg_h2'][8]/dict_class_1['total'][0], dict_class_1['etg_h2'][17]/dict_class_1['total'][0], dict_class_1['etg_h2'][-1]/dict_class_1['total'][0]))
+    print('etg_non                 %.2f      %.2f        %.2f         %.2f' %( dict_class_1['etg_non'][0]/dict_class_1['total'][0], dict_class_1['etg_non'][8]/dict_class_1['total'][0], dict_class_1['etg_non'][17]/dict_class_1['total'][0], dict_class_1['etg_non'][-1]/dict_class_1['total'][0]))
+    print('ltg_h2                  %.2f      %.2f        %.2f         %.2f' %( dict_class_1['ltg_h2'][0]/dict_class_1['total'][0], dict_class_1['ltg_h2'][8]/dict_class_1['total'][0], dict_class_1['ltg_h2'][17]/dict_class_1['total'][0], dict_class_1['ltg_h2'][-1]/dict_class_1['total'][0]))
+    print('ltg_non                 %.2f      %.2f        %.2f         %.2f' %( dict_class_1['ltg_non'][0]/dict_class_1['total'][0], dict_class_1['ltg_non'][8]/dict_class_1['total'][0], dict_class_1['ltg_non'][17]/dict_class_1['total'][0], dict_class_1['ltg_non'][-1]/dict_class_1['total'][0]))
+    print('min_Mstar               %.2f      %.2f        %.2f         %.2f' %( dict_class_1['min_Mstar'][0]/dict_class_1['total'][0], dict_class_1['min_Mstar'][8]/dict_class_1['total'][0], dict_class_1['min_Mstar'][17]/dict_class_1['total'][0], dict_class_1['min_Mstar'][-1]/dict_class_1['total'][0]))
+    print('------------------------------------------------------------')
+    print('Progenitors of z=0 H2 ETGs (fraction)')
+    print('excl. FRs               z=0       z=0.1       z=0.3        z=1')
+    print('etg_h2                  %.2f      %.2f        %.2f         %.2f' %( dict_class_2['etg_h2'][0]/dict_class_2['total'][0], dict_class_2['etg_h2'][8]/dict_class_2['total'][0], dict_class_2['etg_h2'][17]/dict_class_2['total'][0], dict_class_2['etg_h2'][-1]/dict_class_2['total'][0]))
+    print('etg_non                 %.2f      %.2f        %.2f         %.2f' %( dict_class_2['etg_non'][0]/dict_class_2['total'][0], dict_class_2['etg_non'][8]/dict_class_2['total'][0], dict_class_2['etg_non'][17]/dict_class_2['total'][0], dict_class_2['etg_non'][-1]/dict_class_2['total'][0]))
+    print('ltg_h2                  %.2f      %.2f        %.2f         %.2f' %( dict_class_2['ltg_h2'][0]/dict_class_2['total'][0], dict_class_2['ltg_h2'][8]/dict_class_2['total'][0], dict_class_2['ltg_h2'][17]/dict_class_2['total'][0], dict_class_2['ltg_h2'][-1]/dict_class_2['total'][0]))
+    print('ltg_non                 %.2f      %.2f        %.2f         %.2f' %( dict_class_2['ltg_non'][0]/dict_class_2['total'][0], dict_class_2['ltg_non'][8]/dict_class_2['total'][0], dict_class_2['ltg_non'][17]/dict_class_2['total'][0], dict_class_2['ltg_non'][-1]/dict_class_2['total'][0]))
+    print('min_Mstar               %.2f      %.2f        %.2f         %.2f' %( dict_class_2['min_Mstar'][0]/dict_class_2['total'][0], dict_class_2['min_Mstar'][8]/dict_class_2['total'][0], dict_class_2['min_Mstar'][17]/dict_class_2['total'][0], dict_class_2['min_Mstar'][-1]/dict_class_2['total'][0]))
+    
+
+
+    
     
     
     
     #=====================================
     # Graph initialising and base formatting
-    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2], sharex=True, sharey=False)
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
     #-----------
@@ -444,13 +470,10 @@ def _h2_etg_timescale_manual(csv_1 = 'csv_1',
     #axs_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major')
     #axs_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
     axs_top.set_xticklabels(['{:g}'.format(z_i) for z_i in redshiftticks])
-    ax_top.invert_xaxis()
+    axs_top.invert_xaxis()
     
     axs.set_ylim(0, 1)
-    if only_use_SRs:
-        axs.set_ylabel('Fraction of $M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$\nETG population at $z=0$')
-    else:
-        axs.set_ylabel('Fraction of $M_{\mathrm{H_{2}}}>10^{7}$ M$_{\odot}$\nETG population at $z=0$')
+    axs.set_ylabel('Fraction of H$_2$ ETG\npopulation at $z=0$')
     axs.tick_params(axis='x', which='minor')
     axs.tick_params(axis='y', which='minor')
     axs.minorticks_on()
@@ -470,8 +493,8 @@ def _h2_etg_timescale_manual(csv_1 = 'csv_1',
                         'L100m6h': "#D95F02", 
                         'L200m6': "#7570B3"}
     run_name_title = '%s%s'%(title_run_dict[sample_input['simulation_run']], title_type_dict[sample_input['simulation_type']])
-    text_title = r'<%s><..><%s>'%(run_name_title, title_text_in)
-    fig_text(x=0.135, y=1.01, ha='left', s=text_title, fontsize=7, ax=axs,
+    text_title = r'<%s><..><%s>'%(run_name_title, '')
+    fig_text(x=0.135, y=1.05, ha='left', s=text_title, fontsize=7, ax=axs,
         highlight_textprops=[
             {"color": title_color_dict[run_name_title], "fontname": 'Courier New', "bbox": {"edgecolor": title_color_dict[run_name_title], "facecolor": "none", "linewidth": 1, "pad": 0.3, "boxstyle": 'round'}},
             {"color": "white"},
@@ -486,17 +509,19 @@ def _h2_etg_timescale_manual(csv_1 = 'csv_1',
     #axs.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
     # Put a legend to the right of the current axis
-    #axs.legend(loc='center left', frameon=False, labelspacing=0.9, labelcolor='linecolor', handlelength=0, bbox_to_anchor=(1, 0.5), handletextpad=0.2, alignment='center')
+    axs.legend(ncol=1, frameon=False, scatterpoints = 1, labelspacing=0.1, loc='upper left', handletextpad=0.4, handlelength=0.8, markerfirst=True)
+    
         
     #-----------
     # other
     #plt.tight_layout()
+    axs.grid(alpha=0.4, lw=0.7, zorder=-20)
     
     if savefig:
         savefig_txt_save = aperture_h2 + '_' + savefig_txt
         
-        plt.savefig("%s/etg_time_analysis/%s_%s_ETG_z=0_H2_popdecay%s%s_onlyH2ETG.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], ('_exclFRs' if only_use_SRs else ''), savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
-        print("\n  SAVED: %s/etg_time_analysis/%s_%s_ETG_z=0_H2_popdecay%s%s_onlyH2ETG.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], ('_exclFRs' if only_use_SRs else ''), savefig_txt_save, file_format))
+        plt.savefig("%s/etg_time_analysis/%s_%s_ETG_z=0_H2_popdecay%s_onlyH2ETG.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], savefig_txt_save, file_format), format=file_format, bbox_inches='tight', dpi=600)         
+        print("\n  SAVED: %s/etg_time_analysis/%s_%s_ETG_z=0_H2_popdecay%s_onlyH2ETG.%s" %(fig_dir, sample_input['simulation_run'], sample_input['simulation_type'], savefig_txt_save, file_format))
     if showfig:
         plt.show()
     plt.close()
@@ -514,30 +539,32 @@ def _h2_etg_timescale_manual(csv_1 = 'csv_1',
 #       'ltg_non' = becomes non-h2 det and was ltg
 #       'other'   = TrackID was not found (possible merger or just quirk with HBT)
 #       [optional] 'low_mstar' = falls below the M* = 10^9.5 of our sample
-_etg_sample_timescales(z0_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral',
+"""_etg_sample_timescales(z0_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs_plus_redspiral',
                            #snapshot_list = [127, 119, 114, 110],    # np.flip(np.arange(88, 128, 1))
                            snapshot_list = np.flip(np.arange(90, 128, 1)),    # np.flip(np.arange(88, 128, 1))
                            plot_lowStelmass = True,     # includes category where the etg ends up below stelmass limit
                            title_text_in = '',
                            only_use_SRs = False,
                          showfig       = False,
-                         savefig       = True)
+                         savefig       = True)"""
                          
-_etg_sample_timescales(z0_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs',
+"""_etg_sample_timescales(z0_sample = 'L200_m6_THERMAL_AGN_m6_127_sample_all_ETGs',
                            #snapshot_list = [127, 119, 114, 110],    # np.flip(np.arange(88, 128, 1))
                            snapshot_list = np.flip(np.arange(90, 128, 1)),    # np.flip(np.arange(88, 128, 1))
+                           #snapshot_list = np.array([127, 90]),
                            plot_lowStelmass = True,     # includes category where the etg ends up below stelmass limit
                            title_text_in = '',
                            only_use_SRs = True,
                          showfig       = False,
-                         savefig       = True)                         
+                         savefig       = True)  """                       
 
 #-------------------
 # RUN LOCAL
-"""_h2_etg_timescale_manual(csv_1 = 'csv_1',
-                            csv_2 = 'csv_2',
+_h2_etg_timescale_manual(csv_1 = 'L200_m6_THERMAL_AGN_m6_H2_ETG_popdecay_all_ETGs_plus_redspiral',
+                         csv_2 = 'L200_m6_THERMAL_AGN_m6_H2_ETG_popdecay_all_ETGs',
+                             sample_input = {'simulation_run': 'L200_m6', 'simulation_type': 'THERMAL_AGN_m6'},
                               showfig       = False,
-                              savefig       = True)"""
+                              savefig       = True)
 
 
 
